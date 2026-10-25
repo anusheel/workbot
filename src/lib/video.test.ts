@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -60,10 +60,64 @@ function scripted(replies: string[]) {
   return { model, prompts };
 }
 
-test("a missing duration header does not become NaN", () => {
+/** A webm written to a pipe, as a browser's recorder does: no duration header, since the muxer cannot seek back. */
+async function headerless(name: string, source: string, codec: string[]) {
+  const { stdout } = await promisify(execFile)(
+    "ffmpeg",
+    [
+      "-loglevel",
+      "error",
+      "-f",
+      "lavfi",
+      "-i",
+      source,
+      ...codec,
+      "-f",
+      "webm",
+      "-",
+    ],
+    { encoding: "buffer", maxBuffer: 64 * 1024 * 1024 },
+  );
+  const file = join(dir, name);
+  await writeFile(file, stdout);
+  return file;
+}
+
+test("parsing a duration never gives NaN", () => {
   expect(parseDuration("12.48\n")).toBe(12.48);
-  expect(parseDuration("N/A\n")).not.toBeNaN();
-  expect(parseDuration("N/A\n", 8)).toBe(8);
+  expect(parseDuration("N/A\n")).toBeUndefined();
+  expect(parseDuration("")).toBeUndefined();
+});
+
+test("a recording with no duration header is measured from its timestamps, past the frame limit", async () => {
+  // 200 seconds at 1 frame a second: more than the 90 frames extractFrames stops at, so 180 seconds
+  // would mean the length had been counted from frames.
+  const long = await headerless(
+    "long.webm",
+    "testsrc=duration=200:size=64x64:rate=1",
+    ["-c:v", "libvpx"],
+  );
+  const { stdout } = await promisify(execFile)("ffprobe", [
+    "-v",
+    "error",
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "csv=p=0",
+    long,
+  ]);
+  expect(parseDuration(stdout)).toBeUndefined();
+  expect(await duration(long)).toBeCloseTo(200, 0);
+});
+
+test("a recording whose length cannot be read is an error naming the file", async () => {
+  const silent = await headerless("silent.webm", "sine=duration=2", [
+    "-c:a",
+    "libopus",
+  ]);
+  await expect(duration(silent)).rejects.toThrow(
+    "Could not read the length of silent.webm",
+  );
 });
 
 test("clock writes seconds as m:ss", () => {

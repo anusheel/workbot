@@ -1,4 +1,6 @@
 import { execFile, spawn } from "node:child_process";
+import { basename } from "node:path";
+import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import { type LanguageModel, Output, generateText } from "ai";
 import { z } from "zod";
@@ -10,14 +12,54 @@ export type Scene = { at: number; text: string };
 export const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
-/** ffprobe prints N/A for a file with no duration header; the fallback stands in for it. */
-export function parseDuration(stdout: string, fallback = 0): number {
+/** The seconds ffprobe printed, or undefined for N/A: a file with no duration header. */
+export function parseDuration(stdout: string): number | undefined {
   const seconds = Number(stdout);
-  return stdout.trim() && Number.isFinite(seconds) ? seconds : fallback;
+  return stdout.trim() && Number.isFinite(seconds) ? seconds : undefined;
 }
 
-/** The length of a recording in seconds, from ffprobe or, without a header, from its frames. */
-export async function duration(file: string, every = 2): Promise<number> {
+/**
+ * Where the last packet of the first video stream ends. Reads the container's
+ * timestamps without decoding, and streams ffprobe's output so a long
+ * recording does not have to fit in a buffer.
+ */
+function lastPacketEnd(file: string): Promise<number | undefined> {
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn("ffprobe", [
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "packet=pts_time,duration_time",
+      "-of",
+      "csv=p=0",
+      file,
+    ]);
+    let end: number | undefined;
+    let errors = "";
+    ffprobe.stderr.on("data", (chunk: Buffer) => (errors += chunk));
+    ffprobe.on("error", reject);
+    createInterface({ input: ffprobe.stdout }).on("line", (line) => {
+      const [at, length] = line.split(",");
+      const start = parseDuration(at ?? "");
+      if (start === undefined) return;
+      // Packets are in decode order, so the latest end is not always the last line.
+      end = Math.max(end ?? 0, start + (parseDuration(length ?? "") ?? 0));
+    });
+    ffprobe.on("close", (code) =>
+      code === 0
+        ? resolve(end)
+        : reject(new Error(errors.trim() || `ffprobe exited with ${code}`)),
+    );
+  });
+}
+
+/**
+ * The length of a recording in seconds, from ffprobe or, for a file with no
+ * duration header such as a browser's webm recording, from its last timestamp.
+ */
+export async function duration(file: string): Promise<number> {
   const { stdout } = await promisify(execFile)("ffprobe", [
     "-v",
     "error",
@@ -27,10 +69,10 @@ export async function duration(file: string, every = 2): Promise<number> {
     "csv=p=0",
     file,
   ]);
-  const seconds = parseDuration(stdout, NaN);
-  if (!Number.isNaN(seconds)) return seconds;
-  const frames = await extractFrames(file, { every });
-  return frames.length * every;
+  const seconds = parseDuration(stdout) ?? (await lastPacketEnd(file));
+  if (seconds === undefined)
+    throw new Error(`Could not read the length of ${basename(file)}`);
+  return seconds;
 }
 
 const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
