@@ -7,8 +7,8 @@ import {
   query,
   tool as sdkTool,
 } from "@anthropic-ai/claude-agent-sdk";
-import { readPolicy, searchKnowledgeBase } from "./knowledge-tools";
-import type { Tool } from "./tools";
+import { knowledgeTools } from "./knowledge-tools";
+import type { Tool } from "./tool";
 
 export type TraceEvent = {
   at: Date;
@@ -34,7 +34,7 @@ const asSdkTool = (t: Tool) =>
 
 const knowledge = createSdkMcpServer({
   name: "knowledge",
-  tools: [searchKnowledgeBase, readPolicy].map(asSdkTool),
+  tools: knowledgeTools().map(asSdkTool),
 });
 
 export const agents: Options["agents"] = {
@@ -42,11 +42,8 @@ export const agents: Options["agents"] = {
     description:
       "Gathers the facts that answer a customer's question from the company's policies, each with its source.",
     prompt:
-      "You are the researcher for a customer reply at Fieldstone Supply. Call search_knowledge_base, then read_policy for each policy that matters. Reply with a list of facts, one per line starting with a dash, each ending with its source in brackets, for example [Customer refunds]. A fact without a source is not a fact; leave it out. Nothing else.",
-    tools: [
-      "mcp__knowledge__search_knowledge_base",
-      "mcp__knowledge__read_policy",
-    ],
+      "You are the researcher for a customer reply at Fieldstone Supply. Call find with the question, then cat each document that matters; grep when you need an exact number. Reply with a list of facts, one per line starting with a dash, each ending with its source in brackets, for example [Customer refunds]. A fact without a source is not a fact; leave it out. Nothing else.",
+    tools: knowledgeTools().map((t) => `mcp__knowledge__${t.name}`),
     model: "haiku",
   },
   writer: {

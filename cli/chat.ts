@@ -8,7 +8,7 @@ import { investigate } from "@/lib/investigate";
 import { providerNames, providers } from "@/lib/providers";
 import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
-import { tools } from "@/lib/tools";
+import { employeeTools } from "@/lib/tools";
 
 const { values } = parseArgs({
   options: {
@@ -24,7 +24,7 @@ const Provider = z.enum(providerNames);
 const Effort = z.enum(["low", "medium", "high"]);
 
 const session = new Session(Provider.parse(values.provider), values.model, {
-  tools,
+  tools: employeeTools,
   maxTokens: Number(values["max-tokens"]),
   effort: values.effort === undefined ? undefined : Effort.parse(values.effort),
   temperature:

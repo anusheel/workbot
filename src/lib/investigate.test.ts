@@ -32,16 +32,11 @@ const scripted = (turns: Call[][]) =>
     },
   });
 
-test("searches the knowledge base, reads the policy, saves findings and writes the report", async () => {
+test("explores the knowledge base, saves findings and writes the report", async () => {
   const seen: string[] = [];
   const model = scripted([
-    [
-      {
-        name: "search_knowledge_base",
-        input: { query: "refund damaged order" },
-      },
-    ],
-    [{ name: "read_policy", input: { slug: "refunds" } }],
+    [{ name: "find", input: { query: "refund damaged order" } }],
+    [{ name: "cat", input: { path: "policies/refunds" } }],
     [
       {
         name: "save_finding",
@@ -63,12 +58,7 @@ test("searches the knowledge base, reads the policy, saves findings and writes t
   const result = await investigate("Can an agent refund $250?", model, {
     tool: (c) => seen.push(`${c.name}${c.failed ? "!" : ""}`),
   });
-  expect(seen).toEqual([
-    "search_knowledge_base",
-    "read_policy",
-    "save_finding",
-    "write_report",
-  ]);
+  expect(seen).toEqual(["find", "cat", "save_finding", "write_report"]);
   expect(result.findings).toEqual([
     {
       text: "Agents may refund up to $200 per order.",
@@ -81,10 +71,10 @@ test("searches the knowledge base, reads the policy, saves findings and writes t
   expect(result.stopped).toBe("answered");
 });
 
-test("an unknown policy is an error the model can recover from, and a cut-off run reports its findings", async () => {
+test("a missing document is an error the model can recover from, and a cut-off run reports its findings", async () => {
   const seen: string[] = [];
   const model = scripted([
-    [{ name: "read_policy", input: { slug: "nope" } }],
+    [{ name: "cat", input: { path: "policies/nope" } }],
     [
       {
         name: "save_finding",
@@ -98,7 +88,7 @@ test("an unknown policy is an error the model can recover from, and a cut-off ru
     { tool: (c) => seen.push(`${c.name}${c.failed ? "!" : ""}`) },
     { steps: 2 },
   );
-  expect(seen).toEqual(["read_policy!", "save_finding"]);
+  expect(seen).toEqual(["cat!", "save_finding"]);
   expect(result.stopped).toBe("steps");
   expect(result.report).toContain(
     "Findings so far:\n- Nothing covers this. [Knowledge base]",

@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { z } from "zod";
-import { type Tool, inputSchema } from "./tools";
+import { type Tool, inputSchema } from "./tool";
 
 export const providerNames = ["anthropic", "openai"] as const;
 export type ProviderName = (typeof providerNames)[number];

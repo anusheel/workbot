@@ -2,12 +2,13 @@ import type { LanguageModel } from "ai";
 import { z } from "zod";
 import { type AgentEvents, type Limits, runAgent } from "./agent";
 import { config } from "./config";
-import { readPolicy, searchKnowledgeBase } from "./knowledge-tools";
-import { readUrl, tool, webSearch } from "./tools";
+import { knowledgeTools } from "./knowledge-tools";
+import { tool } from "./tool";
+import { readUrl, webSearch } from "./tools";
 
 export type Finding = { text: string; source: string };
 
-const system = `You investigate questions for Fieldstone Supply's operations and support teams, so that whoever picks up the ticket starts with the facts. Work like this: search the knowledge base first, and read a policy before you rely on it. Use external sources only for what the company's own documents do not cover, and prefer official or primary sources. Save every fact that helps answer the question with its source. When the findings answer the question, or nothing more can be found, call write_report once: the answer in plain sentences, then each finding with its source in brackets. Before each tool call, say in one short sentence what you are about to do and why. Numerals for numbers; no guesses.`;
+const system = `You investigate questions for Fieldstone Supply's operations and support teams, so that whoever picks up the ticket starts with the facts. Work like this: find in the knowledge base first, cat what looks relevant before you rely on it, and grep when you need an exact number or phrase. Use external sources only for what the company's own documents do not cover, and prefer official or primary sources. Save every fact that helps answer the question with its source. When the findings answer the question, or nothing more can be found, call write_report once: the answer in plain sentences, then each finding with its source in brackets. Before each tool call, say in one short sentence what you are about to do and why. Numerals for numbers; no guesses.`;
 
 /** Investigates a ticket's question: knowledge base first, then the web when there is a search key, and ends with a sourced report. */
 export async function investigate(
@@ -18,8 +19,7 @@ export async function investigate(
 ) {
   const findings: Finding[] = [];
   const tools = [
-    searchKnowledgeBase,
-    readPolicy,
+    ...knowledgeTools(),
     ...(config.brave.key ? [webSearch, readUrl] : []),
     tool({
       name: "save_finding",

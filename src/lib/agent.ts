@@ -6,7 +6,7 @@ import {
   tool as aiTool,
 } from "ai";
 import { type Usage, priceOf } from "./providers";
-import type { Tool } from "./tools";
+import type { Tool } from "./tool";
 
 type ToolResultPart = Extract<
   ModelMessage,

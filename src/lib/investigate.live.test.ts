@@ -10,7 +10,7 @@ test("the agent reads the knowledge base and writes a sourced report on the smal
     { tool: (call) => calls.push(call.name) },
     { steps: 10, dollars: 0.1, seconds: 150 },
   );
-  expect(calls[0]).toBe("search_knowledge_base");
+  expect(["find", "grep", "ls"]).toContain(calls[0]);
   expect(calls).toContain("write_report");
   expect(run.stopped).toBe("answered");
   expect(run.findings.length).toBeGreaterThan(0);
