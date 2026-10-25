@@ -18,9 +18,13 @@ site is a second app in `site/`, with its own AGENTS.md.
 - `pnpm --filter workbot-site dev`: the public site on http://localhost:3001
 - `pnpm dlx shadcn@latest add <component>`: a UI primitive into `src/components/ui/`
 
-## Claude Code
+## Company brain
 
-Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path; `docs/architecture.md` is the system as built.
+`brain/` is what an engineer or an agent working on WorkBot reads before changing it: the product, the architecture decisions, the customer, the style rules, with an index at `brain/README.md`. Read the index first; cite the note you relied on. The knowledge base under `content/knowledge/` is a different thing: Fieldstone Supply's own documents, which the assistant answers from.
+
+## Working across CLIs
+
+One policy, 3 CLIs. The instruction files are `AGENTS.md` at the root and in `site/`, `src/app/api/` and `content/knowledge/`; each has a `CLAUDE.md` beside it that imports it, for Claude Code. The MCP servers are declared once per CLI from the same list: `.mcp.json` (Claude Code), `.codex/config.toml` (Codex, loaded when the project is trusted) and `opencode.jsonc` (OpenCode, which also lists the nested instruction files). The permission policy is the same in each: work in the tree without asking, ask for anything beyond it, never read `.env.local`. Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel; Codex loads them from `skills.config`, OpenCode as the commands in `.opencode/commands/`, written from the same files by `pnpm sync:commands`. A hook in `.claude/settings.json` formats every file Claude edits. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path; `docs/architecture.md` is the system as built; `docs/agentic-development.md` is how we work with the CLIs.
 
 ## Tooling for agents
 

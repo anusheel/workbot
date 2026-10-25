@@ -1,0 +1,47 @@
+// OpenCode, project scope. The same policy as .claude/settings.json and .codex/config.toml:
+// the instruction files of every package, the 5 MCP servers of .mcp.json, the skills as commands.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "site/AGENTS.md",
+    "src/app/api/AGENTS.md",
+    "content/knowledge/AGENTS.md",
+    "brain/README.md",
+  ],
+  "permission": {
+    "edit": "allow",
+    "bash": "ask",
+    // The last matching pattern wins; .env.example is the one env file the agent may read.
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+    },
+  },
+  "mcp": {
+    "linear": { "type": "remote", "url": "https://mcp.linear.app/mcp" },
+    "github": { "type": "remote", "url": "https://api.githubcopilot.com/mcp/" },
+    "figma": { "type": "remote", "url": "https://mcp.figma.com/mcp" },
+    "database": {
+      "type": "local",
+      "command": [
+        "node",
+        "--env-file-if-exists=.env.local",
+        "--import",
+        "tsx",
+        "mcp/database.ts",
+      ],
+    },
+    "posthog": {
+      "type": "local",
+      "command": [
+        "node",
+        "--env-file-if-exists=.env.local",
+        "--import",
+        "tsx",
+        "mcp/posthog.ts",
+      ],
+    },
+  },
+}

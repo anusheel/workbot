@@ -1,0 +1,48 @@
+# Codex CLI, project scope. Loaded when the project is trusted (projects.<path>.trust_level in ~/.codex/config.toml).
+# The same policy as .claude/settings.json and opencode.jsonc: ask before anything outside the working tree,
+# never read the env files, the 5 MCP servers of .mcp.json, and the skills of .claude/skills.
+
+approval_policy = "on-request"
+default_permissions = "workbot"
+
+# Writes inside the tree, system temp aside; the env files out of reach, as in the other 2 CLIs.
+# A profile applies only when no loaded config sets the older sandbox_mode.
+[permissions.workbot]
+extends = ":workspace"
+[permissions.workbot.filesystem.":workspace_roots"]
+"**/.env" = "deny"
+"**/.env.local" = "deny"
+"**/.env.*.local" = "deny"
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.database]
+command = "node"
+args = ["--env-file-if-exists=.env.local", "--import", "tsx", "mcp/database.ts"]
+
+[mcp_servers.posthog]
+command = "node"
+args = ["--env-file-if-exists=.env.local", "--import", "tsx", "mcp/posthog.ts"]
+
+[[skills.config]]
+path = ".claude/skills/api-route"
+enabled = true
+
+[[skills.config]]
+path = ".claude/skills/component"
+enabled = true
+
+[[skills.config]]
+path = ".claude/skills/pre-deploy"
+enabled = true
+
+[[skills.config]]
+path = ".claude/skills/review"
+enabled = true

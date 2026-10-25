@@ -1,4 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(pnpm check)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm format)",
+      "Bash(pnpm build)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh issue view:*)"
+    ],
+    "deny": ["Read(./.env.local)", "Read(./.env*.local)", "Bash(rm -rf:*)"]
+  },
   "hooks": {
     "PostToolUse": [
       {

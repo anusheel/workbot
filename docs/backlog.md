@@ -264,3 +264,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 
 - `docs/architecture.md`: the system as built after Day 19, in one diagram, with the agents and their patterns, where each kind of data lives, the technology and why, the tradeoffs, and what reliability is built and what is missing
 - `docs/design/brief-a.md`: the design for an AI customer support platform at 10,000 tickets a day: 3 workflows, 4 agents, the data and the technology, the tradeoffs, 5 features by impact and effort with the MVP, what to promise and what to caveat, and the 5-minute pitch
+
+### WB-48 One policy across 3 CLIs, the company brain, the way of working
+
+- `AGENTS.md` at the root and in `site/`, `src/app/api/` and `content/knowledge/`, each with a `CLAUDE.md` importing it; the MCP servers declared once per CLI from the same list (`.mcp.json`, `.codex/config.toml`, `opencode.jsonc`); the same permission policy in each; the skills as Codex skills and OpenCode commands pointing at the same files; `scripts/agent-config.test.ts` fails when they drift
+- `brain/`: the product, the architecture decisions, the customer and the style notes, with an index, `Reviewed` dates and a retention rule; the root `AGENTS.md` points at it
+- An issue form with acceptance criteria and constraints, a pull request template with the brief, the plan, the sessions and the checks; `docs/agentic-development.md` records the policy, the workflow and what each CLI was faster or clearer at on the day's 3 tasks
