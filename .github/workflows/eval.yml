@@ -2,6 +2,9 @@ name: Eval
 
 on:
   pull_request:
+    # The twelve files and folders the brief names, then the modules the evals
+    # run that hold a prompt or decide a score: the triage and extraction
+    # instructions sit in intake.ts and extract.ts, not in system-prompt.ts.
     paths:
       - src/lib/system-prompt.ts
       - src/lib/tools.ts
@@ -15,18 +18,38 @@ on:
       - content/eval/**
       - content/knowledge/**
       - .github/workflows/eval.yml
+      - src/lib/intake.ts
+      - src/lib/extract.ts
+      - src/lib/documents.ts
+      - src/lib/document-model.ts
+      - src/lib/request-model.ts
+      - src/lib/field-match.ts
+      - src/lib/chat.ts
+      - src/lib/knowledge.ts
+      - src/lib/web.ts
+      - src/lib/prompts.ts
+      - package.json
+      - pnpm-lock.yaml
   schedule:
     - cron: "30 2 * * *"
   workflow_dispatch:
 
 jobs:
   smoke:
-    if: github.event_name == 'pull_request'
+    # A pull request from a fork has neither the key nor a token that can comment.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # A newer push makes the older run's report stale, so the older run stops.
+    concurrency:
+      group: eval-smoke-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       pull-requests: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -38,22 +61,37 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL: memory://
-      # The report is written before the gate exits, so a failing run is commented too.
-      - if: always() && hashFiles('eval-report.md') != ''
-        run: gh pr comment "$PR" --edit-last --create-if-none --body-file eval-report.md
+      # The report is written before the gate exits, so a failing run is commented
+      # too. A run that crashed wrote none: the comment then says so, rather than
+      # leaving the last commit's PASS up beside a red check.
+      - if: ${{ !cancelled() }}
+        run: |
+          [ -f eval-report.md ] || echo "The evals ended before they wrote a report: $RUN_URL" > eval-report.md
+          gh pr comment "$PR" --edit-last --create-if-none --body-file eval-report.md
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   nightly:
-    if: github.event_name != 'pull_request'
+    # The write token and the key go only to the workflow as it is on main.
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Two runs pushing the scoreboard at once would lose one night's rows.
+    concurrency:
+      group: eval-nightly
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
+          # The token is handed to git in the last step only, not to the install
+          # scripts and the evals that run before it.
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -70,5 +108,14 @@ jobs:
           git add content/eval/scoreboard.jsonl
           git diff --cached --quiet || {
             git commit -m "Record the nightly evals"
-            git push origin HEAD:main
+            auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+            echo "::add-mask::$auth"
+            export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+            # What landed on main during the run goes under the night's commit.
+            for attempt in 1 2 3; do
+              git pull --rebase origin main && git push origin HEAD:main && exit 0
+            done
+            exit 1
           }
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
