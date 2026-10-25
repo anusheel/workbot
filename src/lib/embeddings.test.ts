@@ -37,3 +37,42 @@ test("the embedder posts to Voyage and returns vectors in input order", async ()
   });
   vi.unstubAllEnvs();
 });
+
+async function embedWith(response: Response) {
+  vi.stubEnv("VOYAGE_API_KEY", "voy_test");
+  vi.resetModules();
+  const { embedder } = await import("./embeddings");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => response),
+  );
+  return embedder()!;
+}
+
+test("a Voyage error keeps its detail", async () => {
+  const embed = await embedWith(
+    Response.json({ detail: "input too long" }, { status: 400 }),
+  );
+  await expect(embed(["a"], "document")).rejects.toThrow(
+    "Voyage answered 400: input too long",
+  );
+  vi.unstubAllEnvs();
+});
+
+test("a response with fewer vectors than inputs is caught", async () => {
+  const embed = await embedWith(
+    Response.json({ data: [{ index: 0, embedding: [1, 0] }] }),
+  );
+  await expect(embed(["a", "b"], "document")).rejects.toThrow(
+    /1 vectors for 2 inputs/,
+  );
+  vi.unstubAllEnvs();
+});
+
+test("a response without a data array is caught", async () => {
+  const embed = await embedWith(Response.json({}));
+  await expect(embed(["a", "b"], "document")).rejects.toThrow(
+    /0 vectors for 2 inputs/,
+  );
+  vi.unstubAllEnvs();
+});
