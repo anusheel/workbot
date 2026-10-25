@@ -59,7 +59,7 @@ A document files its own request: on the new-request page, or at `POST
 /api/documents`, an invoice, an email, a letter or a form (as a PDF, an
 image or text) is read into a typed record, filed with the right team, and
 kept on the request with its doubtful fields marked. `pnpm extract <file>`
-runs the extraction alone; `pnpm extract:eval` measures it on 18 documents.
+runs the extraction alone; `pnpm eval --task extract` measures it on the eval documents.
 
 Documents can also go through the approval workflow at `/admin/inbox`: each
 upload is a durable run on [Inngest](https://www.inngest.com) that classifies,
@@ -69,9 +69,20 @@ Run `pnpm inngest` beside `pnpm dev` for the engine and its dashboard.
 
 Every model call is traced with its tenant, tokens, cost and latency, and
 `/admin/traces` shows the last day; the system prompt is versioned at
-`/admin/prompts`, with traffic split between versions; `pnpm eval` scores the
-assistant against 14 golden cases with a judge model; an hourly watch raises
+`/admin/prompts`, with traffic split between versions; an hourly watch raises
 alerts into the outbox for failures and spend.
+
+The evals are the development loop: 35 chat cases (answers, refusals,
+escalations, actions checked by the tool they must call, and safety cases),
+30 documents and 32 triage messages, each saying whether it was written by
+hand, sampled from what people sent, or generated and reviewed. `pnpm eval`
+runs them on the production routes with a judge that is never the model under
+test (calibrated against 20 hand-labeled replies); `--gate` fails on a hard
+failure or a mean under 0.7 and warns of a regression against the last
+recorded run, in CI on every pull request that touches a prompt, a tool, a
+model or an eval, in the fleet's merge queue, and in the terminal; the full
+suite runs nightly and `/admin/evals` is the scoreboard. How it all fits is in
+[docs/evals.md](docs/evals.md).
 
 Every model call is routed by task: `src/lib/routing.ts` maps chat,
 generation, research, summaries, extraction, triage, reading and judging to a

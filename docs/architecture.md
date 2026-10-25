@@ -1,6 +1,6 @@
 # WorkBot: the architecture as built
 
-WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system after Day 24: what runs, where state lives, the models, the design choices and their tradeoffs. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-25. Day 40 revisits it.
+WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system after Day 25: what runs, where state lives, the models, the design choices and their tradeoffs. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-25. Day 40 revisits it.
 
 ## The system
 
@@ -87,6 +87,6 @@ Flows are short. A chat message: cookie to visitor, memories and a compacted his
 
 ## Reliability, as built and as missing
 
-Built: a fallback model behind every task (the other size on the same provider), taken when a call fails with a status another model can take, and rehearsed with `OUTAGE`; step, dollar and time limits on every agent; Inngest's 3 retries per step and a failure handler that marks the document; a retry and a text fallback for the browser; words when embeddings are missing; idempotent filing (the request's creation is its own step); a public-address guard on every fetch; a rate limit on the chat; alerts on error rate and spend; evals with a judge before a prompt takes traffic.
+Built: a fallback model behind every task (the other size on the same provider), taken when a call fails with a status another model can take, and rehearsed with `OUTAGE`; step, dollar and time limits on every agent; Inngest's 3 retries per step and a failure handler that marks the document; a retry and a text fallback for the browser; words when embeddings are missing; idempotent filing (the request's creation is its own step); a public-address guard on every fetch; a rate limit on the chat; alerts on error rate and spend; the smoke evals as a gate on every pull request that touches a prompt, a tool, a model or an eval, in CI and in the fleet's queue, with the full suite nightly on the scoreboard (`docs/evals.md`).
 
 Missing, and in the design brief's plan: a second provider in the chain, which needs its key and its column in the table; a circuit breaker on a failing provider, so a long outage stops paying for the failed first call; a response cache for repeated questions; a shared store for the rate limit across instances; audio transcripts; sign-in, so a tenant is an account rather than a cookie.

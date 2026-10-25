@@ -24,7 +24,8 @@
           "amount": 180
         }
       ]
-    }
+    },
+    "smoke": true
   },
   "invoice-2": {
     "type": "invoice",
@@ -94,7 +95,8 @@
       "subject": "Order 4411 arrived damaged",
       "intent": "complaint",
       "urgency": "high"
-    }
+    },
+    "smoke": true
   },
   "email-2": {
     "type": "email",
@@ -148,7 +150,8 @@
         "period": "hour"
       },
       "workplace": "onsite"
-    }
+    },
+    "smoke": true
   },
   "job-2": {
     "type": "job",
@@ -215,7 +218,8 @@
         "Confirm the inspection date of November 12, 2026 at 9:00 am within 10 days, or propose another date in November",
         "Have the sprinkler system certificate, fire extinguisher service tags and evacuation plan ready on the day"
       ]
-    }
+    },
+    "smoke": true
   },
   "letter-2": {
     "type": "letter",
@@ -264,6 +268,245 @@
       "from": "Dana Whitfield",
       "date": "2026-09-30",
       "to": "Support Team, Fieldstone Supply"
+    }
+  },
+  "invoice-6": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Brightwater Tire & Brake Co.",
+      "number": "INV-2024-08317",
+      "date": "2024-09-18",
+      "due": "2024-10-18",
+      "currency": "USD",
+      "lines": [
+        {
+          "description": "Brake pad replacement, front axle (Van 3)",
+          "quantity": 1,
+          "unitPrice": 389.5,
+          "amount": 389.5
+        },
+        {
+          "description": "Rotor resurfacing",
+          "quantity": 2,
+          "unitPrice": 74.25,
+          "amount": 148.5
+        },
+        {
+          "description": "Tire 225/75R16 all-season, mounted and balanced",
+          "quantity": 4,
+          "unitPrice": 142.8,
+          "amount": 571.2
+        },
+        {
+          "description": "Four-wheel alignment",
+          "quantity": 3,
+          "unitPrice": 96,
+          "amount": 288
+        },
+        {
+          "description": "Shop supplies and tire disposal fee",
+          "quantity": 1,
+          "unitPrice": 28.4,
+          "amount": 28.4
+        }
+      ],
+      "subtotal": 1425.6,
+      "tax": 146.12,
+      "total": 1571.72
+    }
+  },
+  "email-6": {
+    "type": "email",
+    "data": {
+      "from": "Marisol Quintero-Baez <mquintero@ridgelinebuilders.example>",
+      "to": [
+        "Fieldstone Support <support@fieldstonesupply.example>",
+        "Dale Ostrowski <dostrowski@fieldstonesupply.example>"
+      ],
+      "subject": "Order 48213 delivered short - 40 bags of mortar missing",
+      "intent": "complaint",
+      "urgency": "high"
+    }
+  },
+  "letter-4": {
+    "type": "letter",
+    "data": {
+      "from": "Harlan Ridge Lumber Co.",
+      "date": "2024-11-19",
+      "requested": ["$10,127.92"]
+    }
+  },
+  "job-6": {
+    "type": "job",
+    "data": {
+      "title": "Dispatch and Route Coordinator",
+      "company": "Fieldstone Supply",
+      "location": "Oakland, CA",
+      "salary": {
+        "min": 29.5,
+        "max": 34,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "workplace": "onsite"
+    }
+  },
+  "invoice-7": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Brannock & Teague Fleet Service",
+      "number": "BT-20417",
+      "date": "2024-09-17",
+      "due": "2024-10-17",
+      "currency": "USD",
+      "lines": [
+        {
+          "description": "Oil and filter service, delivery van #3",
+          "quantity": 1,
+          "unitPrice": 148.5,
+          "amount": 148.5
+        },
+        {
+          "description": "Front brake pad replacement, vans #2 and #5",
+          "quantity": 2,
+          "unitPrice": 389,
+          "amount": 778
+        },
+        {
+          "description": "Tire rotation and balance",
+          "quantity": 6,
+          "unitPrice": 42.75,
+          "amount": 256.5
+        },
+        {
+          "description": "Shop supplies and disposal fee",
+          "quantity": null,
+          "unitPrice": null,
+          "amount": 35
+        }
+      ],
+      "subtotal": 1218,
+      "tax": 115.71,
+      "total": 1333.71
+    }
+  },
+  "email-7": {
+    "type": "email",
+    "data": {
+      "from": "Marisol Quintanilla <marisol@quintanillabuilds.example>",
+      "to": [
+        "support@fieldstonesupply.example",
+        "dispatch@fieldstonesupply.example"
+      ],
+      "subject": "Order 48213 - wrong joist hangers and drywall short by 15 sheets",
+      "intent": "complaint",
+      "actions": ["Deliver the 15 missing drywall sheets by 7:00 am Thursday"],
+      "urgency": "high"
+    }
+  },
+  "letter-5": {
+    "type": "letter",
+    "data": {
+      "from": "Brightwater Builders",
+      "date": "2024-04-02",
+      "requested": ["$194.70", "$1,284.80"]
+    }
+  },
+  "job-7": {
+    "type": "job",
+    "data": {
+      "title": "Route Dispatch Coordinator",
+      "company": "Fieldstone Supply",
+      "location": "Oakland, CA",
+      "salary": {
+        "min": 29.5,
+        "max": 34.75,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "workplace": "onsite"
+    }
+  },
+  "invoice-8": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Tamarack Fleet Services LLC",
+      "number": "TFS-2024-0417",
+      "date": "2024-08-14",
+      "due": "2024-09-13",
+      "currency": "USD",
+      "lines": [
+        {
+          "description": "Oil and filter service, Van 3",
+          "quantity": 1,
+          "unitPrice": 148.5,
+          "amount": 148.5
+        },
+        {
+          "description": "Labor, front brake service, Van 5 (hours)",
+          "quantity": 3.5,
+          "unitPrice": 112,
+          "amount": 392
+        },
+        {
+          "description": "Front brake pad set, Van 5",
+          "quantity": 2,
+          "unitPrice": 86.75,
+          "amount": 173.5
+        },
+        {
+          "description": "Tire rotation and balance, Vans 1, 2 and 4",
+          "quantity": 3,
+          "unitPrice": 64,
+          "amount": 192
+        },
+        {
+          "description": "Shop supplies and disposal fee",
+          "quantity": null,
+          "unitPrice": null,
+          "amount": 27.4
+        }
+      ],
+      "subtotal": 933.4,
+      "tax": 20.59,
+      "total": 953.99
+    }
+  },
+  "email-8": {
+    "type": "email",
+    "data": {
+      "from": "Marisol Quintanilla <marisol@quintanillaframing.example>",
+      "to": [
+        "Fieldstone Support <support@fieldstonesupply.example>",
+        "Dwayne Okafor <dokafor@fieldstonesupply.example>",
+        "Teodoro Quintanilla <teo@quintanillaframing.example>"
+      ],
+      "subject": "Invoice 77124 short-shipped - crew idle Thursday",
+      "intent": "complaint",
+      "urgency": "high"
+    }
+  },
+  "letter-6": {
+    "type": "letter",
+    "data": {
+      "from": "Cascadia Millwork Ltd.",
+      "date": "2025-03-18",
+      "requested": ["$13,521.07", "CM-30817"]
+    }
+  },
+  "job-8": {
+    "type": "job",
+    "data": {
+      "title": "Dispatch Coordinator",
+      "company": "Fieldstone Supply",
+      "location": "Oakland, CA",
+      "salary": {
+        "min": 29.5,
+        "max": 34.25,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "workplace": "onsite"
     }
   }
 }

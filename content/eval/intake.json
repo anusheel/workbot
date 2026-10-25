@@ -3,72 +3,256 @@
     "id": "van-breakdown",
     "message": "Van 3 broke down on the 880 with the morning's deliveries on board. We need a tow and a replacement van now.",
     "team": "operations",
-    "priority": "high"
+    "priority": "high",
+    "source": "golden",
+    "smoke": true
   },
   {
     "id": "new-badge",
     "message": "The new receiving clerk starts Monday and will need a badge and a locker.",
     "team": "operations",
-    "priority": "normal"
+    "priority": "normal",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "aisle-labels",
     "message": "Idea for whenever there is time: the racking in aisle 4 could be relabelled so picks go faster. Nothing urgent.",
     "team": "operations",
-    "priority": "low"
+    "priority": "low",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "forklift-down",
     "message": "The forklift's hydraulics failed mid-shift. Nothing can be unloaded until it is repaired.",
     "team": "operations",
-    "priority": "high"
+    "priority": "high",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "invoice-hold",
     "message": "Acme Supplies says invoice INV-4471 is 30 days overdue and will hold our next delivery until it is paid.",
     "team": "finance",
-    "priority": "high"
+    "priority": "high",
+    "source": "golden",
+    "smoke": true
   },
   {
     "id": "trade-show-expenses",
     "message": "Attaching my receipts from the Sacramento trade show for reimbursement, $412 in all.",
     "team": "finance",
-    "priority": "normal"
+    "priority": "normal",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "early-payment-question",
     "message": "Out of curiosity, do we ever pay vendors early for a discount? Just wondering, nothing pending.",
     "team": "finance",
-    "priority": "low"
+    "priority": "low",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "new-vendor-payment",
     "message": "Please add Ridgeline Lumber to the next payment run; their W-9 and first invoice are attached.",
     "team": "finance",
-    "priority": "normal"
+    "priority": "normal",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "refund-chargeback",
     "message": "A customer has waited 3 weeks for the refund on order 7812 and is threatening a chargeback.",
     "team": "support",
-    "priority": "high"
+    "priority": "high",
+    "source": "golden",
+    "smoke": true
   },
   {
     "id": "tile-return",
     "message": "A customer wants to return 6 unopened boxes of tile bought 20 days ago. Can we take them back?",
     "team": "support",
-    "priority": "normal"
+    "priority": "normal",
+    "source": "golden",
+    "smoke": false
   },
   {
     "id": "faq-bulk-pricing",
     "message": "Someday it would be nice if the FAQ had a section on bulk pricing. Low priority.",
     "team": "support",
-    "priority": "low"
+    "priority": "low",
+    "source": "golden",
+    "smoke": true
   },
   {
     "id": "split-mortar-bags",
     "message": "A customer says 2 of the 10 bags of mortar arrived split open and wants replacements with the next delivery.",
     "team": "support",
-    "priority": "normal"
+    "priority": "normal",
+    "source": "golden",
+    "smoke": false
+  },
+  {
+    "id": "request-dc8ff6c0",
+    "message": "From Marcus Lee. Fieldstone Supply visitor access request for Lena Ortiz of Golden Gate Forklift Repair, arriving 07:30 on 2026-10-28 to service forklifts FL-3 and FL-5. The host is Marcus Lee of Operations, who requires forklift bay access and signed the form on 2026-10-26.\n\n- Visitor access for Lena Ortiz on 2026-10-28 at 07:30\n- Forklift bay access for the visit",
+    "team": "operations",
+    "priority": "normal",
+    "source": "trace",
+    "smoke": false
+  },
+  {
+    "id": "request-1415f85c",
+    "message": "From Oakland Fire Department, Fire Prevention Bureau (Inspector R. Alvarez). The Fire Prevention Bureau notifies Fieldstone Supply that its warehouse at 400 Dock Road is due for its annual fire and life safety inspection and proposes Thursday, November 12, 2026 at 9:00 am. The company is asked to confirm the date within 10 days or propose another November date, and to have the sprinkler system certificate, fire extinguisher service tags, and posted evacuation plans ready.\n\n- Confirm the proposed inspection date within 10 days, or propose another date in November\n- Have the current sprinkler system certificate ready on the day\n- Have the fire extinguisher service tags ready on the day\n- Have the evacuation plan posted at each exit ready on the day",
+    "team": "operations",
+    "priority": "normal",
+    "source": "trace",
+    "smoke": false
+  },
+  {
+    "id": "request-87ca9002",
+    "message": "From Dana Whitfield, Store Manager, Brightline Retail (Alameda store). The store manager thanks Fieldstone Supply for handling the damaged shelving delivery for order 4411, noting replacement uprights arrived within two days and agent Sam kept them informed. She asks for confirmation that damaged uprights will be collected from the loading area before 10 October and requests a quote with January lead times for twelve more units for a second store.\n\n- Confirm damaged uprights will be collected from the loading area before 10 October\n- Send a quote with January lead times for twelve more units for a second store",
+    "team": "operations",
+    "priority": "low",
+    "source": "trace",
+    "smoke": false
+  },
+  {
+    "id": "operations-low-synthetic-0",
+    "message": "Not urgent, but could we look at re-slotting the Aisle 14 fasteners closer to the loading dock? Pickers on the morning shift are walking about 80 feet extra for the most common deck screw SKUs, and it might be worth a look when we next revisit the warehouse layout.",
+    "team": "operations",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-normal-synthetic-1",
+    "message": "Van 4 is due for its 30,000-mile service and the shop in San Leandro has openings next Tuesday or Thursday, so can we pick one and shuffle the Alameda County routes around it? Nothing urgent, but I'd like to book by end of week so we don't lose the slot.",
+    "team": "operations",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-high-synthetic-2",
+    "message": "Van 4 is stuck at the Berkeley job site with a dead battery, and the 2pm drywall delivery for Castellan Builders can't go out until we get a replacement van loaded. Can someone dispatch a jump-start or swap in the spare from the Oakland yard right now?",
+    "team": "operations",
+    "priority": "high",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-low-synthetic-3",
+    "message": "Not urgent, but I was wondering if we could start batching the fuel card receipts for the 6 vans into one monthly reconciliation instead of submitting them weekly. It might save Dana in AP a few hours, and there's no deadline on this, just an idea for whenever finance has time to look at it.",
+    "team": "finance",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-normal-synthetic-4",
+    "message": "Hi, the invoice from Bayline Lumber (#40718) for $12,430 shows as paid in our system, but their statement still lists it as open, so can someone check whether the March 14 payment actually cleared? We're not past due on anything, just want it reconciled before month-end close.",
+    "team": "finance",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-high-synthetic-5",
+    "message": "Our payment run for the lumber suppliers is stuck: the bank rejected the ACH batch #4471 this morning, and Pacific Coast Timber will stop shipping to our Oakland warehouse tomorrow if they don't see $38,200 by end of day. Can someone in finance re-submit it or tell me what needs fixing?",
+    "team": "finance",
+    "priority": "high",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-low-synthetic-6",
+    "message": "Not urgent, but I was wondering if we could get a second monitor for the dispatch desk at the Oakland warehouse. Van 4's route sheets and the order queue are hard to keep open side by side on the one screen, so it would be a nice-to-have whenever there's budget.",
+    "team": "operations",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "support-normal-synthetic-7",
+    "message": "Hi, one of our contractor customers, Marcus at Delgado Framing, says his online order #48213 shows as delivered but the 2x6 studs never arrived at his Hayward job site. Can someone check with the driver on Van 4 and let me know what happened when you get a chance this week?",
+    "team": "support",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-low-synthetic-b-0",
+    "message": "Not urgent, but I was wondering if we could re-slot the cement and mortar bags closer to the dock doors in the Oakland warehouse, since Aisle 14 is where most of our pallet pulls end up. Maybe something to look at when we do the next inventory layout review.",
+    "team": "operations",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-normal-synthetic-b-1",
+    "message": "Van 4's liftgate has been sticking on the Berkeley route for the past couple of days, and Marcus says it takes a few tries to get it to lower. Can someone schedule it for a look at the Oakland yard sometime in the next week or so? We can still use it in the meantime, just slower on unloads.",
+    "team": "operations",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-high-synthetic-b-2",
+    "message": "Van 4 won't start at the Oakland yard and it's carrying the 9am drywall delivery for the Alameda job site, so we have three crews standing around waiting on material. Can someone reassign the load to another van or get a mechanic out here in the next 30 minutes?",
+    "team": "operations",
+    "priority": "high",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-low-synthetic-b-3",
+    "message": "Not urgent, but I was wondering if we could switch the monthly fuel card statements for the 6 vans from paper to a PDF export so Dana in the Oakland warehouse doesn't have to scan them by hand. If that's possible, it would be nice to have before year-end, though there's no rush.",
+    "team": "finance",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-normal-synthetic-b-4",
+    "message": "Hi, the invoice from Delgado Lumber (#44817, $12,460) shows a different unit price for the 2x6 studs than what's on PO 3092, so I can't match it for payment. Could someone in AP look at it before the end-of-month close on the 28th?",
+    "team": "finance",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "finance-high-synthetic-b-5",
+    "message": "Our payment run for the lumber suppliers is stuck because the bank rejected the ACH batch #4471 this morning, and Pacific Timber Co. needs to be paid by 3pm today or they'll hold tomorrow's shipment to our Oakland warehouse. Can someone in finance fix the routing error right away?",
+    "team": "finance",
+    "priority": "high",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "operations-low-synthetic-b-6",
+    "message": "Not urgent, but is there a way to make the Dock B label printer the default on my laptop instead of the front office printer? I'm just wondering if it's something I can set up myself or if it needs an admin, and there's no deadline on it.",
+    "team": "operations",
+    "priority": "low",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "support-normal-synthetic-b-7",
+    "message": "Hi, the tracking links in our order confirmation emails are sending customers to a 404 page, and I've had three people call about it since this morning, including the Alvarez Construction account. Can someone take a look when they get a chance? Customers can still reach us by phone, so it's not blocking any deliveries.",
+    "team": "support",
+    "priority": "normal",
+    "source": "synthetic",
+    "smoke": false
+  },
+  {
+    "id": "support-high-synthetic-b-8",
+    "message": "Delgado Framing in Hayward can't accept today's delivery because 40 of the cement boards on order #20418 arrived cracked, and they'll cancel the $18,000 order if we don't confirm a replacement by noon tomorrow. I can't open the return ticket because the support portal keeps throwing a 500 error, so I'm blocked on getting this to your team.",
+    "team": "support",
+    "priority": "high",
+    "source": "synthetic",
+    "smoke": false
   }
 ]

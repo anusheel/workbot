@@ -1,0 +1,10 @@
+{
+  "base": "day-22",
+  "at": "2026-10-25T17:01:59.299Z",
+  "merged": 50,
+  "hours": 2.4,
+  "perHour": 20.6,
+  "reverted": 1,
+  "medianMinutes": 101,
+  "p90Minutes": 160
+}

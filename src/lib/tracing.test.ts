@@ -3,7 +3,14 @@ import { MockLanguageModelV4 } from "ai/test";
 import { generateText, streamText } from "ai";
 import { expect, test } from "vitest";
 import { query } from "./db";
-import { recordTrace, spend, traceSummary, traced, withTrace } from "./tracing";
+import {
+  failovers,
+  recordTrace,
+  spend,
+  traceSummary,
+  traced,
+  withTrace,
+} from "./tracing";
 
 const usage = {
   inputTokens: {
@@ -211,4 +218,51 @@ test("the spend under a context since a moment: its calls, dollars and p95, noth
   expect(bill.calls).toBe(3);
   expect(bill.dollars).toBeCloseTo(0.003, 6);
   expect(bill.p95).toBe(920);
+});
+
+test("a failed call answered by another model within 5 s in the same request is a fallback; one left alone, or answered in another request, is not", async () => {
+  const before = await failovers(1);
+  const call = {
+    tenant: "fallback-test",
+    name: "chat",
+    input: 10,
+    output: 5,
+    cached: 0,
+    dollars: 0,
+    ms: 1,
+  };
+  const failed = { ok: false, error: "503" };
+  const fine = { ok: true, error: null };
+  // Spaced out, so the order by time is the order of the calls.
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+  await recordTrace({
+    ...call,
+    request: "r1",
+    model: "first-model",
+    ...failed,
+  });
+  await tick();
+  await recordTrace({ ...call, request: "r1", model: "second-model", ...fine });
+  await tick();
+  await recordTrace({
+    ...call,
+    request: "r2",
+    model: "first-model",
+    ...failed,
+  });
+  await tick();
+  await recordTrace({ ...call, request: "r3", model: "second-model", ...fine });
+  const after = await failovers(1);
+  expect(after.failed - before.failed).toBe(2);
+  expect(after.recovered - before.recovered).toBe(1);
+  expect(after.byModel.find((m) => m.model === "first-model")).toEqual({
+    model: "first-model",
+    calls: 2,
+    failed: 2,
+  });
+  expect(after.byModel.find((m) => m.model === "second-model")).toEqual({
+    model: "second-model",
+    calls: 2,
+    failed: 0,
+  });
 });

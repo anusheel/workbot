@@ -136,6 +136,7 @@ test("every task has a route, and the table resolves to the providers' models", 
   }
   expect(modelFor("generate").modelId).toBe("claude-sonnet-5-5");
   expect(modelFor("chat").modelId).toBe("claude-haiku-5-5");
+  expect(modelFor("judge").modelId).toBe("claude-sonnet-5-5");
 });
 
 test("ROUTES names a task and a route, or the app does not start", () => {
