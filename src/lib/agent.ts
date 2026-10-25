@@ -49,12 +49,18 @@ type Options = {
 export const idOf = (model: LanguageModel) =>
   typeof model === "string" ? model : model.modelId;
 
+class OutOfTime extends Error {
+  constructor() {
+    super("The tool ran out of time.");
+  }
+}
+
 /** A tool call raced against the run's deadline, so a slow tool cannot outlive the time limit. */
 function within<T>(deadline: number, work: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
   const late = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new Error("The tool ran out of time.")),
+      () => reject(new OutOfTime()),
       Math.max(0, deadline - Date.now()),
     );
   });
@@ -120,6 +126,8 @@ export async function runAgent({
 
     messages.push(...result.responseMessages);
     const results: ToolResultPart[] = [];
+    // A timer can fire a millisecond before Date.now() reaches the deadline, so the clock alone may let one more step start.
+    let outOfTime = false;
     for (const call of result.toolCalls) {
       const tool = tools.find((t) => t.name === call.toolName);
       const { result: value, failed } =
@@ -130,10 +138,13 @@ export async function runAgent({
             }
           : await within(deadline, tool.run(call.input)).then(
               (result) => ({ result, failed: false }),
-              (err: unknown) => ({
-                result: err instanceof Error ? err.message : String(err),
-                failed: true,
-              }),
+              (err: unknown) => {
+                if (err instanceof OutOfTime) outOfTime = true;
+                return {
+                  result: err instanceof Error ? err.message : String(err),
+                  failed: true,
+                };
+              },
             );
       on.tool?.({
         name: call.toolName,
@@ -154,6 +165,7 @@ export async function runAgent({
     messages.push({ role: "tool", content: results });
     if (answer) return finish("answered", answer, step);
     if (spent() >= dollars) return finish("dollars", answer, step);
+    if (outOfTime) return finish("time", answer, step);
   }
   return finish("steps", answer, steps);
 }

@@ -14,8 +14,20 @@ type Props = {
   onMessages?: (messages: UIMessage[]) => void;
 };
 
+/** The AI SDK puts the raw response body in the message; show the sentence the route sent. */
+export function errorText(error: Error): string {
+  try {
+    const body: unknown = JSON.parse(error.message);
+    if (body && typeof body === "object" && "error" in body) {
+      const text = (body as { error: unknown }).error;
+      if (typeof text === "string") return text;
+    }
+  } catch {}
+  return error.message;
+}
+
 export function Chat({ id, initialMessages, onMessages }: Props) {
-  const { messages, sendMessage, status, error, stop } = useChat({
+  const { messages, sendMessage, regenerate, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -50,6 +62,8 @@ export function Chat({ id, initialMessages, onMessages }: Props) {
           following.current =
             el.scrollHeight - el.scrollTop - el.clientHeight < 40;
         }}
+        role="log"
+        aria-label="Conversation"
         className="min-h-0 flex-1 overflow-y-auto"
       >
         <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-8">
@@ -64,10 +78,23 @@ export function Chat({ id, initialMessages, onMessages }: Props) {
           {status === "submitted" && (
             <span
               className="size-2 animate-pulse rounded-full bg-foreground/40"
+              role="status"
               aria-label="Thinking"
             />
           )}
-          {error && <p className="text-sm text-destructive">{error.message}</p>}
+          {error && (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-destructive">{errorText(error)}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => regenerate()}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       <form
@@ -82,7 +109,11 @@ export function Chat({ id, initialMessages, onMessages }: Props) {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing
+              ) {
                 event.preventDefault();
                 submit();
               }
