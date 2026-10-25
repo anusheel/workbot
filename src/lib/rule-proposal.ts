@@ -45,8 +45,10 @@ ${existing}`;
         .map((l) => l.trim())
         .find((l) => l.startsWith("rule ")) ?? text.trim();
     try {
-      const [rule] = Rules.parse(parseRules(line));
+      const [rule] = parseRules(line);
       if (!rule) throw new Error("the answer holds no rule");
+      // Checked with the rules it would join, so a repeated id or a team the customer lacks is refused here, not at the next start.
+      Rules.parse([...parseRules(existing), rule]);
       return { rule, line: printRule(rule) };
     } catch (err) {
       if (attempt) throw err;

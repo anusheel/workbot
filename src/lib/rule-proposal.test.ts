@@ -62,6 +62,16 @@ test("a rule naming a team the customer lacks is refused twice and the proposal 
   );
 });
 
+test("a rule whose id the file already has is refused, so the next start never meets a duplicate", async () => {
+  const { model, prompts } = scripted([
+    'rule route-finance on ticket when team is missing and text matches "credit" then set team = "finance"',
+    forklifts,
+  ]);
+  const { rule } = await proposeRule("route credit tickets to finance", model);
+  expect(rule.id).toBe("route-forklifts");
+  expect(prompts[1]).toMatch(/unique/);
+});
+
 test("the dry run says what the rule would change on the current copy, and nothing else", async () => {
   await upsertTicket(
     fromIssue("acme/helpdesk", {
