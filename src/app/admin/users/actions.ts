@@ -9,6 +9,7 @@ import {
   revokeKey,
   roles,
 } from "@/lib/auth";
+import { type Provider, revokeCredential } from "@/lib/credentials";
 
 export type Issued = { name?: string; key?: string; error?: string };
 
@@ -39,5 +40,12 @@ export async function addKey(userId: string, name: string): Promise<Issued> {
 export async function revoke(keyId: string) {
   await requireUser("admin");
   await revokeKey(keyId);
+  refresh();
+}
+
+/** Revokes a user's sealed token for an integration. */
+export async function disconnectUser(userId: string, provider: Provider) {
+  await requireUser("admin");
+  await revokeCredential(userId, provider);
   refresh();
 }

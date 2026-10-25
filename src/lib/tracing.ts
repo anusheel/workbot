@@ -17,6 +17,8 @@ export type Context = {
   caller: string;
   name: string;
   role?: Access;
+  // The signed-in user, when there is one: whose integration tokens a tool may use.
+  user?: string;
   prompt?: string;
   request?: string;
 };

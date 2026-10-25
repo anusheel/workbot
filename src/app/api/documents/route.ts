@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
   const result = await withTrace(
-    { caller: user.id, role: user.role, name: "document" },
+    { caller: user.id, role: user.role, user: user.id, name: "document" },
     () => ingest(input.source, input.name, modelFor("extract")),
   );
   await track("request_submitted", {

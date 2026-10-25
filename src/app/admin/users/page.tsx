@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { listUsers, requireUser } from "@/lib/auth";
 import { when } from "@/lib/format";
-import { revoke } from "./actions";
+import { disconnectUser, revoke } from "./actions";
 import { AddKey, AddUser } from "./user-forms";
 
 export const metadata: Metadata = { title: "Users" };
@@ -54,6 +54,7 @@ async function Users() {
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Keys</TableHead>
+              <TableHead>Connections</TableHead>
               <TableHead className="w-40" />
             </TableRow>
           </TableHeader>
@@ -93,6 +94,20 @@ async function Users() {
                       </li>
                     ))}
                   </ul>
+                </TableCell>
+                <TableCell>
+                  {user.connections.map((provider) => (
+                    <form
+                      key={provider}
+                      action={disconnectUser.bind(null, user.id, provider)}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      {provider}
+                      <PendingButton busy="Revoking…" icon={<Ban />}>
+                        Revoke
+                      </PendingButton>
+                    </form>
+                  ))}
                 </TableCell>
                 <TableCell>
                   <AddKey userId={user.id} name={user.name} />

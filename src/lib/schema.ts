@@ -221,6 +221,18 @@ const tables = [
     created_at timestamptz not null default now(),
     expires_at timestamptz not null
   )`,
+  // The tokens a user connects for an integration, sealed: the plaintext never reaches the database.
+  `create table if not exists credentials (
+    user_id uuid not null references users(id) on delete cascade,
+    provider text not null,
+    ciphertext bytea not null,
+    iv bytea not null,
+    tag bytea not null,
+    key_id text not null,
+    created_at timestamptz not null default now(),
+    sealed_at timestamptz not null default now(),
+    primary key (user_id, provider)
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];

@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { config } from "./config";
+import { credentialFor } from "./credentials";
 import { type Mcp, connectMcp, remote, withMcp } from "./mcp";
 import {
   type Filing,
@@ -12,6 +13,7 @@ import {
 } from "./tickets";
 import { type Ticket, findTickets, issueUrl } from "./unified";
 import { type Tool, tool } from "./tool";
+import { currentContext } from "./tracing";
 
 /** GitHub's own MCP server, which keeps the tool surface; the token and the issues toolset are ours. */
 export const githubMcp = "https://api.githubcopilot.com/mcp/";
@@ -19,9 +21,15 @@ export const githubMcp = "https://api.githubcopilot.com/mcp/";
 export const githubEnabled = () =>
   Boolean(config.github.token && config.github.repo);
 
-export const githubConnect = () =>
+/** The token a call runs with: the signed-in user's own when they connected one, so the work is theirs on GitHub; the app's otherwise. */
+export async function githubToken(): Promise<string | undefined> {
+  const { user } = currentContext();
+  return (user && (await credentialFor(user, "github"))) ?? config.github.token;
+}
+
+export const githubConnect = async () =>
   connectMcp(
-    remote(githubMcp, config.github.token ?? "", {
+    remote(githubMcp, (await githubToken()) ?? "", {
       "X-MCP-Toolsets": "issues",
     }),
   );

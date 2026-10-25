@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const created = await withTrace(
-    { caller: user.id, role: user.role, name: "intake" },
+    { caller: user.id, role: user.role, user: user.id, name: "intake" },
     () => intake(body.data.message, modelFor("triage")),
   );
   await track("request_submitted", {

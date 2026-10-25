@@ -64,7 +64,13 @@ export async function POST(request: Request) {
   const caller = user?.id ?? visitor ?? "web";
   const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(
-    { caller, name: "chat", role, prompt: `workbot/system@${prompt.version}` },
+    {
+      caller,
+      name: "chat",
+      role,
+      user: user?.id,
+      prompt: `workbot/system@${prompt.version}`,
+    },
     () =>
       reply(
         body.data.id,

@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { type Role, permits } from "./auth-model";
+import type { Provider } from "./credentials";
 import { query } from "./db";
 
 export * from "./auth-model";
@@ -50,10 +51,11 @@ export type Key = {
   revokedAt: Date | null;
 };
 
-/** Every user with their keys, newest first; a key shows only its last 4 characters. */
+/** Every user with their keys and the integrations they connected, newest first; a key shows only its last 4 characters. */
 export const listUsers = () =>
-  query<User & { createdAt: Date; keys: Key[] }>(
+  query<User & { createdAt: Date; keys: Key[]; connections: Provider[] }>(
     `select users.id, users.name, users.role, users.created_at as "createdAt",
+       array(select provider from credentials where credentials.user_id = users.id order by provider) as connections,
        coalesce(json_agg(json_build_object('id', keys.id, 'hint', keys.hint, 'createdAt', keys.created_at,
          'lastUsedAt', keys.last_used_at, 'revokedAt', keys.revoked_at) order by keys.created_at desc)
          filter (where keys.id is not null), '[]') as keys

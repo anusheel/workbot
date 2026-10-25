@@ -52,6 +52,11 @@ export const config = {
     webhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
   },
   // Web search for the assistant; unset means the tool is not offered.
+  // Seals the tokens people connect: 32 bytes, base64. During a rotation the old key stays as the previous one until pnpm users reseal has run.
+  secrets: {
+    key: process.env.SECRETS_KEY,
+    previous: process.env.SECRETS_KEY_PREVIOUS,
+  },
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   // The spend in a day that raises an alert.
   alerts: { dailyDollars: dailyDollars(process.env.ALERT_DAILY_DOLLARS) },

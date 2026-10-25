@@ -1,5 +1,13 @@
+import { stdin } from "node:process";
+import { text } from "node:stream/consumers";
 import { parseArgs } from "node:util";
 import { createUser, issueKey, listUsers, revokeKey, roles } from "@/lib/auth";
+import {
+  providers,
+  reseal,
+  revokeCredential,
+  saveCredential,
+} from "@/lib/credentials";
 import { close } from "@/lib/db";
 
 const usage = `Usage: pnpm users <command>
@@ -8,6 +16,9 @@ const usage = `Usage: pnpm users <command>
   key <name>                             another key; the old ones keep working until revoked
   revoke <name>                          every key the user holds, and with them every session
   list                                   users, roles and keys (the last 4 characters of each)
+  connect <name> github                  seals the token read from stdin as the user's own
+  disconnect <name> github               deletes the user's sealed token
+  reseal                                 seals every token again under SECRETS_KEY, so the previous key can go
 
 A key is printed once. The terminal runs as the operator, who holds the
 database itself, so it is how the first admin is made.`;
@@ -44,6 +55,19 @@ if (values.help || !command) {
   const live = user.keys.filter((k) => !k.revokedAt);
   for (const key of live) await revokeKey(key.id);
   console.log(`${user.name}: ${live.length} key(s) revoked`);
+} else if (command === "connect" || command === "disconnect") {
+  const provider = providers.find((p) => p === rest.at(-1));
+  if (!provider) throw new Error(`${command} <name> ${providers.join("|")}`);
+  const user = await userNamed(rest.slice(0, -1).join(" "));
+  if (command === "disconnect") await revokeCredential(user.id, provider);
+  else {
+    const token = (await text(stdin)).trim();
+    if (!token) throw new Error(`Pipe the ${provider} token in on stdin`);
+    await saveCredential(user.id, provider, token);
+  }
+  console.log(`${user.name}: ${provider} ${command}ed`);
+} else if (command === "reseal") {
+  console.log(`${await reseal()} token(s) sealed again under the current key`);
 } else if (command === "list") {
   for (const user of await listUsers())
     console.log(
