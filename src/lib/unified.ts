@@ -268,6 +268,10 @@ export async function ticketUpdatedAt(source: string, key: string) {
   return row?.updatedAt;
 }
 
+/** Drops one ticket, which the system says is gone. */
+export const dropTicket = (source: string, key: string) =>
+  query(`delete from tickets where id = $1`, [`${source}#${key}`]);
+
 /** Drops a source's tickets not in the set, the ones the system no longer lists, and returns their keys. */
 export async function dropTicketsExcept(source: string, keys: Set<string>) {
   const rows = await query<{ key: string }>(

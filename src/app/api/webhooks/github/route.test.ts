@@ -56,6 +56,19 @@ test("a signed issues delivery replaces the ticket's row, routed, and is logged 
   expect(logged.lag_s).toBeGreaterThanOrEqual(4);
 });
 
+test("a deleted issue's row goes, and the deletion is logged as gone", async () => {
+  const deleted = {
+    action: "deleted",
+    issue: issue(12, "Van 3 brake light"),
+    repository,
+  };
+  expect((await deliver(deleted)).status).toBe(204);
+  expect(await findTickets("brake")).toEqual([]);
+  expect(
+    await query(`select path from sync_log where key = '12' order by id`),
+  ).toEqual([{ path: "webhook" }, { path: "gone" }]);
+});
+
 test("a delivery with the wrong signature is refused", async () => {
   const response = await deliver(
     { action: "opened", issue: issue(13, "Forklift charger"), repository },

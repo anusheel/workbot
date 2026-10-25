@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { deliverySigned } from "@/lib/github";
 import { repository } from "@/lib/tickets";
-import { fromIssue, logSync, upsertTicket } from "@/lib/unified";
+import { dropTicket, fromIssue, logSync, upsertTicket } from "@/lib/unified";
 import { IssuesEvent } from "./types";
 
 /** The body as JSON, or nothing, which the schema then refuses. */
@@ -27,12 +27,13 @@ export async function POST(request: Request) {
   if (event.data.repository.full_name !== slug)
     return new Response(null, { status: 204 });
   const ticket = fromIssue(slug, event.data.issue);
-  await upsertTicket(ticket);
-  await logSync(
-    "github",
-    ticket.key,
-    "webhook",
-    Date.now() - ticket.updatedAt.getTime(),
-  );
+  const lag = Date.now() - ticket.updatedAt.getTime();
+  if (event.data.action === "deleted") {
+    await dropTicket("github", ticket.key);
+    await logSync("github", ticket.key, "gone", lag);
+  } else {
+    await upsertTicket(ticket);
+    await logSync("github", ticket.key, "webhook", lag);
+  }
   return new Response(null, { status: 204 });
 }
