@@ -27,8 +27,8 @@
     // A command that spells an env file name (after a space, a tab, a slash, a quote, `=` or a redirect) is
     // refused even under --auto, which only answers the asks; `process.env` in a grep is not a file name and
     // still asks. This is a filter on literal lower-case names, not a boundary: a name built with a glob, a
-    // variable or a script, and `grep -r KEY .`, fall through to `ask`, which --auto answers. The exact
-    // commands after the denies are the ones that touch .env.example, which the denies would otherwise refuse.
+    // variable or a script, and `grep -r KEY .`, fall through to `ask`, which --auto answers. In an
+    // interactive session, "Always" on any bash prompt stores an allow rule that outranks these denies.
     "bash": {
       "*": "ask",
       "* .env*": "deny",
@@ -39,9 +39,6 @@
       "*=.env*": "deny",
       "*<.env*": "deny",
       "*>.env*": "deny",
-      "cat .env.example": "ask",
-      "git add .env.example": "ask",
-      "git log -- .env.example": "ask",
     },
   },
   "mcp": {
