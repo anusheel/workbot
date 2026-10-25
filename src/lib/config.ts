@@ -11,6 +11,8 @@ export const config = {
         : ("anthropic" as const),
     model: process.env.CHAT_MODEL,
   },
+  // Embeddings for the knowledge base; unset means search by words.
+  voyage: { key: process.env.VOYAGE_API_KEY },
   // Web search for the assistant; unset means the tool is not offered.
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   posthog: {

@@ -15,7 +15,8 @@ day is at [joinplank.com/fde/anusheel](https://joinplank.com/fde/anusheel).
 
 Without a `DATABASE_URL`, the app runs on an embedded Postgres (PGlite) in
 `.data/pg`, and the tests on an in-memory one. For a server, point
-`DATABASE_URL` in `.env.local` at a Postgres database. `.env.example` lists
+`DATABASE_URL` in `.env.local` at a Postgres database with the pgvector
+extension (`brew install pgvector` for a local one). `.env.example` lists
 every variable. `pnpm check` runs what CI runs: lint, types, tests and a
 production build of both apps.
 
@@ -30,6 +31,11 @@ web page reading, notes and (with a Brave key) web search as tools, and
 citations, and `/investigate <question>` for an agent that searches the
 policies, reads them and writes a sourced report. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
 every variable. `pnpm test:live` runs the tests that call the real APIs.
+
+The knowledge base is 52 Markdown documents under `content/knowledge`,
+searchable by words out of the box and by meaning with a `VOYAGE_API_KEY`
+(`pnpm knowledge:index` rebuilds the index; `pnpm compare:retrieval` answers
+10 questions by top-5 retrieval and by the agent, side by side).
 
 `pnpm explain "<question>"` runs the customer-reply pipeline (researcher,
 writer, safety editor) on the Claude Agent SDK, which uses your Claude Code

@@ -1,29 +1,11 @@
 import { z } from "zod";
+import { type Tool } from "./tool";
 import { calculate } from "./calculator";
+import { customerSections, knowledgeTools } from "./knowledge-tools";
 import { config } from "./config";
 import { saveNote } from "./notes";
+import { tool } from "./tool";
 import { readPage, searchWeb } from "./web";
-
-/** A function the model may call: a schema for what it takes and the code that runs it. */
-export type Tool = {
-  name: string;
-  description: string;
-  input: z.ZodObject;
-  run(input: unknown): Promise<string>;
-};
-
-/** Defines a tool from a Zod schema and a function; the input type flows from the schema into run. */
-export function tool<Schema extends z.ZodObject>(definition: {
-  name: string;
-  description: string;
-  input: Schema;
-  run(input: z.infer<Schema>): string | Promise<string>;
-}): Tool {
-  return {
-    ...definition,
-    run: async (input) => definition.run(input as z.infer<Schema>),
-  };
-}
 
 export const calculator = tool({
   name: "calculator",
@@ -66,17 +48,23 @@ export const webSearch = tool({
   },
 });
 
-/** What the assistant can call. Web search needs a Brave key, so it is offered only when there is one. */
-export const tools: Tool[] = [
+const web = config.brave.key ? [webSearch] : [];
+
+/** What the assistant can call for an employee: the whole knowledge base, notes and the web. */
+export const employeeTools: Tool[] = [
+  ...knowledgeTools(),
   calculator,
   readUrl,
   noteTaker,
-  ...(config.brave.key ? [webSearch] : []),
+  ...web,
 ];
 
-/** A tool's input as JSON Schema, which is what both providers take. */
-export function inputSchema(tool: Tool) {
-  const schema = z.toJSONSchema(tool.input);
-  delete schema.$schema;
-  return schema;
-}
+/** What it can call for anyone else: the customer-facing documents, no notes. */
+export const customerTools: Tool[] = [
+  ...knowledgeTools(customerSections),
+  calculator,
+  readUrl,
+  ...web,
+];
+
+export { type Tool, inputSchema, tool } from "./tool";

@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { vector } from "@electric-sql/pglite-pgvector";
 import postgres from "postgres";
 import { config } from "./config";
 import { schema } from "./schema";
@@ -32,7 +33,7 @@ export function connect(
       close: () => client.end(),
     };
   }
-  const pg = new PGlite(database);
+  const pg = new PGlite(database, { extensions: { vector } });
   const ready = readOnly
     ? pg.exec("set default_transaction_read_only = on")
     : pg.waitReady;

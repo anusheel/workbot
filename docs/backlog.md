@@ -37,6 +37,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-29  | Investigation agent                        | M    | done   |
 | WB-30  | Explainer pipeline for customer replies    | M    | done   |
 | WB-31  | Intake workflow: triage to the queue       | S    | done   |
+| WB-32  | Knowledge base of 50 or more documents     | M    | done   |
+| WB-33  | Agentic retrieval tools                    | M    | done   |
 
 ## Acceptance criteria
 
@@ -172,3 +174,14 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-31 Intake workflow: triage to the queue
 
 - `POST /api/intake` takes a message from any channel; a small model writes the title, keeps the body in the sender's words and picks team and priority; the request lands in the queue for a person to review
+
+### WB-32 Knowledge base of 50 or more documents
+
+- `content/knowledge` holds the policies, operations and finance manuals, IT how-tos, customer FAQs and HR documents, 52 in all, each with front matter and headings; the policies pages read the `policies` section
+- Each heading is indexed as a chunk with full-text search, and with a Voyage embedding when a key is set; the index builds itself on first use and `pnpm knowledge:index` rebuilds it
+
+### WB-33 Agentic retrieval tools
+
+- The assistant and the agents get find (by meaning or words), ls, cat and grep over the knowledge base, and explore it coarse to fine instead of receiving a top-k dump
+- The tools are scoped by section: the terminal assistant and the agents read everything; the web chat, a public surface until sign-in exists, reads the FAQ and policies only
+- `pnpm compare:retrieval` runs 10 questions through top-5 retrieval and through the agent, for a side-by-side table
