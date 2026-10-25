@@ -91,23 +91,66 @@ test("binary values show as a placeholder with their size", async () => {
   expect(described.sample[0].bytes).toBe("<5 bytes>");
 });
 
-test("the row limit goes to the database and the result says when it was cut", async () => {
+async function spied() {
   const spy = vi.fn(query) as typeof query;
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
-  const limited = new Client({ name: "test", version: "1.0.0" });
+  const spied = new Client({ name: "test", version: "1.0.0" });
   await databaseServer(spy).connect(serverTransport);
-  await limited.connect(clientTransport);
+  await spied.connect(clientTransport);
+  const run = async (sql: string) =>
+    JSON.parse(
+      text(await spied.callTool({ name: "query", arguments: { sql } })),
+    );
+  return { run, sent: () => vi.mocked(spy).mock.calls.map(([text]) => text) };
+}
 
-  const result = JSON.parse(
-    text(
-      await limited.callTool({
-        name: "query",
-        arguments: { sql: "select n from generate_series(1, 150) n;" },
-      }),
-    ),
-  );
+test("the row limit goes to the database and the result says when it was cut", async () => {
+  const { run, sent } = await spied();
+
+  const result = await run("select n from generate_series(1, 150) n;");
   expect(result.rows).toHaveLength(100);
   expect(result.truncated).toBe(true);
-  expect(vi.mocked(spy).mock.calls[0][0]).toMatch(/limit 101\s*$/i);
+  expect(sent()[0]).toMatch(/limit 101\s*$/i);
+
+  const whole = await run("select n from generate_series(1, 3) n");
+  expect(whole.count).toBe(3);
+  expect(whole.truncated).toBeUndefined();
+
+  expect((await run("select 1 as a ; ;")).rows).toEqual([{ a: 1 }]);
+  expect(sent().at(-1)).toMatch(/limit 101\s*$/i);
+});
+
+test("statements that are not a plain select run as written and are cut afterwards", async () => {
+  const { run, sent } = await spied();
+
+  expect((await run("explain select 1")).rows.length).toBeGreaterThan(0);
+  expect((await run("show server_version")).count).toBe(1);
+  expect((await run("select 1 as a -- why")).rows).toEqual([{ a: 1 }]);
+  expect((await run("select 1 as a; -- done")).rows).toEqual([{ a: 1 }]);
+  expect(sent().some((sql) => /limited/.test(sql))).toBe(false);
+
+  const all = await run("show all");
+  expect(all.rows).toHaveLength(100);
+  expect(all.truncated).toBe(true);
+});
+
+test("the query tool shows binary values as their size, also inside arrays", async () => {
+  const result = await (
+    await spied()
+  ).run(
+    `select bytes, array[bytes, '\\x0102'::bytea] as parts from inbox where name = 'note.pdf'`,
+  );
+  expect(result.rows[0]).toEqual({
+    bytes: "<5 bytes>",
+    parts: ["<5 bytes>", "<2 bytes>"],
+  });
+});
+
+test("the query tool refuses a statement too long to be a question", async () => {
+  const long = await client.callTool({
+    name: "query",
+    arguments: { sql: ";".repeat(10_001) },
+  });
+  expect(long.isError).toBe(true);
 });
