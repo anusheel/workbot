@@ -10,6 +10,10 @@ Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnp
 - `pnpm check`: lint, types, tests and a production build; CI runs the same on every push
 - `pnpm dlx shadcn@latest add <component>`: a UI primitive into `src/components/ui/`
 
+## Claude Code
+
+Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits.
+
 ## Conventions
 
 - One day of the course per branch, `day-NN`, merged into `main` through a pull request and kept
