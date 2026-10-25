@@ -27,6 +27,8 @@ test("each kind of document becomes the right request", () => {
       type: "invoice",
       data: {
         vendor: "Acme Supplies",
+        vendorEmail: null,
+        vendorPhone: null,
         number: "INV-4471",
         date: "2026-10-01",
         due: "2026-10-31",
@@ -112,6 +114,8 @@ test("a filed request fits the request model's limits", () => {
     type: "invoice",
     data: {
       vendor: "Acme Supplies",
+      vendorEmail: null,
+      vendorPhone: null,
       number: null,
       date: "2026-10-01",
       due: null,

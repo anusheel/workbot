@@ -5,7 +5,8 @@ import { z } from "zod";
 import { query } from "./db";
 import { githubTools } from "./github";
 import { connectMcp } from "./mcp";
-import { lastSync, listTickets, pullTickets } from "./tickets";
+import { pullTickets } from "./tickets";
+import { lastSync, listTickets } from "./unified";
 
 vi.hoisted(() => {
   process.env.GITHUB_REPO = "acme/helpdesk";
@@ -71,11 +72,13 @@ function fakeGitHub() {
           since: z.string().optional(),
           after: z.string().optional(),
           fields: z.array(z.string()).optional(),
+          state: z.enum(["OPEN", "CLOSED"]).optional(),
         },
       },
       async (args) => {
         since.push(args.since);
         const changed = issues
+          .filter((i) => !args.state || i.state === args.state)
           .filter(
             (i) =>
               !args.since || new Date(i.updated_at) >= new Date(args.since),
@@ -179,7 +182,12 @@ const tools = Object.fromEntries(
 
 test("pulls the issues that changed since the last sync, a page at a time", async () => {
   const mcp = await github.connect();
-  expect(await pullTickets(mcp)).toEqual({ pulled: 3, since: null });
+  expect(await pullTickets(mcp)).toEqual({
+    pulled: 3,
+    since: null,
+    missed: 0,
+    gone: 0,
+  });
   expect(github.since).toEqual([undefined, undefined]);
   const pulledAt = await lastSync();
 
@@ -194,23 +202,51 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
   );
 
   const tickets = await listTickets();
-  expect(tickets.map((t) => [t.number, t.state])).toEqual([
-    [2, "closed"],
-    [3, "open"],
-    [1, "open"],
+  expect(tickets.map((t) => [t.key, t.state])).toEqual([
+    ["2", "closed"],
+    ["3", "open"],
+    ["1", "open"],
   ]);
   expect(tickets[2]).toMatchObject({
-    id: "acme/helpdesk#1",
-    source: "acme/helpdesk",
+    id: "github#1",
+    source: "github",
     assignee: "sam",
+    team: "operations",
     url: issueUrl(1),
   });
   await mcp.close();
 });
 
+test("a full pull finds what the other paths missed and drops what the system no longer lists", async () => {
+  const mcp = await github.connect();
+  github.issues[0].title = "Badge printer jams again";
+  github.issues[0].updated_at = "2026-10-10T00:00:00Z";
+  github.issues.splice(2, 1);
+  expect(await pullTickets(mcp, { full: true })).toMatchObject({
+    pulled: 2,
+    missed: 1,
+    gone: 1,
+  });
+  expect((await listTickets()).map((t) => [t.key, t.title])).toEqual([
+    ["1", "Badge printer jams again"],
+    ["2", "Van 3 brake light"],
+  ]);
+  github.issues.push({
+    number: 3,
+    title: "Invoice 4471 unpaid",
+    body: "",
+    state: "OPEN",
+    assignees: [],
+    labels: ["finance"],
+    updated_at: "2026-10-11T00:00:00Z",
+  });
+  await pullTickets(mcp);
+  await mcp.close();
+});
+
 test("finds tickets in the synced copy", async () => {
   expect(await tools.find_ticket.run({ query: "printer" })).toBe(
-    `#1 (open, sam) Badge printer jams ${issueUrl(1)}`,
+    `#1 (open, sam, operations) Badge printer jams again ${issueUrl(1)}`,
   );
   expect(await tools.find_ticket.run({ query: "espresso" })).toBe(
     'No ticket matches "espresso".',

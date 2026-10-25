@@ -60,6 +60,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-52  | Evals as the development loop: 30 cases a task, a calibrated judge, the gate in CI, the scoreboard | M    | done   |
 | WB-53  | Audited against the principles; the customer in configuration; one agent where the eval allows     | M    | done   |
 | WB-54  | The ticketing system through its MCP server: the sync, 3 product-level tools, the routes compared  | M    | done   |
+| WB-55  | One shape for tickets and contacts, 3 sync paths, the rule table, a cache with its freshness       | M    | done   |
 
 ## Acceptance criteria
 
@@ -329,3 +330,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `src/lib/tickets.ts` and `src/inngest/sync-tickets.ts`: the issues pulled since the newest change, 100 a page, every 15 minutes and on demand, into one ticket shape; `/admin/tickets` shows the copy and pulls now
 - 3 tools over the server's 46: `find_ticket` reads the copy; `file_ticket` and `comment_on_ticket` write through the server once per key (`filings`) and take a dry run; nothing closes or deletes
 - `docs/integrations.md`: the 3 routes compared on time to a first call, auth per user, schema control, data, what breaks on an expired token; Composio and Nango unmeasured for want of an account, and marked so; D16
+
+### WB-55 One shape for tickets and contacts, 3 sync paths, the rule table, a cache with its freshness
+
+- `src/lib/unified.ts`: tickets from GitHub issues and WorkBot requests, contacts from document senders and ticket logins, each with the provider's record in `raw` and the rules that fired in `applied`; one mapping for an issue listed or delivered
+- `src/inngest/sync.ts` and `src/app/api/webhooks/github/`: the pull every 15 minutes, a signed delivery replacing a row now, the nightly full pull that logs what the other paths missed and drops what the system no longer lists; every refresh logged with how far behind the copy was
+- `content/rules.json` and `src/lib/rules.ts`: the rule table, applied in order before the model sees a record, every change written on it; a phone in any written form finds its contact
+- `src/lib/cache.ts`: page reads cached per tenant, served stale while refreshed, with when they were fetched in the tool's answer; hit rate and age measured; `/admin/tickets` shows the paths, the rules and the cache; `docs/data-layer.md`; D17

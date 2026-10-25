@@ -9,3 +9,11 @@ export function when(at: Date, now: Date = new Date()): string {
   });
   return `${day}, ${time(at)}`;
 }
+
+/** A span of seconds in the largest unit that reads: 4 s, 7 min, 2 h, 3 d. */
+export function span(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  if (seconds < 86_400) return `${Math.round(seconds / 3600)} h`;
+  return `${Math.round(seconds / 86_400)} d`;
+}

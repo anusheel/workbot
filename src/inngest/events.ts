@@ -18,8 +18,8 @@ export const documentReviewed = eventType("document/reviewed", {
 /** Runs the daily reminders on demand. */
 export const remindersRequested = eventType("reminders/requested");
 
-/** Pulls the tickets that changed, on demand. */
-export const ticketsSyncRequested = eventType("tickets/sync-requested");
+/** Pulls what changed into the one shape, on demand. */
+export const syncRequested = eventType("sync/requested");
 
 /** Runs the hourly checks on demand. */
 export const watchRequested = eventType("watch/requested");

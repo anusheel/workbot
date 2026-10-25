@@ -1,22 +1,14 @@
 import { config } from "./config";
 import { query } from "./db";
 import type { Mcp } from "./mcp";
-
-/** One ticket shape whatever the system behind it: GitHub's issues today, a help desk's tomorrow. */
-export type Ticket = {
-  id: string;
-  source: string;
-  number: number;
-  title: string;
-  body: string;
-  state: "open" | "closed";
-  assignee: string | null;
-  labels: string[];
-  url: string;
-  updatedAt: Date;
-};
-
-const columns = `id, source, number, title, body, state, assignee, labels, url, updated_at as "updatedAt"`;
+import {
+  type Issue,
+  dropTicketsExcept,
+  fromIssue,
+  logSync,
+  ticketUpdatedAt,
+  upsertTicket,
+} from "./unified";
 
 /** The ticketing repository as owner and name, from the configuration. */
 export function repository() {
@@ -25,23 +17,10 @@ export function repository() {
   return { owner, repo, slug: `${owner}/${repo}` };
 }
 
-type Issue = {
-  number: number;
-  title: string;
-  body?: string;
-  state: string;
-  assignees?: { login: string }[];
-  labels?: string[];
-  updated_at: string;
-};
-
-export const issueUrl = (slug: string, number: number) =>
-  `https://github.com/${slug}/issues/${number}`;
-
 /** The issues changed since a time, oldest change first, a page of up to 100 at a time. */
 export async function* issuePages(
   mcp: Mcp,
-  args: { since?: string; fields?: string[] } = {},
+  args: { since?: string; fields?: string[]; state?: "OPEN" | "CLOSED" } = {},
 ): AsyncGenerator<Issue[]> {
   const { owner, repo } = repository();
   let after: string | undefined;
@@ -69,70 +48,54 @@ export async function* issuePages(
  * Pulls the issues that changed since the last sync into the tickets table:
  * the one shape the tools read, kept fresh here in Postgres rather than
  * fetched on every question. No state filter: closed issues come too, and a
- * closure is a change.
+ * closure is a change. A full pull is the nightly reconciliation: it reads
+ * every issue, counts the rows the webhook and the pulls had missed, and
+ * drops the ones the system no longer lists.
  */
 export async function pullTickets(
   mcp: Mcp,
-): Promise<{ pulled: number; since: Date | null }> {
+  { full = false } = {},
+): Promise<{
+  pulled: number;
+  since: Date | null;
+  missed: number;
+  gone: number;
+}> {
   const { slug } = repository();
   const [{ since }] = await query<{ since: Date | null }>(
-    `select max(updated_at) as since from tickets where source = $1`,
-    [slug],
+    `select max(updated_at) as since from tickets where source = 'github'`,
   );
+  const seen = new Set<string>();
   let pulled = 0;
-  for await (const issues of issuePages(mcp, {
-    since: since?.toISOString(),
-  })) {
-    for (const issue of issues) {
-      await query(
-        `insert into tickets (id, source, number, title, body, state, assignee, labels, url, updated_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         on conflict (id) do update set title = excluded.title, body = excluded.body, state = excluded.state,
-           assignee = excluded.assignee, labels = excluded.labels, updated_at = excluded.updated_at`,
-        [
-          `${slug}#${issue.number}`,
-          slug,
-          issue.number,
-          issue.title,
-          issue.body ?? "",
-          issue.state.toLowerCase(),
-          issue.assignees?.[0]?.login ?? null,
-          issue.labels ?? [],
-          issueUrl(slug, issue.number),
-          issue.updated_at,
-        ],
-      );
-      pulled++;
-    }
-  }
+  let missed = 0;
+  // A pull since a time takes every state; the full read names both, so no default decides what is dropped.
+  const reads = full
+    ? (["OPEN", "CLOSED"] as const).map((state) => issuePages(mcp, { state }))
+    : [issuePages(mcp, { since: since?.toISOString() })];
+  for (const pages of reads)
+    for await (const issues of pages)
+      for (const issue of issues) {
+        const input = fromIssue(slug, issue);
+        const lag = Date.now() - input.updatedAt.getTime();
+        const before = full ? await ticketUpdatedAt("github", input.key) : null;
+        await upsertTicket(input);
+        seen.add(input.key);
+        pulled++;
+        // The backfill is not a measure of the path; a pull since a time is.
+        if (!full && since) await logSync("github", input.key, "pull", lag);
+        else if (full && since && (!before || before < input.updatedAt)) {
+          missed++;
+          await logSync("github", input.key, "missed", lag);
+        }
+      }
+  const gone = full ? await dropTicketsExcept("github", seen) : [];
+  for (const key of gone) await logSync("github", key, "gone");
   await query(
     `insert into syncs (source, pulled_at, pulled) values ($1, now(), $2)
      on conflict (source) do update set pulled_at = now(), pulled = excluded.pulled`,
     [slug, pulled],
   );
-  return { pulled, since };
-}
-
-/** The tickets, newest change first. */
-export const listTickets = (limit = 50) =>
-  query<Ticket>(
-    `select ${columns} from tickets order by updated_at desc limit $1`,
-    [limit],
-  );
-
-/** Tickets whose title or body holds the words, newest change first. */
-export const findTickets = (words: string, limit = 5) =>
-  query<Ticket>(
-    `select ${columns} from tickets where title ilike $1 or body ilike $1 order by updated_at desc limit $2`,
-    [`%${words}%`, limit],
-  );
-
-/** When the tickets were last pulled, changed or not; null before the first sync. */
-export async function lastSync(): Promise<Date | null> {
-  const [row] = await query<{ at: Date | null }>(
-    `select max(pulled_at) as at from syncs`,
-  );
-  return row.at;
+  return { pulled, since, missed, gone: gone.length };
 }
 
 /** A write made through the ticketing system, remembered by its kind and key; the number and link are null while it is in flight. */

@@ -2,6 +2,7 @@ import { type LanguageModel, Output, generateText } from "ai";
 import { io } from "next/cache";
 import { z } from "zod";
 import { customer } from "./customer";
+import { type Applied, applyRules } from "./rules";
 import { query } from "./db";
 import {
   type DocumentType,
@@ -21,6 +22,7 @@ export type DocumentRecord = {
   data: Extracted["data"];
   confidence: Record<string, number>;
   review: string[];
+  applied: Applied[];
   createdAt: Date;
 };
 
@@ -131,7 +133,7 @@ export function toRequest(document: Extracted): NewRequest {
   }
 }
 
-const columns = `id, request_id as "requestId", type, name, data, confidence, review, created_at as "createdAt"`;
+const columns = `id, request_id as "requestId", type, name, data, confidence, review, applied, created_at as "createdAt"`;
 
 export async function saveDocument(
   requestId: string,
@@ -140,15 +142,22 @@ export async function saveDocument(
     "type" | "name" | "data" | "confidence" | "review"
   >,
 ): Promise<DocumentRecord> {
+  // The rules run before anyone sees the record: an invoice over the threshold is flagged for review here.
+  const { record, applied } =
+    document.type === "invoice"
+      ? applyRules("invoice", document.data)
+      : { record: {}, applied: [] };
+  const flags = Array.isArray(record.flags) ? (record.flags as string[]) : [];
   const [row] = await query<DocumentRecord>(
-    `insert into documents (request_id, type, name, data, confidence, review) values ($1, $2, $3, $4, $5, $6) returning ${columns}`,
+    `insert into documents (request_id, type, name, data, confidence, review, applied) values ($1, $2, $3, $4, $5, $6, $7) returning ${columns}`,
     [
       requestId,
       document.type,
       document.name,
       document.data,
       document.confidence,
-      document.review,
+      [...document.review, ...flags],
+      applied,
     ],
   );
   return row;

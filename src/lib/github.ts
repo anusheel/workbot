@@ -1,17 +1,16 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { config } from "./config";
 import { type Mcp, connectMcp, remote, withMcp } from "./mcp";
 import {
   type Filing,
   type Kind,
-  type Ticket,
   filingOf,
-  findTickets,
   issuePages,
-  issueUrl,
   once,
   repository,
 } from "./tickets";
+import { type Ticket, findTickets, issueUrl } from "./unified";
 import { type Tool, tool } from "./tool";
 
 /** GitHub's own MCP server, which keeps the tool surface; the token and the issues toolset are ours. */
@@ -27,6 +26,20 @@ export const githubConnect = () =>
     }),
   );
 
+/** Whether a webhook delivery carries the signature the secret produces for its body. */
+export function deliverySigned(
+  body: string,
+  signature: string | null,
+  secret = config.github.webhookSecret,
+) {
+  if (!secret || !signature) return false;
+  const expected = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+  return (
+    signature.length === expected.length &&
+    timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  );
+}
+
 /** What the server returns for a write: the id and the page of what it wrote. */
 const written = (text: string) =>
   JSON.parse(text) as { id: string; url: string };
@@ -38,7 +51,7 @@ const signed = (kind: Kind, text: string, key: string) =>
   `${text}\n\n${signature(kind, key)}`.trim();
 
 const line = (t: Ticket) =>
-  `#${t.number} (${t.state}${t.assignee ? `, ${t.assignee}` : ""}) ${t.title} ${t.url}`;
+  `${t.source === "github" ? `#${t.key}` : "request"} (${[t.state, t.assignee, t.team].filter(Boolean).join(", ")}) ${t.title} ${t.url}`;
 
 /** What a repeated key gets: the first write, or word that it is still being made. */
 const already = (done: string, doing: string, f: Filing) =>
@@ -110,7 +123,7 @@ export function githubTools(
     tool({
       name: "find_ticket",
       description:
-        "Finds tickets, the issues of the ticketing repository as synced every 15 minutes, by words in their title or body: up to 5, newest change first, each with number, state, assignee, title and link. Call it before filing a ticket, to find one that exists. Reads nothing from the network.",
+        "Finds tickets, the ticketing repository's issues and WorkBot's own requests as synced every 15 minutes, by words in their title or body: up to 5, newest change first, each with its number, state, assignee, team, title and link. Call it before filing a ticket, to find one that exists. Reads nothing from the network.",
       input: z.object({ query: z.string().min(2).max(200) }),
       run: async ({ query }) => {
         const found = await findTickets(query);

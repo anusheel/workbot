@@ -9,7 +9,7 @@ import {
   providers,
 } from "./providers";
 import { systemPrompt } from "./system-prompt";
-import { recordTrace } from "./tracing";
+import { recordTrace, withTrace } from "./tracing";
 
 export type Options = Pick<
   Completion,
@@ -44,20 +44,23 @@ export class Session {
     this.messages.push({ role: "user", content: text });
     let reply = "";
     try {
-      const usage = await this.provider.stream(
-        {
-          ...this.options,
-          model: this.model.id,
-          system: this.system,
-          messages: this.messages,
-        },
-        {
-          ...on,
-          text: (delta) => {
-            reply += delta;
-            on.text(delta);
+      // The turn runs in the terminal's context, so what its tools read and cache is the terminal's.
+      const usage = await withTrace({ tenant: "terminal", name: "chat" }, () =>
+        this.provider.stream(
+          {
+            ...this.options,
+            model: this.model.id,
+            system: this.system,
+            messages: this.messages,
           },
-        },
+          {
+            ...on,
+            text: (delta) => {
+              reply += delta;
+              on.text(delta);
+            },
+          },
+        ),
       );
       this.messages.push({ role: "assistant", content: reply });
       this.record(this.model.id, usage, this.model.price);

@@ -30,6 +30,9 @@ on:
       - src/lib/prompts.ts
       - src/lib/customer.ts
       - src/lib/github.ts
+      - src/lib/unified.ts
+      - src/lib/rules.ts
+      - content/rules.json
       - content/customer.json
       - package.json
       - pnpm-lock.yaml

@@ -2,8 +2,11 @@ import { z } from "zod";
 import { type Tool } from "./tool";
 import { calculate } from "./calculator";
 import { customerSections, knowledgeTools } from "./knowledge-tools";
+import { cached } from "./cache";
 import { config } from "./config";
+import { when } from "./format";
 import { githubEnabled, githubTools } from "./github";
+import { type Contact, findContacts } from "./unified";
 import { saveNote } from "./notes";
 import { tool } from "./tool";
 import { readPage, searchWeb } from "./web";
@@ -18,12 +21,38 @@ export const calculator = tool({
   run: ({ expression }) => String(calculate(expression)),
 });
 
+/** A page is kept an hour per tenant; the model is told how old what it reads is. */
+const pageAge = 3_600_000;
+
 export const readUrl = tool({
   name: "read_url",
   description:
-    "Fetches a web page and returns its text. Call it to read a page a search returned or a URL the user gave.",
+    "Fetches a web page and returns its text, with when it was fetched: a page read in the last hour comes from a copy. Call it to read a page a search returned or a URL the user gave.",
   input: z.object({ url: z.url() }),
-  run: ({ url }) => readPage(url),
+  run: async ({ url }) => {
+    const { value, fetchedAt, outcome } = await cached(
+      `page:${url}`,
+      pageAge,
+      () => readPage(url),
+    );
+    return `As of ${when(fetchedAt)}${outcome === "stale" ? ", a fresh copy on its way" : ""}:\n${value}`;
+  },
+});
+
+const contactLine = (c: Contact) =>
+  `${c.name}${c.company && c.company !== c.name ? ` (${c.company})` : ""}: ${[c.email, c.phone].filter(Boolean).join(", ") || "no email or phone"}; seen in ${c.source === "github" ? "the tickets" : "a document"}`;
+
+export const findContact = tool({
+  name: "find_contact",
+  description:
+    "Finds contacts WorkBot has seen, the senders of documents and the people on tickets, by words in their name, email or company, or by a phone number in any written form: up to 5, each with name, company, email, phone and where it was seen. Call it for who someone is or how to reach them.",
+  input: z.object({ query: z.string().min(2).max(200) }),
+  run: async ({ query }) => {
+    const found = await findContacts(query);
+    return found.length
+      ? found.map(contactLine).join("\n")
+      : `No contact matches "${query}".`;
+  },
 });
 
 export const noteTaker = tool({
@@ -57,6 +86,7 @@ export const employeeTools: Tool[] = [
   calculator,
   readUrl,
   noteTaker,
+  findContact,
   ...web,
   ...(githubEnabled() ? githubTools() : []),
 ];
