@@ -101,9 +101,10 @@ test("the dry run says what the rule would change on the current copy, and nothi
 
 test("an approved rule is one more line in the file, and parses with the rest", () => {
   const file = join(mkdtempSync(join(tmpdir(), "rules-")), "rules.rules");
-  writeFileSync(file, readFileSync(rulesFile, "utf8"));
+  const existing = readFileSync(rulesFile, "utf8");
+  writeFileSync(file, existing);
   approve(parseRules(forklifts)[0], file);
   const rules = parseRules(readFileSync(file, "utf8"));
-  expect(rules).toHaveLength(7);
+  expect(rules).toHaveLength(parseRules(existing).length + 1);
   expect(rules.at(-1)?.id).toBe("route-forklifts");
 });
