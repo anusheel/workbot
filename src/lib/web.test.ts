@@ -37,6 +37,8 @@ test("readPage refuses private addresses, other schemes, and redirects into them
     "http://[::ffff:127.0.0.1]/",
     "http://[fd00::1]/",
     "http://db.internal/",
+    "http://localhost./",
+    "http://db.internal./",
   ]) {
     await expect(readPage(url)).rejects.toThrow("not a public web address");
   }
@@ -51,6 +53,20 @@ test("readPage refuses private addresses, other schemes, and redirects into them
         new Response("", {
           status: 302,
           headers: { location: "http://169.254.169.254/" },
+        }),
+    ),
+  );
+  await expect(readPage("https://example.com/go")).rejects.toThrow(
+    "not a public web address",
+  );
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response("", {
+          status: 302,
+          headers: { location: "http://localhost./" },
         }),
     ),
   );

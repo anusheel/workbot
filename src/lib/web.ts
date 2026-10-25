@@ -45,7 +45,11 @@ const maxBytes = 512_000;
 /** Whether an address is on the public web: http or https, and not this machine, a private network or link-local. */
 export function isPublic(url: URL): boolean {
   if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-  const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  // A trailing dot is the same name in DNS (localhost. is localhost) but the parser keeps it.
+  const host = url.hostname
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.+$/, "")
+    .toLowerCase();
   // The URL parser writes an IPv4-mapped address as ::ffff:7f00:1; check it as the IPv4 it is.
   const mapped = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
   const address = mapped
