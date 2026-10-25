@@ -34,6 +34,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-26  | Generated dashboards, forms and timelines  | M    | done   |
 | WB-27  | Memory of the person across conversations  | M    | done   |
 | WB-28  | Long conversations within budget           | S    | done   |
+| WB-29  | Investigation agent                        | M    | done   |
 
 ## Acceptance criteria
 
@@ -153,3 +154,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-28 Long conversations within budget
 
 - Before each reply the history is cut to a token budget: the first message and the most recent ones stay, and a small model summarizes the rest into the system prompt
+
+### WB-29 Investigation agent
+
+- `/investigate <question>` in the terminal runs an agent loop written in the repository: the model searches the knowledge base and, with a search key, trusted web sources, reads what it finds, saves findings with their source and ends by writing a sourced summary
+- Guards: 15 steps, a dollar limit and a timeout; the loop stops with what it has and says why
+- Reasoning, tool calls and results stream as they happen; tests drive the loop with a scripted model
