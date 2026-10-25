@@ -11,10 +11,7 @@ import { config } from "@/lib/config";
 
 export const metadata: Metadata = { title: "Settings" };
 
-const rows = [
-  ["Commit", config.commit],
-  ["Region", config.region],
-];
+const rows = [["Commit", config.commit]];
 
 export default function SettingsPage() {
   return (
@@ -26,7 +23,7 @@ export default function SettingsPage() {
             Deployment <Badge variant="secondary">{config.env}</Badge>
           </CardTitle>
           <CardDescription>
-            Where this instance runs and the commit it serves.
+            The environment this instance runs in and the commit it serves.
           </CardDescription>
         </CardHeader>
         <CardContent>
