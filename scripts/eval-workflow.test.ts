@@ -184,7 +184,9 @@ test("a pull request runs the smoke evals when a prompt, tool, model, eval or th
     "src/lib/unified.ts",
     "src/lib/rules.ts",
     "content/rules.json",
-    "content/customer.json",
+    "content/customers/**",
+    "content/defaults.json",
+    "src/lib/settings.ts",
     "package.json",
     "pnpm-lock.yaml",
   ]);

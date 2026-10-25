@@ -1,7 +1,7 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test } from "vitest";
 import { ingest, listDocuments, toRequest } from "./documents";
-import { NewRequest } from "./request-model";
+import { NewRequest } from "./requests";
 
 const scripted = (replies: object[]) =>
   new MockLanguageModelV4({

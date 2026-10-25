@@ -11,7 +11,7 @@ import {
   schemas,
 } from "./document-model";
 import { type Extraction, type Source, content, extract } from "./extract";
-import { NewRequest, type WorkRequest } from "./request-model";
+import { NewRequest, type WorkRequest } from "./requests";
 import { createRequest } from "./requests";
 
 export type DocumentRecord = {

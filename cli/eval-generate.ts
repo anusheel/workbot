@@ -8,12 +8,7 @@ import { type DocumentType, schemas } from "@/lib/document-model";
 import { type Golden, type IntakeCase } from "@/lib/eval";
 import { customer } from "@/lib/customer";
 import { customerSections } from "@/lib/knowledge-tools";
-import {
-  type Priority,
-  type Team,
-  priorities,
-  teams,
-} from "@/lib/request-model";
+import { type Priority, type Team, priorities, teams } from "@/lib/requests";
 import { modelFor } from "@/lib/routing";
 
 // Candidate cases for a person to review before any enters a set: chat cases

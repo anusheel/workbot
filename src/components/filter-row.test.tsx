@@ -5,7 +5,7 @@ import {
   statuses,
   teams,
   type WorkRequest,
-} from "@/lib/request-model";
+} from "@/lib/requests";
 import { FilterRow } from "./filter-row";
 import { RequestList } from "./request-list";
 

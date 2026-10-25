@@ -1,6 +1,6 @@
 import { z } from "zod";
 import data from "../../content/rules.json";
-import { teams } from "./request-model";
+import { teams } from "./requests";
 
 /**
  * Rules are data: an ordered table of conditions and actions, applied to a

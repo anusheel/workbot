@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NewRequest, priorities, statuses, teams } from "@/lib/request-model";
+import { NewRequest, priorities, statuses, teams } from "@/lib/requests";
 
 export { NewRequest as RequestBody };
 
