@@ -82,4 +82,29 @@ export const schema = [
     link text,
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists traces (
+    id uuid primary key default gen_random_uuid(),
+    at timestamptz not null default now(),
+    tenant text not null,
+    name text not null,
+    prompt text,
+    model text not null,
+    input integer not null default 0,
+    output integer not null default 0,
+    cached integer not null default 0,
+    dollars double precision not null default 0,
+    ms integer not null default 0,
+    ok boolean not null default true,
+    error text
+  )`,
+  `create index if not exists traces_at on traces (at)`,
+  `create table if not exists prompts (
+    name text not null,
+    version integer not null,
+    text text not null,
+    note text not null default '',
+    share integer not null default 0,
+    created_at timestamptz not null default now(),
+    primary key (name, version)
+  )`,
 ];

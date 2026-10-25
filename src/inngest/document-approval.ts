@@ -6,6 +6,7 @@ import { type Source, extract } from "@/lib/extract";
 import { fileOf, getItem, markFailed, updateItem } from "@/lib/inbox";
 import { notify } from "@/lib/notify";
 import { createRequest, getRequest } from "@/lib/requests";
+import { withTrace } from "@/lib/tracing";
 import { inngest } from "./client";
 import { documentReceived, documentReviewed } from "./events";
 
@@ -33,21 +34,26 @@ export const documentApproval = inngest.createFunction(
       return { kind: "file", ...file };
     };
 
-    const type = await step.run("classify", async () => {
-      const type = await classify(await source(), model);
-      await updateItem(id, { type });
-      return type;
-    });
+    const ctx = { tenant: "workflow", name: "document" };
+    const type = await step.run("classify", () =>
+      withTrace(ctx, async () => {
+        const type = await classify(await source(), model);
+        await updateItem(id, { type });
+        return type;
+      }),
+    );
 
-    const extraction = await step.run("extract", async () => {
-      const { data, confidence, review } = await extract(
-        await source(),
-        schemas[type],
-        model,
-      );
-      await updateItem(id, { status: "extracted", data, confidence, review });
-      return { data, confidence, review };
-    });
+    const extraction = await step.run("extract", () =>
+      withTrace(ctx, async () => {
+        const { data, confidence, review } = await extract(
+          await source(),
+          schemas[type],
+          model,
+        );
+        await updateItem(id, { status: "extracted", data, confidence, review });
+        return { data, confidence, review };
+      }),
+    );
 
     let data = extraction.data;
     if (extraction.review.length > 0) {

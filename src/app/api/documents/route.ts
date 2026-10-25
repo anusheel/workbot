@@ -3,6 +3,7 @@ import { track } from "@/lib/analytics";
 import { chatModel } from "@/lib/chat";
 import { ingest } from "@/lib/documents";
 import { type MediaType, type Source, mediaTypes } from "@/lib/extract";
+import { withTrace } from "@/lib/tracing";
 import { DocumentBody } from "./types";
 
 // Classification and extraction are 2 model calls, with retries; a file goes to the model whole.
@@ -50,7 +51,9 @@ export async function POST(request: Request) {
     : fromBody(await request.json().catch(() => null));
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
-  const result = await ingest(input.source, input.name, chatModel("small"));
+  const result = await withTrace({ tenant: "api", name: "document" }, () =>
+    ingest(input.source, input.name, chatModel("small")),
+  );
   await track("request_submitted", {
     requestId: result.request.id,
     team: result.request.team,

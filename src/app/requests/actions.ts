@@ -13,6 +13,7 @@ import { type MediaType, mediaTypes } from "@/lib/extract";
 import { investigate } from "@/lib/investigate";
 import { getRecording, saveRecording } from "@/lib/recordings";
 import { saveReport } from "@/lib/reports";
+import { withTrace } from "@/lib/tracing";
 import type { Answer } from "@/components/recording-question";
 import {
   askRecording,
@@ -63,10 +64,14 @@ export async function investigateRequest(id: string) {
   const question = request.body
     ? `${request.title}\n\n${request.body}`
     : request.title;
-  const { report, findings, dollars } = await investigate(question, {
-    analyst: chatModel(),
-    specialist: chatModel("small"),
-  });
+  const { report, findings, dollars } = await withTrace(
+    { tenant: "admin", name: "investigate" },
+    () =>
+      investigate(question, {
+        analyst: chatModel(),
+        specialist: chatModel("small"),
+      }),
+  );
   await saveReport(id, { report, findings, dollars });
   await track("request_investigated", { requestId: id, dollars });
   refresh();
@@ -81,13 +86,18 @@ export async function attachRecording(id: string, formData: FormData) {
   try {
     await writeFile(path, new Uint8Array(await file.arrayBuffer()));
     const model = chatModel("small");
-    const scenes = await describeFrames(await extractFrames(path), model);
-    const recording = await saveRecording(id, {
-      name: file.name,
-      seconds: Math.round(await duration(path)),
-      scenes,
-      summary: await summarize(scenes, model),
-    });
+    const recording = await withTrace(
+      { tenant: "admin", name: "recording" },
+      async () => {
+        const scenes = await describeFrames(await extractFrames(path), model);
+        return saveRecording(id, {
+          name: file.name,
+          seconds: Math.round(await duration(path)),
+          scenes,
+          summary: await summarize(scenes, model),
+        });
+      },
+    );
     await track("recording_attached", {
       requestId: id,
       seconds: recording.seconds,
@@ -107,10 +117,8 @@ export async function askAboutRecording(
   const question = String(formData.get("question") ?? "").trim();
   const recording = await getRecording(recordingId);
   if (!question || !recording) return {};
-  const answer = await askRecording(
-    recording.scenes,
-    question,
-    chatModel("small"),
+  const answer = await withTrace({ tenant: "admin", name: "recording" }, () =>
+    askRecording(recording.scenes, question, chatModel("small")),
   );
   return { question, answer };
 }
@@ -121,14 +129,18 @@ const media = new Set<string>(Object.values(mediaTypes));
 export async function submitDocument(formData: FormData) {
   const file = formData.get("document");
   if (!(file instanceof File) || !media.has(file.type)) return;
-  const { request } = await ingest(
-    {
-      kind: "file",
-      data: new Uint8Array(await file.arrayBuffer()),
-      mediaType: file.type as MediaType,
-    },
-    file.name,
-    chatModel("small"),
+  const { request } = await withTrace(
+    { tenant: "admin", name: "document" },
+    async () =>
+      ingest(
+        {
+          kind: "file",
+          data: new Uint8Array(await file.arrayBuffer()),
+          mediaType: file.type as MediaType,
+        },
+        file.name,
+        chatModel("small"),
+      ),
   );
   await track("request_submitted", {
     requestId: request.id,
