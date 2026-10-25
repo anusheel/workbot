@@ -6,11 +6,14 @@ import { teams } from "@/lib/requests";
 import { modelFor } from "@/lib/routing";
 import { requestSummary } from "@/lib/requests";
 import { GenerateBody } from "./types";
+import { authorized } from "@/lib/auth";
 
 // A page on the large model can outlast a serverless function's default limit.
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  const user = await authorized(request, "viewer");
+  if (user instanceof Response) return user;
   const body = GenerateBody.safeParse(await request.json().catch(() => null));
   if (!body.success)
     return Response.json(

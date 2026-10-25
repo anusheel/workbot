@@ -1,7 +1,6 @@
 // Generated from content/entities/vendor.json by pnpm generate. Edit the description, not this file.
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
-import { io } from "next/cache";
 import { Suspense } from "react";
 import { PendingButton } from "@/components/pending-button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { requireUser } from "@/lib/auth";
 import { when } from "@/lib/format";
 import { listVendors, vendorTerms } from "@/lib/entities/vendor";
 import { createVendorAction } from "./actions";
@@ -77,7 +77,7 @@ export default function VendorsPage() {
 }
 
 async function Vendors() {
-  await io();
+  await requireUser();
   const rows = await listVendors();
   const now = new Date();
   return (

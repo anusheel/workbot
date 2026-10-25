@@ -11,6 +11,7 @@ import {
   statuses,
   teams,
 } from "@/lib/requests";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Requests" };
 
@@ -37,6 +38,7 @@ export default function RequestsPage(props: PageProps<"/requests">) {
 async function Requests({
   searchParams,
 }: Pick<PageProps<"/requests">, "searchParams">) {
+  await requireUser();
   const filter = RequestFilter.parse(await searchParams);
   return (
     <>

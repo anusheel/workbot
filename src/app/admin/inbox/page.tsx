@@ -16,6 +16,7 @@ import {
 import { listInbox } from "@/lib/inbox";
 import { listNotifications } from "@/lib/notify";
 import { review, runReminders, uploadDocuments } from "./actions";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Inbox" };
 
@@ -55,6 +56,7 @@ export default function InboxPage() {
 }
 
 async function Items() {
+  await requireUser();
   const items = await listInbox();
   if (items.length === 0)
     return (
@@ -112,6 +114,7 @@ async function Items() {
 }
 
 async function Outbox() {
+  await requireUser();
   const notifications = await listNotifications(8);
   return (
     <section className="mt-10">

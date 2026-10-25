@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { when } from "@/lib/format";
 import { traceSummary } from "@/lib/tracing";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Traces" };
 
@@ -52,6 +53,7 @@ export default function TracesPage() {
 }
 
 async function Dashboard() {
+  await requireUser();
   const day = await traceSummary(24);
   const errorRate = day.calls ? (100 * day.errors) / day.calls : 0;
   const now = new Date();

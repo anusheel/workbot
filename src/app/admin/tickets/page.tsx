@@ -1,6 +1,5 @@
 import { RefreshCw, ScanSearch } from "lucide-react";
 import type { Metadata } from "next";
-import { io } from "next/cache";
 import { Suspense } from "react";
 import { PendingButton } from "@/components/pending-button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +24,7 @@ import {
   syncSummary,
 } from "@/lib/unified";
 import { reconcileNow, syncNow } from "./actions";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Tickets" };
 
@@ -73,7 +73,7 @@ function Stat({
 }
 
 async function Synced() {
-  await io();
+  await requireUser();
   const [tickets, contacts, synced, total, sync, cache] = await Promise.all([
     listTickets(),
     listContacts(20),

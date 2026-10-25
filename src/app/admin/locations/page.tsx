@@ -1,7 +1,6 @@
 // Generated from content/entities/location.json by pnpm generate. Edit the description, not this file.
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
-import { io } from "next/cache";
 import { Suspense } from "react";
 import { PendingButton } from "@/components/pending-button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { requireUser } from "@/lib/auth";
 import { when } from "@/lib/format";
 import { listLocations, locationKind } from "@/lib/entities/location";
 import { createLocationAction } from "./actions";
@@ -83,7 +83,7 @@ export default function LocationsPage() {
 }
 
 async function Locations() {
-  await io();
+  await requireUser();
   const rows = await listLocations();
   const now = new Date();
   return (

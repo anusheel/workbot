@@ -10,6 +10,7 @@ import {
 } from "@/lib/extract";
 import { withTrace } from "@/lib/tracing";
 import { DocumentBody } from "./types";
+import { authorized } from "@/lib/auth";
 
 // Classification and extraction are 2 model calls, with retries; a file goes to the model whole.
 export const maxDuration = 120;
@@ -58,6 +59,8 @@ function fromBody(body: unknown): Input | Invalid {
 }
 
 export async function POST(request: Request) {
+  const user = await authorized(request, "agent");
+  if (user instanceof Response) return user;
   const input = request.headers
     .get("content-type")
     ?.startsWith("multipart/form-data")
@@ -65,7 +68,7 @@ export async function POST(request: Request) {
     : fromBody(await request.json().catch(() => null));
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
-  const result = await withTrace({ caller: "api", name: "document" }, () =>
+  const result = await withTrace({ caller: user.id, name: "document" }, () =>
     ingest(input.source, input.name, modelFor("extract")),
   );
   await track("request_submitted", {

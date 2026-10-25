@@ -29,6 +29,7 @@ import {
   statuses,
   updateRequest,
 } from "@/lib/requests";
+import { requireUser } from "@/lib/auth";
 
 export type FormState = {
   errors?: Partial<Record<keyof NewRequest, string[]>>;
@@ -38,6 +39,7 @@ export async function submitRequest(
   _: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  await requireUser("agent");
   const parsed = NewRequest.safeParse(Object.fromEntries(formData));
   if (!parsed.success)
     return { errors: z.flattenError(parsed.error).fieldErrors };
@@ -51,6 +53,7 @@ export async function submitRequest(
 }
 
 export async function setStatus(id: string, status: string) {
+  await requireUser("agent");
   const next = z.enum(statuses).parse(status);
   if (!(await updateRequest(id, { status: next }))) return;
   await track("request_status_changed", { requestId: id, status: next });
@@ -59,13 +62,14 @@ export async function setStatus(id: string, status: string) {
 
 /** Runs the analyst on the request and files its report on the ticket. */
 export async function investigateRequest(id: string) {
+  const user = await requireUser("agent");
   const request = await getRequest(id);
   if (!request) return;
   const question = request.body
     ? `${request.title}\n\n${request.body}`
     : request.title;
   const { report, findings, dollars } = await withTrace(
-    { caller: "admin", name: "investigate" },
+    { caller: user.id, name: "investigate" },
     () => investigate(question, modelFor("research")),
   );
   await saveReport(id, { report, findings, dollars });
@@ -75,6 +79,7 @@ export async function investigateRequest(id: string) {
 
 /** Reads an uploaded recording frame by frame and files its timeline on the ticket. */
 export async function attachRecording(id: string, formData: FormData) {
+  const user = await requireUser("agent");
   const file = formData.get("recording");
   if (!(file instanceof File) || file.size === 0) return;
   const dir = await mkdtemp(join(tmpdir(), "workbot-recording-"));
@@ -83,7 +88,7 @@ export async function attachRecording(id: string, formData: FormData) {
     await writeFile(path, new Uint8Array(await file.arrayBuffer()));
     const model = modelFor("read");
     const recording = await withTrace(
-      { caller: "admin", name: "recording" },
+      { caller: user.id, name: "recording" },
       async () => {
         const scenes = await describeFrames(await extractFrames(path), model);
         return saveRecording(id, {
@@ -110,10 +115,11 @@ export async function askAboutRecording(
   _: Answer,
   formData: FormData,
 ): Promise<Answer> {
+  const user = await requireUser("viewer");
   const question = String(formData.get("question") ?? "").trim();
   const recording = await getRecording(recordingId);
   if (!question || !recording) return {};
-  const answer = await withTrace({ caller: "admin", name: "recording" }, () =>
+  const answer = await withTrace({ caller: user.id, name: "recording" }, () =>
     askRecording(recording.scenes, question, modelFor("read")),
   );
   return { question, answer };
@@ -123,10 +129,11 @@ const media = new Set<string>(Object.values(mediaTypes));
 
 /** Files a request from an uploaded document: an invoice, an email, a letter or a form, as PDF or image. */
 export async function submitDocument(formData: FormData) {
+  const user = await requireUser("agent");
   const file = formData.get("document");
   if (!(file instanceof File) || !media.has(file.type)) return;
   const { request } = await withTrace(
-    { caller: "admin", name: "document" },
+    { caller: user.id, name: "document" },
     async () =>
       ingest(
         {

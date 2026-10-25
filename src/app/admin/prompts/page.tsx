@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { promptOf, versions } from "@/lib/prompts";
 import { systemPrompt } from "@/lib/system-prompt";
 import { SplitForm, VersionForm } from "./prompt-forms";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Prompts" };
 
@@ -28,6 +29,7 @@ export default function PromptsPage() {
 }
 
 async function Versions() {
+  await requireUser();
   // Reading seeds version 1 from the code the first time.
   await promptOf(name, "admin", systemPrompt);
   const rows = await versions(name);

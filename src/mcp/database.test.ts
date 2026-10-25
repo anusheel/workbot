@@ -73,7 +73,7 @@ test("the query tool runs selects and reports errors to the model", async () => 
 
   const unknown = await client.callTool({
     name: "describe-table",
-    arguments: { table: "users" },
+    arguments: { table: "ledger" },
   });
   expect(unknown.isError).toBe(true);
 });

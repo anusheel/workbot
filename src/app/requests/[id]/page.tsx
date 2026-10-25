@@ -24,6 +24,7 @@ import {
   setStatus,
 } from "../actions";
 import { customer } from "@/lib/customer";
+import { requireUser } from "@/lib/auth";
 
 // An investigation is a few model calls per agent; the action waits for all of them.
 export const maxDuration = 300;
@@ -50,6 +51,7 @@ export default function RequestPage(props: PageProps<"/requests/[id]">) {
 async function RequestDetail({
   params,
 }: Pick<PageProps<"/requests/[id]">, "params">) {
+  await requireUser();
   const request = await getRequest((await params).id);
   if (!request) notFound();
   await track("request_viewed", { requestId: request.id });

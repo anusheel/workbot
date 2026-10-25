@@ -140,16 +140,21 @@ export const ${Name}Response = ${Name}.extend({ createdAt: z.iso.datetime() });
 export type ${Name}Response = z.infer<typeof ${Name}Response>;
 `;
 
+  const employee = e.access === "employee";
+  const check = (need: "viewer" | "agent") =>
+    employee
+      ? `\n  const user = await authorized(request, "${need}");\n  if (user instanceof Response) return user;`
+      : "";
   const route = `${header(e)}
 import { z } from "zod";
-import { create${Name}, list${cap(e.plural)} } from "@/lib/entities/${e.name}";
+${employee ? 'import { authorized } from "@/lib/auth";\n' : ""}import { create${Name}, list${cap(e.plural)} } from "@/lib/entities/${e.name}";
 import { ${Name}Body } from "./types";
 
-export async function GET() {
+export async function GET(${employee ? "request: Request" : ""}) {${check("viewer")}
   return Response.json(await list${cap(e.plural)}());
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request) {${check("agent")}
   const parsed = ${Name}Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return Response.json(
@@ -163,14 +168,15 @@ export async function POST(request: Request) {
 
   const test = `${header(e)}
 import { expect, test } from "vitest";
-import { GET, POST } from "./route";
+${employee ? 'import { as } from "@/test/auth";\n' : ""}import { GET, POST } from "./route";
 import { ${Name}Response } from "./types";
 
-const post = (body: unknown) =>
+const url = "http://workbot/api${base}";
+${employee ? 'const agent = await as("agent");\n' : ""}const post = (body: unknown) =>
   POST(
-    new Request("http://workbot/api${base}", {
+    new Request(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json"${employee ? ", ...agent" : ""} },
       body: JSON.stringify(body),
     }),
   );
@@ -180,7 +186,9 @@ test("creates a ${e.name} from its required fields and lists it", async () => {
   expect(response.status).toBe(201);
   const created = ${Name}Response.parse(await response.json());
   expect(created).toMatchObject(${JSON.stringify(valid)});
-  const listed = ${Name}Response.array().parse(await (await GET()).json());
+  const listed = ${Name}Response.array().parse(
+    await (await GET(${employee ? "new Request(url, { headers: agent })" : ""})).json(),
+  );
   expect(listed.map((row) => row.id)).toContain(created.id);
 });
 
@@ -196,10 +204,10 @@ test("a ${e.name} without ${label(required[0]).toLowerCase()} is refused with th
 
 ${header(e)}
 import { refresh } from "next/cache";
-import { New${Name}, create${Name} } from "@/lib/entities/${e.name}";
+${employee ? 'import { requireUser } from "@/lib/auth";\n' : ""}import { New${Name}, create${Name} } from "@/lib/entities/${e.name}";
 
 /** A ${e.name} from the form; an empty field is left to its default. */
-export async function create${Name}Action(form: FormData) {
+export async function create${Name}Action(form: FormData) {${employee ? '\n  await requireUser("agent");' : ""}
   const parsed = New${Name}.safeParse(
     Object.fromEntries([...form.entries()].filter(([, value]) => value !== "")),
   );
@@ -212,8 +220,7 @@ export async function create${Name}Action(form: FormData) {
   const page = `${header(e)}
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
-import { io } from "next/cache";
-import { Suspense } from "react";
+${employee ? "" : 'import { io } from "next/cache";\n'}import { Suspense } from "react";
 import { PendingButton } from "@/components/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -225,7 +232,7 @@ ${choices.length ? 'import { NativeSelect, NativeSelectOption } from "@/componen
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-${e.fields.some((f) => f.multiline) ? 'import { Textarea } from "@/components/ui/textarea";\n' : ""}import { when } from "@/lib/format";
+${e.fields.some((f) => f.multiline) ? 'import { Textarea } from "@/components/ui/textarea";\n' : ""}${employee ? 'import { requireUser } from "@/lib/auth";\n' : ""}import { when } from "@/lib/format";
 import { list${cap(e.plural)}${choices.map((f) => `, ${e.name}${cap(f.name)}`).join("")} } from "@/lib/entities/${e.name}";
 import { create${Name}Action } from "./actions";
 
@@ -251,7 +258,7 @@ export default function ${cap(e.plural)}Page() {
 }
 
 async function ${cap(e.plural)}() {
-  await io();
+  ${employee ? "await requireUser();" : "await io();"}
   const rows = await list${cap(e.plural)}();
   const now = new Date();
   return (
