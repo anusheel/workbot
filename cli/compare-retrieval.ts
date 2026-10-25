@@ -22,7 +22,7 @@ const questions = [
   "What should I do if I click a suspicious link?",
 ];
 
-const models = { analyst: modelFor("research"), specialist: modelFor("read") };
+const model = modelFor("research");
 const embed = embedder();
 
 async function classic(question: string) {
@@ -42,14 +42,14 @@ async function classic(question: string) {
     }),
   );
   const { text, usage } = await generateText({
-    model: models.analyst,
+    model,
     instructions:
       "Answer the question from the passages only, naming the passage you used in brackets. If they do not answer it, say so.",
     prompt: `Question: ${question}\n\n${context.join("\n\n")}`,
   });
   return {
     answer: text,
-    dollars: costOf(idOf(models.analyst), {
+    dollars: costOf(idOf(model), {
       input: usage.inputTokens ?? 0,
       output: usage.outputTokens ?? 0,
     }),
@@ -63,7 +63,7 @@ console.log("| --- | --- | --- | --- |");
 for (const question of questions) {
   const [a, b] = await Promise.all([
     classic(question),
-    investigate(question, models),
+    investigate(question, model),
   ]);
   const cell = (text: string) => text.replace(/\s+/g, " ").slice(0, 300);
   console.log(

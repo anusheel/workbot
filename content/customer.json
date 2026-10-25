@@ -1,0 +1,16 @@
+{
+  "name": "Fieldstone Supply",
+  "assistant": "WorkBot",
+  "about": "a building-supply company with a warehouse in Oakland, 6 delivery vans, and operations, finance and support teams",
+  "teams": [
+    { "id": "operations", "files": "facilities, vendors and logistics" },
+    { "id": "finance", "files": "money" },
+    { "id": "support", "files": "customers" }
+  ],
+  "filing": {
+    "invoice": "finance",
+    "complaint": "support",
+    "other": "operations"
+  },
+  "customerSections": ["faq", "policies"]
+}

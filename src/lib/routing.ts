@@ -44,7 +44,7 @@ export const allRoutes = providerNames.flatMap((provider) =>
 export const routes: Record<Task, Route[]> = {
   chat: ["anthropic/small", "anthropic/large"],
   generate: ["anthropic/large", "anthropic/small"],
-  research: ["anthropic/large", "anthropic/small"],
+  research: ["anthropic/small", "anthropic/large"],
   summarize: ["anthropic/small", "anthropic/large"],
   extract: ["anthropic/small", "anthropic/large"],
   triage: ["anthropic/small", "anthropic/large"],

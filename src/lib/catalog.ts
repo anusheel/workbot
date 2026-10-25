@@ -140,8 +140,7 @@ export const catalog = defineCatalog(schema, {
   },
   actions: {
     submit_request: {
-      description:
-        "Creates a work request from the form. Params come from state: title (/form/title), body (/form/body), team (/form/team: operations, finance or support) and priority (/form/priority: low, normal or high)",
+      description: `Creates a work request from the form. Params come from state: title (/form/title), body (/form/body), team (/form/team: ${teams.join(", ")}) and priority (/form/priority: ${priorities.join(", ")})`,
       params: z.object({
         title: text,
         body: text.nullable(),

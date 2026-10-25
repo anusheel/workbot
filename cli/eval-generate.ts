@@ -6,6 +6,7 @@ import { z } from "zod";
 import { close, query } from "@/lib/db";
 import { type DocumentType, schemas } from "@/lib/document-model";
 import { type Golden, type IntakeCase } from "@/lib/eval";
+import { customer } from "@/lib/customer";
 import { customerSections } from "@/lib/knowledge-tools";
 import {
   type Priority,
@@ -30,8 +31,7 @@ const count = Number(values.count);
 const out = "content/eval/candidates";
 await mkdir(out, { recursive: true });
 const model = modelFor("generate");
-const company =
-  "Fieldstone Supply, a building-supply company with a warehouse in Oakland, 6 delivery vans, and operations, finance and support teams";
+const company = `${customer.name}, ${customer.about}`;
 
 async function chat(): Promise<Golden[]> {
   const docs = (

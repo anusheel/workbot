@@ -3,6 +3,7 @@ import { z } from "zod";
 import { intake } from "./intake";
 import type { WorkRequest } from "./request-model";
 import type { Turn } from "./voice-model";
+import { customer } from "./customer";
 
 export type { Turn } from "./voice-model";
 
@@ -29,7 +30,7 @@ const Reply = z.object({
     ),
 });
 
-const instructions = `You answer Fieldstone Supply's support line for employees. Find out what happened, who or what is affected, and how urgent it is, one question at a time, in plain spoken sentences a person can listen to: short, no lists, no markdown. Ask at most 2 questions in a call. When all 3 are known, or after the second answer, say that you are filing the request and that the team will follow up, and set done. If the caller asks a question instead of reporting a problem, answer briefly and ask what you can file for them.`;
+const instructions = `You answer ${customer.name}'s support line for employees. Find out what happened, who or what is affected, and how urgent it is, one question at a time, in plain spoken sentences a person can listen to: short, no lists, no markdown. Ask at most 2 questions in a call. When all 3 are known, or after the second answer, say that you are filing the request and that the team will follow up, and set done. If the caller asks a question instead of reporting a problem, answer briefly and ask what you can file for them.`;
 
 const transcript = (turns: Turn[]) =>
   turns

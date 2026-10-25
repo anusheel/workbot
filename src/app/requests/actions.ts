@@ -66,11 +66,7 @@ export async function investigateRequest(id: string) {
     : request.title;
   const { report, findings, dollars } = await withTrace(
     { tenant: "admin", name: "investigate" },
-    () =>
-      investigate(question, {
-        analyst: modelFor("research"),
-        specialist: modelFor("read"),
-      }),
+    () => investigate(question, modelFor("research")),
   );
   await saveReport(id, { report, findings, dollars });
   await track("request_investigated", { requestId: id, dollars });

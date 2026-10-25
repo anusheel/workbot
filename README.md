@@ -28,11 +28,10 @@ starts it in the terminal, streaming from
 Anthropic by default or OpenAI with `--provider openai`, with a calculator,
 web page reading, notes and (with a Brave key) web search as tools, and
 `/research <question>` for an answer from the company's policies with
-citations, and `/investigate <question>` for the research analyst: a
-knowledge-base specialist and a web specialist (pages, the browser agent,
-search) under an analyst, every step logged with its agent and time, each
-agent's cost shown, and a sourced report at the end. Investigate on a
-request's page runs the same analyst and files the report on the ticket. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
+citations, and `/investigate <question>` for a sourced report: one agent reads the
+knowledge base and the web (pages, the browser agent, search), every step
+logged with its time and the run priced. Investigate on a request's page
+runs the same agent and files the report on the ticket. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
 every variable. `pnpm test:live` runs the tests that call the real APIs.
 
 The knowledge base is 52 Markdown documents under `content/knowledge`,
@@ -51,7 +50,7 @@ machine's Chrome, one screenshot and one action at a time.
 
 `/voice` is the support line in the browser: say what happened, WorkBot asks
 what it needs, files the request and says where it went; talk over it and it
-listens. On a request's page, Investigate runs the research analyst and
+listens. On a request's page, Investigate runs the research agent and
 Attach a recording reads a video frame by frame into a timeline you can ask
 about (`pnpm video <file>` does the same from the terminal; it needs ffmpeg).
 
@@ -94,6 +93,8 @@ rehearses an outage: the chat answers on the fallback and the traces show
 both calls.
 
 `pnpm frameworks` runs the research agent on LangGraph.js, the Claude Agent SDK and the OpenAI Agents SDK, on 5 questions, and prints time, tool calls, tokens and cost per run; the comparison and the choice are in [docs/frameworks.md](docs/frameworks.md).
+
+The company WorkBot works for is configuration: `content/customer.json` names it, its teams and what each files, and the prompts and the request model read it, so a new customer is a new file. The principles the code is held to are in [brain/architecture/principles.md](brain/architecture/principles.md), with the audit behind them in the architecture document.
 
 How we work with Claude Code, the Codex CLI and OpenCode on this repository, under one policy, is in [docs/agentic-development.md](docs/agentic-development.md); the notes an agent reads first are in [brain/](brain/README.md). A fleet of agents on the backlog is `scripts/fleet.mjs`; what it did on 50 tasks is in [docs/fleet.md](docs/fleet.md). The system as built is written up in [docs/architecture.md](docs/architecture.md);
 [docs/design/brief-a.md](docs/design/brief-a.md) designs a customer support

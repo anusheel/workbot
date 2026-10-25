@@ -154,7 +154,8 @@ function modulesRun(entry: string) {
 
 test("a pull request runs the smoke evals when a prompt, tool, model, eval or the workflow changes", () => {
   // The first twelve are the brief's; the rest are modules the evals run that
-  // carry a prompt, a schema or a score, and the dependencies that shape a call.
+  // carry a prompt, a schema or a score, the dependencies that shape a call, and
+  // the customer file the prompts are functions of.
   expect(paths).toEqual([
     "src/lib/system-prompt.ts",
     "src/lib/tools.ts",
@@ -178,6 +179,8 @@ test("a pull request runs the smoke evals when a prompt, tool, model, eval or th
     "src/lib/knowledge.ts",
     "src/lib/web.ts",
     "src/lib/prompts.ts",
+    "src/lib/customer.ts",
+    "content/customer.json",
     "package.json",
     "pnpm-lock.yaml",
   ]);

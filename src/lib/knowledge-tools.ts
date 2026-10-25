@@ -10,6 +10,7 @@ import {
   slugify,
 } from "./knowledge";
 import { tool } from "./tool";
+import { customer } from "./customer";
 
 /**
  * The knowledge base as a small filesystem the model can explore, coarse to
@@ -214,4 +215,4 @@ function repeatsARepeat(pattern: string) {
 }
 
 /** What a customer may read: the policies and the questions customers ask. */
-export const customerSections = ["faq", "policies"];
+export const customerSections = customer.customerSections;
