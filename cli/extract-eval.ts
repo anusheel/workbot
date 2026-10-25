@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import { type DocumentType, schemas } from "@/lib/document-model";
 import { classify } from "@/lib/documents";
@@ -20,7 +20,7 @@ type Expected = Record<
 const expected: Expected = JSON.parse(
   await readFile(join(dir, "expected.json"), "utf8"),
 );
-const model = chatModel("small");
+const model = modelFor("extract");
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 
 async function source(name: string): Promise<Source> {

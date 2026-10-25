@@ -1,5 +1,5 @@
 import { NonRetriableError } from "inngest";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { type Extracted, schemas } from "@/lib/document-model";
 import { classify, saveDocument, toRequest } from "@/lib/documents";
 import { type Source, extract } from "@/lib/extract";
@@ -27,7 +27,7 @@ export const documentApproval = inngest.createFunction(
   },
   async ({ event, step }) => {
     const { id } = event.data;
-    const model = chatModel("small");
+    const model = modelFor("extract");
     const source = async (): Promise<Source> => {
       const file = await fileOf(id);
       if (!file) throw new NonRetriableError(`No document ${id} in the inbox.`);

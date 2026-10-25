@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { extname } from "node:path";
 import { parseArgs } from "node:util";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import {
   type DocumentType,
@@ -38,7 +38,7 @@ if (!isUrl) {
 }
 
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
-const model = chatModel("small");
+const model = modelFor("extract");
 const source: Source = isUrl
   ? { kind: "url", url: path }
   : await fromPath(path);

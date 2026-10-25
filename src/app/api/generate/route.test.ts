@@ -11,8 +11,8 @@ let instructions = "";
 let modelCalls = 0;
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
-vi.mock("@/lib/chat", () => ({
-  chatModel: () =>
+vi.mock("@/lib/routing", () => ({
+  modelFor: () =>
     new MockLanguageModelV4({
       doStream: async ({ prompt }) => {
         modelCalls += 1;

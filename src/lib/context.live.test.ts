@@ -1,6 +1,6 @@
 import type { UIMessage } from "ai";
 import { expect, test } from "vitest";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { summarize } from "./context";
 
 const message = (
@@ -14,7 +14,7 @@ const message = (
 });
 
 test("the small model summarizes dropped messages into a short account", async () => {
-  const summary = await summarize(chatModel("small"), [
+  const summary = await summarize(modelFor("summarize"), [
     message(
       "1",
       "user",

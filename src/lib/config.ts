@@ -9,19 +9,28 @@ function dailyDollars(value: string | undefined) {
   return 5;
 }
 
+// Comma-separated values, trimmed; none when unset.
+const list = (value: string | undefined) =>
+  value
+    ?.split(",")
+    .map((v) => v.trim())
+    .filter(Boolean) ?? [];
+
 export const config = {
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
   commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
   // A postgres:// URL, or a directory for an embedded PGlite database.
   database: process.env.DATABASE_URL || ".data/pg",
-  // The provider behind the web chat, and a model to use instead of its default.
-  chat: {
-    provider:
-      process.env.CHAT_PROVIDER === "openai"
-        ? ("openai" as const)
-        : ("anthropic" as const),
-    model: process.env.CHAT_MODEL,
-  },
+  // A task's model instead of the routing table's first, as task=provider/size pairs:
+  // "chat=anthropic/small,generate=anthropic/small".
+  routes: Object.fromEntries(
+    list(process.env.ROUTES).map(
+      (pair) => pair.split("=") as [string, string | undefined],
+    ),
+  ),
+  // Providers or model ids every call to which fails, to rehearse an outage:
+  // "anthropic", or "claude-sonnet-5-5".
+  outages: list(process.env.OUTAGE),
   // Embeddings for the knowledge base; unset means search by words.
   voyage: { key: process.env.VOYAGE_API_KEY },
   // Web search for the assistant; unset means the tool is not offered.

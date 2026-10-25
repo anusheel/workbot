@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { type Browser, browse, chromeBrowser } from "./browser-agent";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 
 const portal = pathToFileURL(
   new URL("./fixtures/legacy-portal.html", import.meta.url).pathname,
@@ -15,7 +15,7 @@ test("the agent works a legacy portal with no API by looking at the screen", asy
   const result = await browse(
     "Find the payment status of invoice INV-4411 and report it word for word.",
     portal,
-    chatModel("small"),
+    modelFor("read"),
     browser,
     {
       on: { step: (_, a) => actions.push(a.kind) },

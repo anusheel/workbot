@@ -10,6 +10,10 @@ export type Message = { role: "user" | "assistant"; content: string };
 export type Usage = { input: number; output: number };
 export type Effort = "low" | "medium" | "high";
 
+/** Two sizes of model: the small one reads, extracts and judges; the large one decides and writes. */
+export const sizes = ["small", "large"] as const;
+export type Size = (typeof sizes)[number];
+
 /**
  * A model id, its size for routing, and its published price in dollars per
  * million tokens where there is one. A cache read costs `cacheRead` times the
@@ -17,7 +21,7 @@ export type Effort = "low" | "medium" | "high";
  */
 export type Model = {
   id: string;
-  size: "small" | "large";
+  size: Size;
   price?: { input: number; output: number; cacheRead?: number };
 };
 

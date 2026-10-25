@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import { scrape } from "@/lib/scrape";
 
@@ -25,7 +25,7 @@ const Supplier = z.object({
   contact: z.string().nullable().describe("phone, email or address, or null"),
 });
 
-const suppliers = await scrape(url, Supplier, chatModel("small"), {
+const suppliers = await scrape(url, Supplier, modelFor("extract"), {
   pages: Number(values.pages),
 });
 console.log(JSON.stringify(suppliers, null, 2));

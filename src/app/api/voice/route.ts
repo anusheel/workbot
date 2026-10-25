@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { withTrace } from "@/lib/tracing";
 import { visitorId } from "@/lib/visitor";
 import { voiceTurn } from "@/lib/voice";
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     );
   const turn = await withTrace(
     { tenant: (await visitorId()) ?? "web", name: "voice" },
-    () => voiceTurn(body.data.turns, chatModel("small")),
+    () => voiceTurn(body.data.turns, modelFor("triage")),
   );
   if (turn.request)
     await track("request_submitted", {

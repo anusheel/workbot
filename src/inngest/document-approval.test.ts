@@ -10,8 +10,8 @@ import { documentApproval } from "./document-approval";
 
 // The model behind the real classify and extract steps answers from a script.
 const replies: string[] = [];
-vi.mock("@/lib/chat", () => ({
-  chatModel: () =>
+vi.mock("@/lib/routing", () => ({
+  modelFor: () =>
     new MockLanguageModelV4({
       doGenerate: async () => ({
         content: [{ type: "text", text: replies.shift() ?? "" }],

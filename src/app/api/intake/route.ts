@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { intake } from "@/lib/intake";
 import { withTrace } from "@/lib/tracing";
 import { IntakeBody } from "./types";
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const created = await withTrace({ tenant: "api", name: "intake" }, () =>
-    intake(body.data.message, chatModel("small")),
+    intake(body.data.message, modelFor("triage")),
   );
   await track("request_submitted", {
     requestId: created.id,

@@ -23,19 +23,19 @@ vi.mock("@/lib/rate-limit", () => ({ allow: vi.fn(() => true) }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
-vi.mock("@/lib/chat", () => ({
-  chatTools: {},
-  chatModel: (size = "large") => {
+vi.mock("@/lib/chat", () => ({ chatTools: {} }));
+vi.mock("@/lib/routing", () => ({
+  modelFor: (task: string) => {
     modelCalls.count++;
     return new MockLanguageModelV4({
-      // The small model extracts memories; the large one answers.
+      // The extract route extracts memories; the chat route answers.
       doGenerate: async () => ({
         content: [
           {
             type: "text",
             text: JSON.stringify({
               memories:
-                size === "small"
+                task === "extract"
                   ? [
                       {
                         kind: "preference",

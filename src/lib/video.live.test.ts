@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import {
   askRecording,
   describeFrames,
@@ -54,7 +54,7 @@ beforeAll(async () => {
 afterAll(() => rm(dir, { recursive: true, force: true }));
 
 test("the small model reads each scene, writes the timeline, and answers a question from it", async () => {
-  const model = chatModel("small");
+  const model = modelFor("read");
   const frames = await extractFrames(video, { every: 3 });
   expect(frames.map((f) => f.at)).toEqual([0, 3, 6]);
   const described = await describeFrames(frames, model);

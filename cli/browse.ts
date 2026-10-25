@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { type Action, browse, chromeBrowser } from "@/lib/browser-agent";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 
 const { values, positionals } = parseArgs({
@@ -60,9 +60,17 @@ const exitCodes = { done: 0, gave_up: 2, steps: 3 } as const;
 
 const browser = await chromeBrowser(values.start);
 try {
-  const result = await browse(goal, values.start, chatModel(), browser, {
-    on: { step: (n, a) => console.log(dim(`${n}. ${describe(a)}: ${a.why}`)) },
-  });
+  const result = await browse(
+    goal,
+    values.start,
+    modelFor("research"),
+    browser,
+    {
+      on: {
+        step: (n, a) => console.log(dim(`${n}. ${describe(a)}: ${a.why}`)),
+      },
+    },
+  );
   console.log(
     `\n${result.outcome === "done" ? result.result : `${result.outcome}: ${result.result}`}`,
   );

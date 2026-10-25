@@ -7,7 +7,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { ingest } from "@/lib/documents";
 import { type MediaType, mediaTypes } from "@/lib/extract";
 import { investigate } from "@/lib/investigate";
@@ -68,8 +68,8 @@ export async function investigateRequest(id: string) {
     { tenant: "admin", name: "investigate" },
     () =>
       investigate(question, {
-        analyst: chatModel(),
-        specialist: chatModel("small"),
+        analyst: modelFor("research"),
+        specialist: modelFor("read"),
       }),
   );
   await saveReport(id, { report, findings, dollars });
@@ -85,7 +85,7 @@ export async function attachRecording(id: string, formData: FormData) {
   const path = join(dir, basename(file.name) || "recording");
   try {
     await writeFile(path, new Uint8Array(await file.arrayBuffer()));
-    const model = chatModel("small");
+    const model = modelFor("read");
     const recording = await withTrace(
       { tenant: "admin", name: "recording" },
       async () => {
@@ -118,7 +118,7 @@ export async function askAboutRecording(
   const recording = await getRecording(recordingId);
   if (!question || !recording) return {};
   const answer = await withTrace({ tenant: "admin", name: "recording" }, () =>
-    askRecording(recording.scenes, question, chatModel("small")),
+    askRecording(recording.scenes, question, modelFor("read")),
   );
   return { question, answer };
 }
@@ -139,7 +139,7 @@ export async function submitDocument(formData: FormData) {
           mediaType: file.type as MediaType,
         },
         file.name,
-        chatModel("small"),
+        modelFor("extract"),
       ),
   );
   await track("request_submitted", {

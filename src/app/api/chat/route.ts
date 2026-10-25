@@ -10,7 +10,8 @@ import {
 import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel, chatTools } from "@/lib/chat";
+import { chatTools } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { compact, textOf } from "@/lib/context";
 import {
   extractMemories,
@@ -66,7 +67,7 @@ async function reply(
 ) {
   const [memories, { messages, summary }] = await Promise.all([
     visitor ? listMemories(visitor) : [],
-    compact(input, chatModel("small")),
+    compact(input, modelFor("summarize")),
   ]);
 
   await track("question_asked", { conversationId });
@@ -78,7 +79,7 @@ async function reply(
     .filter(Boolean)
     .join("\n\n");
   const result = streamText({
-    model: chatModel(),
+    model: modelFor("chat"),
     // The prompt is the same for everyone and goes first, so the provider can serve it from its cache.
     instructions: [
       {
@@ -103,7 +104,7 @@ async function reply(
         if (!visitor) return;
         after(async () => {
           const found = await extractMemories(
-            chatModel("small"),
+            modelFor("extract"),
             { user: question, assistant: textOf(responseMessage) },
             memories,
           );

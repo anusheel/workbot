@@ -3,8 +3,8 @@ import { expect, test, vi } from "vitest";
 import { POST } from "./route";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
-vi.mock("@/lib/chat", () => ({
-  chatModel: () =>
+vi.mock("@/lib/routing", () => ({
+  modelFor: () =>
     new MockLanguageModelV4({
       doGenerate: async () => ({
         content: [
