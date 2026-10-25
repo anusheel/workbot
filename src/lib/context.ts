@@ -88,15 +88,16 @@ export async function summarize(
   return text;
 }
 
-/** The messages to send, and a summary of the ones that had to go, when the conversation outgrows the budget. */
+/** The messages to send, and a summary of the ones that had to go when the conversation outgrows the budget; without a model, what had to go is gone. */
 export async function compact(
   messages: UIMessage[],
-  model: LanguageModel,
+  model?: LanguageModel,
   budget = 24_000,
 ) {
   const { kept, dropped } = fitContext(messages, budget);
   return {
     messages: kept,
-    summary: dropped.length ? await summarize(model, dropped) : undefined,
+    summary:
+      dropped.length && model ? await summarize(model, dropped) : undefined,
   };
 }

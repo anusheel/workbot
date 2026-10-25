@@ -29,6 +29,10 @@ import { ChatBody } from "./types";
 // A tool loop on the large model can outlast a serverless function's default limit.
 export const maxDuration = 60;
 
+// What the person reads when every model in the chain has failed: a sentence, not the provider's error.
+const unavailable =
+  "WorkBot cannot reach its model right now. Try again in a minute.";
+
 export async function POST(request: Request) {
   const visitor = await visitorId();
   // A caller without a cookie (the API reached directly) is limited by its address instead.
@@ -67,7 +71,8 @@ async function reply(
 ) {
   const [memories, { messages, summary }] = await Promise.all([
     visitor ? listMemories(visitor) : [],
-    compact(input, modelFor("summarize")),
+    // A summary the model could not write is left out; the answer still goes, and the trace holds why.
+    compact(input, modelFor("summarize")).catch(() => compact(input)),
   ]);
 
   await track("question_asked", { conversationId });
@@ -99,13 +104,16 @@ async function reply(
     stream: toUIMessageStream({
       stream: result.stream,
       tools: chatTools,
+      onError: () => unavailable,
       // Once the reply is out, keep what this exchange taught about the person.
       onEnd: ({ responseMessage }) => {
-        if (!visitor) return;
+        const reply = textOf(responseMessage);
+        // A turn that failed taught nothing.
+        if (!visitor || !reply) return;
         after(async () => {
           const found = await extractMemories(
             modelFor("extract"),
-            { user: question, assistant: textOf(responseMessage) },
+            { user: question, assistant: reply },
             memories,
           );
           for (const { kind, text } of found)
