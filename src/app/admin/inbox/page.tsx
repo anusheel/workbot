@@ -37,7 +37,7 @@ export default function InboxPage() {
             <FileUpload
               action={uploadDocuments}
               name="documents"
-              accept=".pdf,image/png,image/jpeg,image/webp"
+              accept=".pdf,.docx,image/png,image/jpeg,image/webp"
               label="Upload documents"
               busy="Sending…"
               icon={<FileText />}

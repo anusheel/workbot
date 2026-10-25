@@ -233,6 +233,17 @@ const tables = [
     sealed_at timestamptz not null default now(),
     primary key (user_id, provider)
   )`,
+  // The path a document reached the model by: its text, or the file itself.
+  `alter table documents add column if not exists path text`,
+  // Spreadsheets uploaded to be asked about: the file as it came, and the columns read from it.
+  `create table if not exists sheets (
+    id uuid primary key default gen_random_uuid(),
+    name text not null,
+    bytes bytea not null,
+    columns jsonb not null,
+    rows integer not null,
+    created_at timestamptz not null default now()
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];

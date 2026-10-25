@@ -1,7 +1,13 @@
 import { z } from "zod";
 
-/** The 4 kinds of document WorkBot reads, each as the record it should become. */
-export const documentTypes = ["invoice", "email", "letter", "job"] as const;
+/** The 5 kinds of document WorkBot reads, each as the record it should become. */
+export const documentTypes = [
+  "invoice",
+  "email",
+  "letter",
+  "job",
+  "contract",
+] as const;
 export type DocumentType = (typeof documentTypes)[number];
 
 const asWritten = (what: string) =>
@@ -80,11 +86,47 @@ export const JobPosting = z.object({
   workplace: z.enum(["remote", "hybrid", "onsite"]).nullable(),
 });
 
+/** A contract's terms as its text reads with its tracked changes accepted, and the changes themselves, so a reviewer sees what is proposed. */
+export const Contract = z.object({
+  title: z
+    .string()
+    .describe("what the contract is, such as a supply agreement"),
+  parties: z
+    .array(
+      z.object({
+        name: z.string(),
+        role: z.string().describe("its role, such as supplier or customer"),
+      }),
+    )
+    .describe("every party to the contract"),
+  effective: date("the date it takes effect"),
+  ends: date("the date it ends"),
+  renewal: asWritten("how it renews, such as automatically for 1 year"),
+  obligations: z
+    .array(z.object({ party: z.string(), obligation: z.string() }))
+    .describe("what each party must do, one obligation per entry"),
+  termination: z.object({
+    notice: asWritten("the written notice a party must give to end it"),
+    causes: z
+      .array(z.string())
+      .describe("the grounds on which a party may end it early"),
+  }),
+  governingLaw: asWritten("the law that governs it"),
+  changes: z
+    .array(
+      z.object({ kind: z.enum(["insertion", "deletion"]), text: z.string() }),
+    )
+    .describe(
+      "each tracked change the document carries, marked [+inserted+] or [-deleted-] in its text; empty when it has none",
+    ),
+});
+
 export const schemas = {
   invoice: Invoice,
   email: Email,
   letter: Letter,
   job: JobPosting,
+  contract: Contract,
 } as const;
 
 export type Extracted = {

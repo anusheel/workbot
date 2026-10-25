@@ -2,12 +2,7 @@ import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { modelFor } from "@/lib/routing";
 import { ingest } from "@/lib/documents";
-import {
-  type MediaType,
-  type Source,
-  fileSizeError,
-  mediaTypes,
-} from "@/lib/extract";
+import { type Source, fileSizeError, mediaTypeOf } from "@/lib/extract";
 import { withTrace } from "@/lib/tracing";
 import { DocumentBody } from "./types";
 import { authorized } from "@/lib/auth";
@@ -18,8 +13,6 @@ export const maxDuration = 120;
 type Input = { source: Source; name: string };
 type Invalid = { error: unknown };
 
-const media = new Set<string>(Object.values(mediaTypes));
-
 async function fromForm(form: FormData | null): Promise<Input | Invalid> {
   if (!form)
     return {
@@ -29,25 +22,20 @@ async function fromForm(form: FormData | null): Promise<Input | Invalid> {
       },
     };
   const file = form.get("document");
-  if (!(file instanceof File) || !media.has(file.type))
-    return {
-      error: {
-        formErrors: [
-          `document must be a file of a type among ${[...media].join(", ")}`,
-        ],
-        fieldErrors: {},
-      },
-    };
+  const refuse = (reason: string) => ({
+    error: { formErrors: [reason], fieldErrors: {} },
+  });
+  if (!(file instanceof File)) return refuse("document must be a file");
   const tooBig = fileSizeError(file.size);
-  if (tooBig) return { error: { formErrors: [tooBig], fieldErrors: {} } };
-  return {
-    name: file.name,
-    source: {
-      kind: "file",
-      data: new Uint8Array(await file.arrayBuffer()),
-      mediaType: file.type as MediaType,
-    },
-  };
+  if (tooBig) return refuse(tooBig);
+  // The bytes decide the type, whatever the request declared.
+  const data = new Uint8Array(await file.arrayBuffer());
+  const mediaType = mediaTypeOf(data);
+  if (!mediaType)
+    return refuse(
+      "document must be a PDF, a Word document or an image (PNG, JPEG, WebP)",
+    );
+  return { name: file.name, source: { kind: "file", data, mediaType } };
 }
 
 function fromBody(body: unknown): Input | Invalid {

@@ -21,6 +21,7 @@ on:
       - .github/workflows/eval.yml
       - src/lib/intake.ts
       - src/lib/extract.ts
+      - src/lib/files.ts
       - src/lib/documents.ts
       - src/lib/document-model.ts
       - src/lib/request-model.ts

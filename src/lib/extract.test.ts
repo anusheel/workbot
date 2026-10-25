@@ -1,7 +1,15 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { extract } from "./extract";
+import { pdf } from "@/test/pdf";
+import { docxFrom } from "./files";
+import {
+  type MediaType,
+  extract,
+  mediaTypeOf,
+  mediaTypes,
+  route,
+} from "./extract";
 
 /** A model that answers from a script and keeps every prompt it was sent. */
 function scripted(replies: string[]) {
@@ -114,4 +122,41 @@ test("a page's text and a file's bytes reach the model in the right parts", asyn
   }[];
   expect(parts.map((p) => p.type)).toEqual(["text", "file"]);
   expect(parts[1].mediaType).toBe("application/pdf");
+});
+
+test("a PDF with a text layer goes as its text, a scan, an image or a forced one as the file, a Word document as its text with changes", async () => {
+  const typed = pdf(
+    "Invoice 4471 from Tamarack Fleet Services, total due USD 7200.00, terms net 30 days",
+  );
+  const file = (data: Uint8Array, mediaType: MediaType) =>
+    ({ kind: "file", data, mediaType }) as const;
+  const text = await route(file(typed, "application/pdf"));
+  expect(text.path).toBe("text");
+  expect(text.source).toMatchObject({ kind: "text" });
+  expect((text.source as { text: string }).text).toContain(
+    "Page 1\nInvoice 4471",
+  );
+  expect((await route(file(pdf(), "application/pdf"))).path).toBe("native");
+  expect((await route(file(typed, "application/pdf"), "native")).path).toBe(
+    "native",
+  );
+  expect(
+    (await route(file(new Uint8Array([37]), "application/pdf"))).path,
+  ).toBe("native");
+  expect(
+    (await route(file(new Uint8Array([0x89, 0x50]), "image/png"))).path,
+  ).toBe("native");
+  const contract = docxFrom([
+    ["Notice: ", { deleted: "30" }, { inserted: "60" }, " days"],
+  ]);
+  expect(await route(file(contract, mediaTypes[".docx"]))).toEqual({
+    path: "text",
+    source: { kind: "text", text: "Notice: [-30-][+60+] days" },
+  });
+});
+
+test("a document's type comes from its bytes, not its name or what the browser said", () => {
+  expect(mediaTypeOf(pdf("x"))).toBe("application/pdf");
+  expect(mediaTypeOf(docxFrom([["x"]]))).toBe(mediaTypes[".docx"]);
+  expect(mediaTypeOf(new TextEncoder().encode("plain text"))).toBeUndefined();
 });

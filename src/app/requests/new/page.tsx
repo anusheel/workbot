@@ -36,7 +36,7 @@ export default function NewRequestPage() {
                 <FileUpload
                   action={submitDocument}
                   name="document"
-                  accept=".pdf,image/png,image/jpeg,image/webp"
+                  accept=".pdf,.docx,image/png,image/jpeg,image/webp"
                   label="File it from a document"
                   busy="Reading the document…"
                   icon={<FileText />}

@@ -98,7 +98,9 @@ test("a short text, a bad or private address, an empty body and a file of the wr
     }),
   );
   expect(upload.status).toBe(400);
-  expect(JSON.stringify(await upload.json())).toContain("application/pdf");
+  expect(JSON.stringify(await upload.json())).toContain(
+    "a PDF, a Word document or an image",
+  );
 });
 
 const upload = (file: File) => {

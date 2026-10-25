@@ -123,7 +123,8 @@ export function fromDocument(doc: DocumentRecord): ContactInput | undefined {
         type: "letter";
         data: { from: string; fields: { name: string; value: string }[] };
       }
-    | { type: "job"; data: unknown };
+    | { type: "job"; data: unknown }
+    | { type: "contract"; data: unknown };
   switch (extracted.type) {
     case "invoice": {
       const { vendor, vendorEmail, vendorPhone } = extracted.data;
@@ -168,7 +169,9 @@ export function fromDocument(doc: DocumentRecord): ContactInput | undefined {
         doc.data,
       );
     }
+    // A job posting names no sender; a contract's parties are organizations, filed with the contract.
     case "job":
+    case "contract":
       return undefined;
   }
 }
