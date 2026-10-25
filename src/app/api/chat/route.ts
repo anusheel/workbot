@@ -10,7 +10,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { chatModel, chatTools } from "@/lib/chat";
-import { textOf } from "@/lib/context";
+import { compact, textOf } from "@/lib/context";
 import {
   extractMemories,
   listMemories,
@@ -37,14 +37,20 @@ export async function POST(request: Request) {
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const messages = validated.data;
   const visitor = await visitorId();
-  const memories = visitor ? await listMemories(visitor) : [];
+  const [memories, { messages, summary }] = await Promise.all([
+    visitor ? listMemories(visitor) : [],
+    compact(validated.data, chatModel("small")),
+  ]);
 
   await track("question_asked", { conversationId: body.data.id });
   const result = streamText({
     model: chatModel(),
-    instructions: [systemPrompt, memoryNote(memories)]
+    instructions: [
+      systemPrompt,
+      memoryNote(memories),
+      summary && `Earlier in this conversation: ${summary}`,
+    ]
       .filter(Boolean)
       .join("\n\n"),
     messages: await convertToModelMessages(messages),
