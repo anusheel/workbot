@@ -12,6 +12,5 @@ if (!config.database.startsWith("postgres")) {
   process.exit(1);
 }
 
-await databaseServer(connect(config.database, { readOnly: true })).connect(
-  new StdioServerTransport(),
-);
+const { query } = connect(config.database, { readOnly: true });
+await databaseServer(query).connect(new StdioServerTransport());
