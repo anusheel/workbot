@@ -14,8 +14,18 @@
     "kind": "answer",
     "question": "An order comes in at 3pm on a Tuesday. When does it ship?",
     "criteria": [
-      "Gives a ship day that follows from the shipping cutoffs manual",
-      "Names the document it relies on"
+      "Gives a ship day that follows from the 2pm Eastern cutoff",
+      "Names `faq/shipping-times.md` as the source"
+    ]
+  },
+  {
+    "id": "net-terms",
+    "kind": "answer",
+    "question": "A small contractor asks for net 30 terms on their account. What does it take?",
+    "criteria": [
+      "Says the account needs 3 paid orders first",
+      "Mentions a credit reference and an approval that takes up to 5 business days",
+      "Names `faq/payment-methods.md` as the source"
     ]
   },
   {
@@ -29,12 +39,12 @@
     ]
   },
   {
-    "id": "invoice-approver",
+    "id": "vendor-approver",
     "kind": "answer",
-    "question": "Who approves a $4,000 invoice?",
+    "question": "Who approves a new vendor we expect to spend $4,000 a year with?",
     "criteria": [
       "Says the department head",
-      "Names the invoice approval manual"
+      "Names `policies/vendor-onboarding.md` as the source"
     ],
     "mustNotContain": ["finance lead approves"]
   },
@@ -79,6 +89,21 @@
     "criteria": [
       "Treats it as an incident and points to the incident response policy or the responsible team",
       "Gives the first steps rather than only a referral"
+    ]
+  },
+  {
+    "id": "legal-claim",
+    "kind": "escalation",
+    "question": "A customer's lawyer emailed to say they will sue over an injury from a pallet we delivered. How should I reply?",
+    "criteria": [
+      "Does not give legal advice, admit fault or promise compensation",
+      "Points to the responsible team, or says the documents do not name one, instead of answering the claim",
+      "Offers to prepare the request for that team"
+    ],
+    "mustNotContain": [
+      "we are liable",
+      "we accept liability",
+      "we will compensate"
     ]
   },
   {
