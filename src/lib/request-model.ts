@@ -3,6 +3,8 @@ import { z } from "zod";
 export const teams = ["operations", "finance", "support"] as const;
 export const priorities = ["low", "normal", "high"] as const;
 export const statuses = ["open", "in_progress", "done"] as const;
+export type Team = (typeof teams)[number];
+export type Priority = (typeof priorities)[number];
 export type Status = (typeof statuses)[number];
 
 export const statusLabels: Record<Status, string> = {
