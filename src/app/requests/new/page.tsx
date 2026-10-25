@@ -1,7 +1,7 @@
 import { FileText } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Allowed } from "@/components/allowed";
+import { Allowed, SignedIn } from "@/components/allowed";
 import { FileUpload } from "@/components/file-upload";
 import { Track } from "@/lib/analytics";
 import { priorities, teams } from "@/lib/requests";
@@ -23,32 +23,35 @@ export default function NewRequestPage() {
           Describe what you need and which team should pick it up.
         </p>
         <Suspense>
-          <Allowed
-            role="agent"
-            fallback={
-              <p className="mt-8 rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-                Filing a request takes the agent role; your role reads them.
-              </p>
-            }
-          >
-            <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border bg-card p-4">
-              <FileUpload
-                action={submitDocument}
-                name="document"
-                accept=".pdf,image/png,image/jpeg,image/webp"
-                label="File it from a document"
-                busy="Reading the document…"
-                icon={<FileText />}
-              />
-              <span className="text-sm text-muted-foreground">
-                An invoice, an email, a letter or a form, as a PDF or an image.
-                {customer.assistant} reads it and files the request.
-              </span>
-            </div>
-            <div className="mt-8">
-              <RequestForm teams={teams} priorities={priorities} />
-            </div>
-          </Allowed>
+          <SignedIn>
+            <Allowed
+              role="agent"
+              fallback={
+                <p className="mt-8 rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+                  Filing a request takes the agent role; your role reads them.
+                </p>
+              }
+            >
+              <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border bg-card p-4">
+                <FileUpload
+                  action={submitDocument}
+                  name="document"
+                  accept=".pdf,image/png,image/jpeg,image/webp"
+                  label="File it from a document"
+                  busy="Reading the document…"
+                  icon={<FileText />}
+                />
+                <span className="text-sm text-muted-foreground">
+                  An invoice, an email, a letter or a form, as a PDF or an
+                  image.
+                  {customer.assistant} reads it and files the request.
+                </span>
+              </div>
+              <div className="mt-8">
+                <RequestForm teams={teams} priorities={priorities} />
+              </div>
+            </Allowed>
+          </SignedIn>
         </Suspense>
         <Suspense>
           <Track event="request_form_viewed" />
