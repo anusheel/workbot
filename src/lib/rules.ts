@@ -33,7 +33,7 @@ export const Rule = z.object({
 });
 export type Rule = z.infer<typeof Rule>;
 
-const Rules = z
+export const Rules = z
   .array(Rule)
   .refine((rules) => new Set(rules.map((r) => r.id)).size === rules.length, {
     message: "rule ids are unique",
@@ -111,14 +111,15 @@ function changes(action: Rule["then"], record: Fields): [string, unknown][] {
   return [["flags", [...flags, action.flag]]];
 }
 
-/** The rules for a kind of record, in order, each seeing the record as the ones before it left it. */
+/** The rules for a kind of record, in order, each seeing the record as the ones before it left it; a table of one tries one. */
 export function applyRules(
   on: Rule["on"],
   record: Fields,
+  table: Rule[] = rules,
 ): { record: Fields; applied: Applied[] } {
   const out = { ...record };
   const applied: Applied[] = [];
-  for (const rule of rules.filter((r) => r.on === on)) {
+  for (const rule of table.filter((r) => r.on === on)) {
     if (!rule.when.every((condition) => holds(condition, out))) continue;
     for (const [field, to] of changes(rule.then, out)) {
       if (JSON.stringify(out[field]) === JSON.stringify(to)) continue;
