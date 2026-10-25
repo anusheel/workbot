@@ -1,25 +1,5 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
 import { type ToolSet, tool } from "ai";
-import { config } from "./config";
-import { type ProviderName, providers } from "./providers";
 import { customerTools } from "./tools";
-import { traced } from "./tracing";
-
-/** A model as the AI SDK addresses it, from a provider name and a model id, with every call traced. */
-export const aiModel = (provider: ProviderName, id: string) =>
-  traced(provider === "openai" ? openai(id) : anthropic(id));
-
-/** The model behind the web chat: the configured one, else the provider's default, or its small model. */
-export function chatModel(size: "large" | "small" = "large") {
-  const { provider, model } = config.chat;
-  const { models } = providers[provider]();
-  const id =
-    size === "large" && model
-      ? model
-      : (models.find((m) => m.size === size) ?? models[0]).id;
-  return aiModel(provider, id);
-}
 
 /**
  * The web chat's tools in the AI SDK's shape. Until there is a sign-in, the

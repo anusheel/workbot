@@ -73,6 +73,15 @@ Every model call is traced with its tenant, tokens, cost and latency, and
 assistant against 14 golden cases with a judge model; an hourly watch raises
 alerts into the outbox for failures and spend.
 
+Every model call is routed by task: `src/lib/routing.ts` maps chat,
+generation, research, summaries, extraction, triage, reading and judging to a
+provider and a size, with the model that takes over when the first is down or
+rate-limited; `pnpm routes` scores each task's eval on each provider's models
+with cost and p95 latency, and [docs/routing.md](docs/routing.md) holds the
+table and the routing chosen from it. `OUTAGE=claude-haiku-5-5 pnpm dev`
+rehearses an outage: the chat answers on the fallback and the traces show
+both calls.
+
 `pnpm frameworks` runs the research agent on LangGraph.js, the Claude Agent SDK and the OpenAI Agents SDK, on 5 questions, and prints time, tool calls, tokens and cost per run; the comparison and the choice are in [docs/frameworks.md](docs/frameworks.md).
 
 How we work with Claude Code, the Codex CLI and OpenCode on this repository, under one policy, is in [docs/agentic-development.md](docs/agentic-development.md); the notes an agent reads first are in [brain/](brain/README.md). A fleet of agents on the backlog is `scripts/fleet.mjs`; what it did on 50 tasks is in [docs/fleet.md](docs/fleet.md). The system as built is written up in [docs/architecture.md](docs/architecture.md);

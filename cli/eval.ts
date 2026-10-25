@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import { Golden, answer, judge, stats } from "@/lib/eval";
 import { versions } from "@/lib/prompts";
@@ -33,8 +33,8 @@ async function promptText(): Promise<[string, string]> {
   return [values.prompt, row.text];
 }
 const [label, prompt] = await promptText();
-const model = chatModel();
-const judgeModel = chatModel("small");
+const model = modelFor("chat");
+const judgeModel = modelFor("judge");
 
 if (!cases.length) {
   console.log(`No case matched --only ${values.only}.`);

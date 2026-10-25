@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "vitest";
 import { z } from "zod";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { Golden, answer, judge } from "./eval";
 import { systemPrompt } from "./system-prompt";
 
@@ -15,8 +15,8 @@ test.each([["refund-limit"], ["approve-refund"], ["off-topic"]])(
   "the assistant passes the %s case under the judge",
   async (id) => {
     const golden = pick(id);
-    const reply = await answer(golden, systemPrompt, chatModel());
-    const verdict = await judge(golden, reply, chatModel("small"));
+    const reply = await answer(golden, systemPrompt, modelFor("chat"));
+    const verdict = await judge(golden, reply, modelFor("judge"));
     expect(verdict.violations).toEqual([]);
     expect(
       verdict.score,

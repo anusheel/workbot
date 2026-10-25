@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { type Turn, voiceTurn } from "./voice";
 
 test("a caller's report becomes a filed request on the small model", async () => {
@@ -9,7 +9,7 @@ test("a caller's report becomes a filed request on the small model", async () =>
       text: "Hi, this is Dana from the receiving dock. The badge printer in the warehouse stopped working this morning.",
     },
   ];
-  const first = await voiceTurn(turns, chatModel("small"));
+  const first = await voiceTurn(turns, modelFor("triage"));
   expect(first.say.length).toBeLessThan(300);
   expect(first.say).not.toMatch(/[*#\n-]/);
   turns.push(
@@ -19,13 +19,13 @@ test("a caller's report becomes a filed request on the small model", async () =>
       text: "Six new starters are waiting for badges, so it is urgent. Nobody else is affected, and it is the only printer down there.",
     },
   );
-  let turn = await voiceTurn(turns, chatModel("small"));
+  let turn = await voiceTurn(turns, modelFor("triage"));
   if (!turn.request) {
     turns.push(
       { role: "workbot", text: turn.say },
       { role: "caller", text: "That is everything I know. Please file it." },
     );
-    turn = await voiceTurn(turns, chatModel("small"));
+    turn = await voiceTurn(turns, modelFor("triage"));
   }
   expect(turn.request).toMatchObject({ status: "open", priority: "high" });
   expect(turn.request?.title).toMatch(/badge|printer/i);

@@ -3,7 +3,7 @@ import { MockLanguageModelV4 } from "ai/test";
 import { generateText, streamText } from "ai";
 import { expect, test } from "vitest";
 import { query } from "./db";
-import { recordTrace, traceSummary, traced, withTrace } from "./tracing";
+import { recordTrace, spend, traceSummary, traced, withTrace } from "./tracing";
 
 const usage = {
   inputTokens: {
@@ -191,4 +191,24 @@ test("a stream that ends normally writes one trace", async () => {
   const rows = await rowsFor("normal");
   expect(rows).toHaveLength(1);
   expect(rows[0].ok).toBe(true);
+});
+
+test("the spend under a context since a moment: its calls, dollars and p95, nothing else's", async () => {
+  const ctx = { tenant: "routes", name: "chat", prompt: "anthropic/small" };
+  const call = {
+    model: "claude-haiku-5-5",
+    input: 10,
+    output: 5,
+    cached: 0,
+    ok: true,
+    error: null,
+  };
+  const since = new Date();
+  for (const ms of [100, 200, 1000])
+    await recordTrace({ ...ctx, ...call, dollars: 0.001, ms });
+  await recordTrace({ ...ctx, ...call, name: "judge", dollars: 1, ms: 9000 });
+  const bill = await spend(ctx, since);
+  expect(bill.calls).toBe(3);
+  expect(bill.dollars).toBeCloseTo(0.003, 6);
+  expect(bill.p95).toBe(920);
 });

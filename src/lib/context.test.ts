@@ -115,6 +115,11 @@ test("compact summarizes only what was dropped", async () => {
   expect(result.messages).toHaveLength(4);
   expect(summarized).toMatch(/^WorkBot: 1 /);
   expect(summarized).not.toContain("Person: 9 ");
+  // Without a model, the cut is the same and nothing is summarized.
+  expect(await compact(messages, undefined, sizeOf(messages[0]) * 4)).toEqual({
+    messages: result.messages,
+    summary: undefined,
+  });
 });
 
 const recorder = () => {

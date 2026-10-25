@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { z } from "zod";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { scrape } from "./scrape";
 
 test("the scraper pulls typed records from a real listing page and follows its next link", async () => {
@@ -8,7 +8,7 @@ test("the scraper pulls typed records from a real listing page and follows its n
   const stories = await scrape(
     "https://news.ycombinator.com/",
     Story,
-    chatModel("small"),
+    modelFor("extract"),
     { pages: 2 },
   );
   expect(stories.length).toBeGreaterThan(30);

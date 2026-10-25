@@ -40,7 +40,7 @@ No account was available; the records are the same and no content is stored. Cos
 
 ## D10. Small model first (Days 6 to 19)
 
-Haiku reads, extracts, judges and runs specialists; Sonnet decides and writes; Opus never by default. Costs: quality on hard documents, caught by the confidence threshold and the reviewer. To reverse: `chatModel(size)` is the only place sizes are chosen.
+Haiku reads, extracts, judges and runs specialists; Sonnet decides and writes; Opus never by default. Costs: quality on hard documents, caught by the confidence threshold and the reviewer. To reverse: the routing table (D13) is the only place sizes are chosen. Superseded in part on 2026-10-25 by D13: the chat moved to the small model, because the table could not tell the 2 apart.
 
 ## D11. One policy for 3 CLIs, instruction files per package (Day 21)
 
@@ -49,3 +49,7 @@ Haiku reads, extracts, judges and runs specialists; Sonnet decides and writes; O
 ## D12. The loop stays; LangGraph.js for the first resumable agent, the Claude Agent SDK where Claude Code parity matters (Day 23)
 
 The same research agent on 3 frameworks, 5 topics each (`docs/frameworks.md`): the product keeps its own 90-line loop; the explainer stays on the Claude Agent SDK; LangGraph.js is the choice for an agent that must pause for a person and resume, because its checkpoints live in the Postgres we have and its graph is testable with a scripted model and drawable. The OpenAI Agents SDK is a pattern to copy, not a dependency: we run Anthropic models and the adapter for them is beta. Costs: 3 framework packages in the tree for the comparison. To reverse: `src/lib/frameworks/` is the only place they are imported.
+
+## D13. One routing table per task, the other size behind each; one provider until the second is measured (Day 24)
+
+Every model call names its task; `src/lib/routing.ts` maps it to its models in order, and a call the first cannot take (5xx, 429, unreachable) goes to the next with the same parameters. The rows come from `pnpm routes` (`docs/routing.md`): the small model answers chat (0.83 against 0.87 under one judge, 0.91 against 0.88 under the other, at a twentieth of the price), reads, extracts, triages and judges; the large model lays out pages and writes reports until those have an eval. OpenAI is in the layer and in no route: no key, so no column, so no row. Costs: an outage of the whole provider is still an outage, said in one sentence; a failed first call at each step of a turn, until a circuit breaker remembers. To reverse: the table is one object, and a third entry per row adds the provider.

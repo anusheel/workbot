@@ -10,7 +10,8 @@ import {
 import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel, chatTools } from "@/lib/chat";
+import { chatTools } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { compact, textOf } from "@/lib/context";
 import {
   extractMemories,
@@ -27,6 +28,10 @@ import { ChatBody } from "./types";
 
 // A tool loop on the large model can outlast a serverless function's default limit.
 export const maxDuration = 60;
+
+// What the person reads when every model in the chain has failed: a sentence, not the provider's error.
+const unavailable =
+  "WorkBot cannot reach its model right now. Try again in a minute.";
 
 export async function POST(request: Request) {
   const visitor = await visitorId();
@@ -66,7 +71,8 @@ async function reply(
 ) {
   const [memories, { messages, summary }] = await Promise.all([
     visitor ? listMemories(visitor) : [],
-    compact(input, chatModel("small")),
+    // A summary the model could not write is left out; the answer still goes, and the trace holds why.
+    compact(input, modelFor("summarize")).catch(() => compact(input)),
   ]);
 
   await track("question_asked", { conversationId });
@@ -78,7 +84,7 @@ async function reply(
     .filter(Boolean)
     .join("\n\n");
   const result = streamText({
-    model: chatModel(),
+    model: modelFor("chat"),
     // The prompt is the same for everyone and goes first, so the provider can serve it from its cache.
     instructions: [
       {
@@ -98,13 +104,16 @@ async function reply(
     stream: toUIMessageStream({
       stream: result.stream,
       tools: chatTools,
+      onError: () => unavailable,
       // Once the reply is out, keep what this exchange taught about the person.
       onEnd: ({ responseMessage }) => {
-        if (!visitor) return;
+        const reply = textOf(responseMessage);
+        // A turn that failed taught nothing.
+        if (!visitor || !reply) return;
         after(async () => {
           const found = await extractMemories(
-            chatModel("small"),
-            { user: question, assistant: textOf(responseMessage) },
+            modelFor("extract"),
+            { user: question, assistant: reply },
             memories,
           );
           for (const { kind, text } of found)

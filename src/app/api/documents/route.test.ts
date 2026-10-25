@@ -9,7 +9,7 @@ vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/inngest/client", () => ({ inngest: { send: vi.fn() } }));
 vi.mock("@/lib/inbox", () => ({ receive: vi.fn(), discard: vi.fn() }));
 const generated = vi.hoisted(() => ({ calls: 0 }));
-vi.mock("@/lib/chat", () => {
+vi.mock("@/lib/routing", () => {
   const replies = [
     { type: "email" },
     {
@@ -25,7 +25,7 @@ vi.mock("@/lib/chat", () => {
     },
   ];
   return {
-    chatModel: () =>
+    modelFor: () =>
       new MockLanguageModelV4({
         doGenerate: async () => ({
           ...(generated.calls++, {}),

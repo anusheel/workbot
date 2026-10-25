@@ -18,39 +18,46 @@ const usage = {
 };
 
 const modelCalls = vi.hoisted(() => ({ count: 0 }));
+const outage = vi.hoisted(() => ({ on: false }));
+const summaryDown = vi.hoisted(() => ({ on: false }));
 
 vi.mock("@/lib/rate-limit", () => ({ allow: vi.fn(() => true) }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
-vi.mock("@/lib/chat", () => ({
-  chatTools: {},
-  chatModel: (size = "large") => {
+vi.mock("@/lib/chat", () => ({ chatTools: {} }));
+vi.mock("@/lib/routing", () => ({
+  modelFor: (task: string) => {
     modelCalls.count++;
     return new MockLanguageModelV4({
-      // The small model extracts memories; the large one answers.
-      doGenerate: async () => ({
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              memories:
-                size === "small"
-                  ? [
-                      {
-                        kind: "preference",
-                        text: "The person wants short answers.",
-                      },
-                    ]
-                  : [],
-            }),
-          },
-        ],
-        finishReason: { unified: "stop", raw: undefined },
-        usage,
-        warnings: [],
-      }),
+      // The extract route extracts memories; the chat route answers.
+      doGenerate: async () => {
+        if (task === "summarize" && summaryDown.on)
+          throw new Error("HTTP 503 from the provider");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                memories:
+                  task === "extract"
+                    ? [
+                        {
+                          kind: "preference",
+                          text: "The person wants short answers.",
+                        },
+                      ]
+                    : [],
+              }),
+            },
+          ],
+          finishReason: { unified: "stop", raw: undefined },
+          usage,
+          warnings: [],
+        };
+      },
       doStream: async ({ prompt }) => {
+        if (outage.on) throw new Error("HTTP 503 from the provider");
         // The prompt and the memory note are 2 system messages.
         systemBlocks = prompt
           .filter((m) => m.role === "system")
@@ -170,4 +177,41 @@ test("rejects more than 200 messages and an empty or over-long id with field err
     expect(response.status).toBe(400);
     expect((await response.json()).error.fieldErrors.id).toBeDefined();
   }
+});
+
+test("when every model is down, the person gets a sentence, the page stays up and nothing is learned", async () => {
+  outage.on = true;
+  modelCalls.count = 0;
+  const response = await post({
+    id: "c-down",
+    messages: [
+      { id: "m1", role: "user", parts: [{ type: "text", text: "Hello" }] },
+    ],
+  });
+  expect(response.status).toBe(200);
+  // The model is called as the body is read, not before.
+  const body = await response.text();
+  outage.on = false;
+  expect(body).toContain("WorkBot cannot reach its model right now");
+  expect(body).not.toContain("HTTP 503");
+  // The summary and the chat asked for a model; the extraction did not.
+  expect(modelCalls.count).toBe(2);
+});
+
+test("a conversation past the budget whose summary cannot be written still gets its answer", async () => {
+  summaryDown.on = true;
+  const long = "The forklift manual, read aloud. ".repeat(4_000);
+  const response = await post({
+    id: "c-long",
+    messages: [
+      { id: "m1", role: "user", parts: [{ type: "text", text: long }] },
+      { id: "m2", role: "assistant", parts: [{ type: "text", text: long }] },
+      { id: "m3", role: "user", parts: [{ type: "text", text: "Hello" }] },
+    ],
+  });
+  expect(response.status).toBe(200);
+  const body = await response.text();
+  summaryDown.on = false;
+  expect(body).toContain("Finance.");
+  expect(instructions).not.toContain("Earlier in this conversation");
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { ingest } from "@/lib/documents";
 import {
   type MediaType,
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
   const result = await withTrace({ tenant: "api", name: "document" }, () =>
-    ingest(input.source, input.name, chatModel("small")),
+    ingest(input.source, input.name, modelFor("extract")),
   );
   await track("request_submitted", {
     requestId: result.request.id,

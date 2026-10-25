@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { investigate } from "./investigate";
 
 test("the analyst asks the knowledge base and the web on the small model, and reports with sources from both", async () => {
   const run = await investigate(
     "Operations wants to use The UPS Store at 2443 Fillmore St, San Francisco (https://locations.theupsstore.com/ca/san-francisco/2443-fillmore-st) for printing and shredding, about $4,000 a year. What does our vendor onboarding policy require before the first order, and which of those services does the store list?",
-    { analyst: chatModel(), specialist: chatModel("small") },
+    { analyst: modelFor("research"), specialist: modelFor("read") },
     { limits: { steps: 8, dollars: 0.3, seconds: 280 } },
   );
   expect(new Set(run.log.map((e) => e.agent))).toEqual(

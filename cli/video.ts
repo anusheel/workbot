@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import {
   askRecording,
@@ -19,7 +19,7 @@ if (!file) {
 }
 
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
-const model = chatModel("small");
+const model = modelFor("read");
 const frames = await extractFrames(file, { every: Number(values.every) });
 console.log(dim(`${frames.length} frames, 1 every ${values.every} seconds`));
 const scenes = await describeFrames(frames, model);

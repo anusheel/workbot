@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { chatModel } from "./chat";
+import { modelFor } from "./routing";
 import { Email, Invoice, Letter } from "./document-model";
 import { classify } from "./documents";
 import { type Source, extract } from "./extract";
@@ -33,7 +33,7 @@ async function rendered(name: string, as: "pdf" | "png"): Promise<Source> {
 }
 
 test("an invoice PDF comes back as a typed record with its totals", async () => {
-  const model = chatModel("small");
+  const model = modelFor("extract");
   const source = await rendered("invoice-1", "pdf");
   expect(await classify(source, model)).toBe("invoice");
   const { data, review } = await extract(source, Invoice, model);
@@ -49,7 +49,7 @@ test("an invoice PDF comes back as a typed record with its totals", async () => 
 }, 120_000);
 
 test("a filled form as an image keeps its fields, and an email its intent and urgency", async () => {
-  const model = chatModel("small");
+  const model = modelFor("extract");
   const form = await extract(await rendered("letter-2", "png"), Letter, model);
   expect(form.data.fields).toEqual(
     expect.arrayContaining([{ name: "Visitor name", value: "Lena Ortiz" }]),

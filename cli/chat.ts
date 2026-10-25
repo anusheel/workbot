@@ -2,7 +2,7 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { aiModel } from "@/lib/chat";
+import { aiModel } from "@/lib/routing";
 import { close } from "@/lib/db";
 import { type Entry, investigate } from "@/lib/investigate";
 import { providerNames, providers } from "@/lib/providers";

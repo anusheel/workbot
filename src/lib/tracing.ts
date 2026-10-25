@@ -168,6 +168,21 @@ export function traced(model: LanguageModelV4): LanguageModelV4 {
   return wrapLanguageModel({ model, middleware });
 }
 
+/** The calls under a context since a moment: how many, what they cost, and the p95 of their latency. */
+export async function spend(ctx: Context, since: Date) {
+  const [row] = await query<{
+    calls: number;
+    dollars: number;
+    p95: number | null;
+  }>(
+    `select count(*)::int as calls, coalesce(sum(dollars), 0)::float as dollars,
+       percentile_cont(0.95) within group (order by ms) as p95
+     from traces where tenant = $1 and name = $2 and prompt is not distinct from $3 and at >= $4`,
+    [ctx.tenant, ctx.name, ctx.prompt ?? null, since],
+  );
+  return { ...row, p95: Math.round(row.p95 ?? 0) };
+}
+
 export type Summary = {
   calls: number;
   errors: number;

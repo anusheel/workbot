@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { idOf } from "@/lib/agent";
-import { chatModel } from "@/lib/chat";
+import { modelFor } from "@/lib/routing";
 import { close } from "@/lib/db";
 import { embedder } from "@/lib/embeddings";
 import { investigate } from "@/lib/investigate";
@@ -22,7 +22,7 @@ const questions = [
   "What should I do if I click a suspicious link?",
 ];
 
-const models = { analyst: chatModel(), specialist: chatModel("small") };
+const models = { analyst: modelFor("research"), specialist: modelFor("read") };
 const embed = embedder();
 
 async function classic(question: string) {
