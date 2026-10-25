@@ -107,4 +107,6 @@ export const schema = [
     created_at timestamptz not null default now(),
     primary key (name, version)
   )`,
+  // The request a call belongs to, so a fallback is the next call of the same request.
+  `alter table traces add column if not exists request text`,
 ];

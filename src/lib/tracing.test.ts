@@ -220,10 +220,11 @@ test("the spend under a context since a moment: its calls, dollars and p95, noth
   expect(bill.p95).toBe(920);
 });
 
-test("a failed call answered by another model within 5 s counts as a fallback; one left alone does not", async () => {
+test("a failed call answered by another model within 5 s in the same request is a fallback; one left alone, or answered in another request, is not", async () => {
   const before = await failovers(1);
   const call = {
     tenant: "fallback-test",
+    name: "chat",
     input: 10,
     output: 5,
     cached: 0,
@@ -234,16 +235,23 @@ test("a failed call answered by another model within 5 s counts as a fallback; o
   const fine = { ok: true, error: null };
   // Spaced out, so the order by time is the order of the calls.
   const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
-  await recordTrace({ ...call, name: "chat", model: "first-model", ...failed });
-  await tick();
-  await recordTrace({ ...call, name: "chat", model: "second-model", ...fine });
-  await tick();
   await recordTrace({
     ...call,
-    name: "extract",
+    request: "r1",
     model: "first-model",
     ...failed,
   });
+  await tick();
+  await recordTrace({ ...call, request: "r1", model: "second-model", ...fine });
+  await tick();
+  await recordTrace({
+    ...call,
+    request: "r2",
+    model: "first-model",
+    ...failed,
+  });
+  await tick();
+  await recordTrace({ ...call, request: "r3", model: "second-model", ...fine });
   const after = await failovers(1);
   expect(after.failed - before.failed).toBe(2);
   expect(after.recovered - before.recovered).toBe(1);
@@ -254,7 +262,7 @@ test("a failed call answered by another model within 5 s counts as a fallback; o
   });
   expect(after.byModel.find((m) => m.model === "second-model")).toEqual({
     model: "second-model",
-    calls: 1,
+    calls: 2,
     failed: 0,
   });
 });

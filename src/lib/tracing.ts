@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { randomUUID } from "node:crypto";
 import type {
   LanguageModelV4,
   LanguageModelV4Middleware,
@@ -10,8 +11,13 @@ import { io } from "next/cache";
 import { query } from "./db";
 import { costOf } from "./providers";
 
-/** Who a model call is for and what it is doing: set once per request, read by every call inside it. */
-export type Context = { tenant: string; name: string; prompt?: string };
+/** Who a model call is for and what it is doing: set once per request, read by every call inside it; `request` tells one request's calls from another's. */
+export type Context = {
+  tenant: string;
+  name: string;
+  prompt?: string;
+  request?: string;
+};
 
 export type Trace = Context & {
   id: string;
@@ -29,22 +35,23 @@ export type Trace = Context & {
 const context = new AsyncLocalStorage<Context>();
 const fallback: Context = { tenant: "system", name: "call" };
 
-/** Runs `fn` with every model call inside it attributed to the context. */
+/** Runs `fn` with every model call inside it attributed to the context, under one request id. */
 export const withTrace = <T>(ctx: Context, fn: () => Promise<T>) =>
-  context.run(ctx, fn);
+  context.run({ request: randomUUID(), ...ctx }, fn);
 export const currentContext = (): Context => context.getStore() ?? fallback;
 
-const columns = `id, at, tenant, name, prompt, model, input, output, cached, dollars, ms, ok, error`;
+const columns = `id, at, tenant, name, prompt, request, model, input, output, cached, dollars, ms, ok, error`;
 
 export async function recordTrace(
   trace: Omit<Trace, "id" | "at">,
 ): Promise<void> {
   await query(
-    `insert into traces (tenant, name, prompt, model, input, output, cached, dollars, ms, ok, error) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    `insert into traces (tenant, name, prompt, request, model, input, output, cached, dollars, ms, ok, error) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       trace.tenant,
       trace.name,
       trace.prompt ?? null,
+      trace.request ?? null,
       trace.model,
       trace.input,
       trace.output,
@@ -185,8 +192,8 @@ export async function spend(ctx: Context, since: Date) {
 
 /**
  * The fallbacks of the last `hours`: how many calls failed, how many of those
- * another model answered within 5 s under the same tenant and name, and every
- * model's calls and failures.
+ * another model answered within 5 s in the same request, and every model's
+ * calls and failures.
  */
 export async function failovers(hours: number) {
   const since = `now() - make_interval(hours => $1)`;
@@ -194,7 +201,7 @@ export async function failovers(hours: number) {
     `with calls as (
        select ok, at, lead(ok) over w as next_ok, lead(at) over w as next_at
        from traces where at > ${since}
-       window w as (partition by tenant, name order by at))
+       window w as (partition by tenant, name, request order by at))
      select count(*) filter (where not ok)::int as failed,
        count(*) filter (where not ok and next_ok and next_at - at < interval '5 seconds')::int as recovered
      from calls`,
