@@ -6,7 +6,7 @@ site is a second app in `site/`, with its own AGENTS.md.
 
 ## Commands
 
-- `pnpm dev`: the dev server on http://localhost:3000
+- `pnpm dev`: the dev server on http://localhost:3000; without `DATABASE_URL` it runs on an embedded database in `.data/pg`
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
 - `pnpm check`: lint, types, tests and a production build, for both apps; CI runs the same on every pull request and on `main`
 - `pnpm --filter workbot-site dev`: the public site on http://localhost:3001
@@ -14,7 +14,14 @@ site is a second app in `site/`, with its own AGENTS.md.
 
 ## Claude Code
 
-Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. `.mcp.json` registers the Linear, GitHub and Figma MCP servers; each asks you to sign in on first use. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path.
+Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path.
+
+## Tooling for agents
+
+`.mcp.json` registers Linear, GitHub and Figma, plus 2 servers from this
+repository: `database` (read-only SQL, schema, samples) and `posthog` (which
+events fired). Their logic is in `src/mcp/` with in-process tests; the entries
+in `mcp/` only connect them to stdio. Both read `.env.local`.
 
 ## Conventions
 
@@ -23,7 +30,11 @@ Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-dep
 - Server Components by default; `"use client"` only for state, effects or browser APIs
 - Pages compose shadcn/ui primitives from `src/components/ui/`; the app's own components live in `src/components/`, are kebab-case files exporting a PascalCase name, have a render test beside them and are imported by path
 - Route handlers live at `src/app/api/<name>/route.ts` and return JSON
-- `src/lib/config.ts` is the only module that reads `process.env`
+- `src/lib/config.ts` is the only module that reads `process.env`; `.env.example` lists the variables, required ones uncommented
+- `src/lib/db.ts` is the only module that knows the database driver; everything else calls `query` with `$n` parameters, never values spliced into SQL
+- A schema change is one idempotent statement appended to `src/lib/schema.ts`
+- Pure models (schemas, constants, labels) live in `src/lib/<name>-model.ts` so client components can import them; queries stay in `src/lib/<name>.ts`
+- Product events go through `track` in `src/lib/analytics.tsx`: snake_case names, properties that identify records, never people
 - A folder with its own rules has a `CLAUDE.md` beside the files: `src/app/api/` for routes, `content/policies/` for policies
 - Comments say why, never what; no comment restates the line below it
 - Prettier formats everything (`pnpm format`); formatting is never a review comment
