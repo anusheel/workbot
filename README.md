@@ -1,30 +1,14 @@
-# plank-fde-training
+# WorkBot
 
-Your project for Plank's [AI FDE Course](https://joinplank.com/ai-fde-course).
+An AI assistant and workflow engine for a company's operations, finance and
+support teams, and for the customers they serve.
 
-One repository for the whole course. Day 1 scaffolds it, and every day after
-adds to it: WorkBot, an enterprise workflow platform, grows here week by week.
-There are no per-day folders. The project is the deliverable.
+Built day by day on Plank's [AI FDE Course](https://joinplank.com/ai-fde-course).
+Each day is a branch, `day-01` to `day-40`, merged into `main` through a pull
+request and kept, so any day's code can be read on its own. The record of each
+day is at [joinplank.com/fde/anusheel](https://joinplank.com/fde/anusheel).
 
-## How verification works
+## Run it
 
-When you finish a day, open the day's page in the course and press
-**Verify Day N**. Plank reads this public repository (it never writes to it)
-and checks whether the commits since your last verified day are broadly that
-day's work. What the day ships is the yardstick, and partial progress counts.
-Days verify in order.
-
-Keep commits small and messages honest. They are what the check reads.
-
-## Structure
-
-Yours to decide. From Week 6 the course moves WorkBot into a config-first
-monorepo, so a layout with room for several apps and shared packages saves a
-move later.
-
-## Your profile
-
-Every verified day appears on your public profile at
-`joinplank.com/fde/<your-github-login>`, with what you shipped and the skills
-it added. The repository description links to it; add the same link as the
-repository's website so it shows under the name.
+    pnpm install
+    pnpm dev
