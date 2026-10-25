@@ -30,3 +30,7 @@ web page reading, notes and (with a Brave key) web search as tools, and
 citations, and `/investigate <question>` for an agent that searches the
 policies, reads them and writes a sourced report. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
 every variable. `pnpm test:live` runs the tests that call the real APIs.
+
+`pnpm explain "<question>"` runs the customer-reply pipeline (researcher,
+writer, safety editor) on the Claude Agent SDK, which uses your Claude Code
+sign-in. `POST /api/intake` turns a message into a triaged request.
