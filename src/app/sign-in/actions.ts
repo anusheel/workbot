@@ -2,13 +2,12 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { endSession, sessionCookie, startSession } from "@/lib/auth";
-
-/** Where to go after signing in: a path on this site, never another site. */
-const safe = (next: FormDataEntryValue | null) => {
-  const path = typeof next === "string" ? next : "";
-  return path.startsWith("/") && !path.startsWith("//") ? path : "/admin";
-};
+import {
+  endSession,
+  returnPath,
+  sessionCookie,
+  startSession,
+} from "@/lib/auth";
 
 export async function signIn(_: string | undefined, form: FormData) {
   const key = String(form.get("key") ?? "").trim();
@@ -21,7 +20,7 @@ export async function signIn(_: string | undefined, form: FormData) {
     path: "/",
     maxAge: session.maxAge,
   });
-  redirect(safe(form.get("next")));
+  redirect(returnPath(form.get("next")));
 }
 
 export async function signOut() {

@@ -5,6 +5,7 @@ import {
   issueKey,
   listUsers,
   permits,
+  returnPath,
   revokeKey,
   startSession,
   userByKey,
@@ -85,4 +86,16 @@ test("a route refuses no one with 401 and too low a role with 403", async () => 
     name: "Agent",
     role: "agent",
   });
+});
+
+test.each([
+  ["/admin/tickets", "/admin/tickets"],
+  ["/requests?team=finance", "/requests?team=finance"],
+  ["//attacker.example", "/admin"],
+  ["/\\attacker.example", "/admin"],
+  ["https://attacker.example", "/admin"],
+  ["admin", "/admin"],
+  [null, "/admin"],
+])("after sign-in, %s leads to %s", (next, path) => {
+  expect(returnPath(next)).toBe(path);
 });
