@@ -24,9 +24,13 @@ const statusTone = {
 export function RequestList({
   requests,
   filtered = false,
+  showCount = false,
 }: {
   requests: WorkRequest[];
   filtered?: boolean;
+  // Only for a list that is the whole result: /admin passes a slice, so a
+  // count there would disagree with the totals beside it.
+  showCount?: boolean;
 }) {
   if (requests.length === 0) {
     return filtered ? (
@@ -42,9 +46,11 @@ export function RequestList({
   }
   return (
     <>
-      <p className="mb-2 text-sm text-muted-foreground">
-        {requests.length} {requests.length === 1 ? "request" : "requests"}
-      </p>
+      {showCount && (
+        <p className="mb-2 text-sm text-muted-foreground">
+          {requests.length} {requests.length === 1 ? "request" : "requests"}
+        </p>
+      )}
       <Table>
         <TableHeader>
           <TableRow>

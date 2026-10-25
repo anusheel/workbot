@@ -61,6 +61,7 @@ async function Requests({
         <RequestList
           requests={await listRequests(filter)}
           filtered={Boolean(filter.team || filter.status)}
+          showCount
         />
       </div>
     </>
