@@ -1,3 +1,14 @@
+// NaN would make the watch's `spend > budget` never true, which turns the alert off.
+function dailyDollars(value: string | undefined) {
+  if (!value) return 5;
+  const dollars = Number(value);
+  if (Number.isFinite(dollars) && dollars > 0) return dollars;
+  console.warn(
+    `ALERT_DAILY_DOLLARS="${value}" is not a positive number; using 5`,
+  );
+  return 5;
+}
+
 export const config = {
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
   commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
@@ -16,7 +27,7 @@ export const config = {
   // Web search for the assistant; unset means the tool is not offered.
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   // The spend in a day that raises an alert.
-  alerts: { dailyDollars: Number(process.env.ALERT_DAILY_DOLLARS || 5) },
+  alerts: { dailyDollars: dailyDollars(process.env.ALERT_DAILY_DOLLARS) },
   // The workflow engine's keys for Inngest Cloud; unset, the app talks to the dev server.
   inngest: {
     eventKey: process.env.INNGEST_EVENT_KEY,
