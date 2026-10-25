@@ -217,3 +217,15 @@ checks. Sizes: S is under an hour, M is a few hours.
 - Attach a recording on a request's page: ffmpeg takes 1 frame every 2 seconds, scaled to at most 1024 pixels wide, the small model describes each batch of frames, writes the timeline, and the recording is filed on the ticket with what every frame showed
 - A question box under each recording answers from the frame descriptions; `pnpm video <file> [--every n] [--ask "<question>"]` runs the same pipeline from the terminal
 - Recordings carry no transcript: audio needs a hosted speech-to-text provider, which this build does not have
+
+### WB-39 Extraction engine
+
+- `extract(source, schema, model)` turns a document (text, a page, or a PDF or image file) into the record a Zod schema describes: one schema serves both providers through the AI SDK's `Output.object`; an output that does not fit goes back to the model with the reason, up to 3 times
+- Each top-level field comes back with the model's confidence, and the fields under 0.7 are listed for a person to check
+- 4 schemas in `src/lib/document-model.ts`: invoice, email, letter or form, and job posting; `pnpm extract <file or url> [--as kind]` runs one from the terminal
+- `pnpm extract:eval` runs the 18 documents in `content/eval/documents` (invoices as PDFs, forms and letters as images, emails and job postings as text) against their expected records and prints the accuracy by document and in all
+
+### WB-40 Document intake
+
+- `POST /api/documents` (JSON text or address, or a file as form data) and "File it from a document" on the new-request page classify the document, extract its record and file a request for the right team: invoices to finance, complaints and questions to support, the rest to operations, with the priority from the email's urgency
+- The record is kept on the request and shown under Documents, field by field, with the doubtful fields marked Check
