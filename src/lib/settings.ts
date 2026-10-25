@@ -38,12 +38,19 @@ export const Settings = z.object({
   // The model each task runs on, then the ones that answer when it cannot, in order.
   routes: z.record(z.enum(tasks), z.array(RouteName).min(1)),
   pages: z.object({ maxAgeMinutes: z.number().positive() }),
+  // How long operational records are kept: traces; measurements (cache reads, the sync log); a document's bytes once its run has ended.
+  retention: z.object({
+    tracesDays: z.number().int().positive(),
+    measurementsDays: z.number().int().positive(),
+    documentBytesDays: z.number().int().positive(),
+  }),
 });
 export type Settings = z.infer<typeof Settings>;
 export const Overrides = z
   .object({
     routes: z.partialRecord(z.enum(tasks), z.array(RouteName).min(1)),
     pages: Settings.shape.pages.partial(),
+    retention: Settings.shape.retention.partial(),
   })
   .partial();
 export type Overrides = z.infer<typeof Overrides>;
@@ -79,6 +86,7 @@ export function resolve(
   return Settings.parse({
     routes,
     pages: { ...defaults.pages, ...overrides.pages },
+    retention: { ...defaults.retention, ...overrides.retention },
   });
 }
 

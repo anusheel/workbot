@@ -11,6 +11,7 @@ import { io } from "next/cache";
 import type { Access } from "./auth-model";
 import { query } from "./db";
 import { costOf } from "./providers";
+import { redact } from "./redact";
 
 /** Who a request is for and what it is doing: set once per request, read by every model call and every tool inside it; `role` is what the caller may do, `request` tells one request's calls from another's. */
 export type Context = {
@@ -67,7 +68,8 @@ export async function recordTrace(
       trace.dollars,
       trace.ms,
       trace.ok,
-      trace.error,
+      // A provider's error can quote what it was sent; what is personal or secret goes before it is stored.
+      trace.error && redact(trace.error),
     ],
   );
 }

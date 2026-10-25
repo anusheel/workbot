@@ -19,6 +19,7 @@ const defaults: Settings = {
     judge: ["anthropic/large"],
   },
   pages: { maxAgeMinutes: 60 },
+  retention: { tracesDays: 90, measurementsDays: 30, documentBytesDays: 30 },
 };
 
 test("the defaults file parses and the running settings come from it", () => {
@@ -29,12 +30,22 @@ test("the defaults file parses and the running settings come from it", () => {
 test("a customer's value replaces the default's, task by task and field by field", () => {
   const resolved = resolve(
     defaults,
-    { routes: { chat: ["anthropic/large"] }, pages: { maxAgeMinutes: 5 } },
+    {
+      routes: { chat: ["anthropic/large"] },
+      pages: { maxAgeMinutes: 5 },
+      // A contract that keeps traces for a week, and the rest as the product does.
+      retention: { tracesDays: 7 },
+    },
     {},
   );
   expect(resolved.routes.chat).toEqual(["anthropic/large"]);
   expect(resolved.routes.generate).toEqual(defaults.routes.generate);
   expect(resolved.pages.maxAgeMinutes).toBe(5);
+  expect(resolved.retention).toEqual({
+    tracesDays: 7,
+    measurementsDays: 30,
+    documentBytesDays: 30,
+  });
 });
 
 test("an environment route goes first in its task's chain, once", () => {
