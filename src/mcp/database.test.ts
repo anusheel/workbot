@@ -1,7 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { beforeAll, expect, test } from "vitest";
+import { beforeAll, expect, test, vi } from "vitest";
 import { query } from "@/lib/db";
+import { receive } from "@/lib/inbox";
 import { createRequest } from "@/lib/requests";
 import { databaseServer } from "./database";
 
@@ -75,4 +76,38 @@ test("the query tool runs selects and reports errors to the model", async () => 
     arguments: { table: "users" },
   });
   expect(unknown.isError).toBe(true);
+});
+
+test("binary values show as a placeholder with their size", async () => {
+  await receive("note.pdf", "application/pdf", new Uint8Array([1, 2, 3, 4, 5]));
+  const described = JSON.parse(
+    text(
+      await client.callTool({
+        name: "describe-table",
+        arguments: { table: "inbox" },
+      }),
+    ),
+  );
+  expect(described.sample[0].bytes).toBe("<5 bytes>");
+});
+
+test("the row limit goes to the database and the result says when it was cut", async () => {
+  const spy = vi.fn(query) as typeof query;
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  const limited = new Client({ name: "test", version: "1.0.0" });
+  await databaseServer(spy).connect(serverTransport);
+  await limited.connect(clientTransport);
+
+  const result = JSON.parse(
+    text(
+      await limited.callTool({
+        name: "query",
+        arguments: { sql: "select n from generate_series(1, 150) n;" },
+      }),
+    ),
+  );
+  expect(result.rows).toHaveLength(100);
+  expect(result.truncated).toBe(true);
+  expect(vi.mocked(spy).mock.calls[0][0]).toMatch(/limit 101\s*$/i);
 });

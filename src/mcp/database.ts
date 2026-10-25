@@ -6,6 +6,18 @@ const identifier = /^[a-z_][a-z0-9_]*$/;
 const json = (value: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }],
 });
+const rowLimit = 100;
+
+/** Raw bytes would fill the model's context, so a binary value is shown as its size. */
+const readable = (rows: Record<string, unknown>[]) =>
+  rows.map((row) =>
+    Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [
+        key,
+        value instanceof Uint8Array ? `<${value.byteLength} bytes>` : value,
+      ]),
+    ),
+  );
 const failure = (err: unknown) => ({
   content: [
     {
@@ -48,8 +60,16 @@ export function databaseServer(query: Query) {
     },
     async ({ sql }) => {
       try {
-        const rows = await query(sql);
-        return json({ rows: rows.slice(0, 100), count: rows.length });
+        // One row past the limit tells whether the result was cut.
+        const rows = await query(
+          `select * from (${sql.trim().replace(/;+\s*$/, "")}) as limited limit ${rowLimit + 1}`,
+        );
+        const cut = rows.length > rowLimit;
+        return json({
+          rows: readable(rows.slice(0, rowLimit)),
+          count: Math.min(rows.length, rowLimit),
+          ...(cut && { truncated: true }),
+        });
       } catch (err) {
         return failure(err);
       }
@@ -87,7 +107,7 @@ export function databaseServer(query: Query) {
       return json({
         columns: await columns(query, table),
         rows: Number(count),
-        sample: await query(`select * from ${table} limit 5`),
+        sample: readable(await query(`select * from ${table} limit 5`)),
       });
     },
   );
