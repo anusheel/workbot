@@ -315,3 +315,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 - Programmatic checks before the judge (a forbidden phrase, a tool not called, the wrong document kind); the judge on the large model, never the one under test, calibrated by `pnpm eval:calibrate` against 20 replies a person scored
 - `pnpm eval --gate`: a hard failure or a mean under 0.7 fails, a mean below the last recorded run by more than the detectable change warns; `.github/workflows/eval.yml` runs the smoke subset on every pull request that touches a prompt, a tool, a model or an eval and posts the report, and the full suite nightly onto the scoreboard; the fleet's queue runs the same gate
 - `/admin/evals`: every recorded run with its margin, the day's fallbacks, the Day 23 framework comparison read from its document, the fleet's numbers; `docs/evals.md` is the loop written down
+
+### WB-53 Audited against the principles; the customer in configuration; one agent where the eval allows
+
+- `docs/architecture.md`: the system drawn as it is, a row per principle with what it costs today, the 4 questions answered, the 2 migrations with before and after; `brain/architecture/principles.md` and D15 carry the principles into Weeks 7 and 8
+- `content/customer.json` and `src/lib/customer.ts`: the company, its teams and what each files, the filing rules and the customer sections as configuration; the prompts, the request model and the filing rules read it; a new customer is a new file (10 files touched became 1)
+- `src/lib/investigate.ts`: one agent in place of the analyst and its 2 specialists, after `pnpm compare:agents` scored the designs on the 17 golden answer cases (0.73 at $0.018 and 18 s a question; 0.92 at $0.0016 and 6 s for one agent on the small model); the routing table's research row reads small then large
