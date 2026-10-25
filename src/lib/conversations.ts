@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import { z } from "zod";
 
 /** A chat kept in the browser: the id useChat runs under, a title from its first question, and its messages. */
 export type Conversation = {
@@ -32,13 +33,35 @@ export function getConversations(): Conversation[] {
 export const getServerConversations = () => none;
 
 export function saveConversations(conversations: Conversation[]) {
-  localStorage.setItem(key, JSON.stringify(conversations));
+  // The list is most recent first, so a full store gives up the tail.
+  let kept = conversations;
+  while (!write(kept) && kept.length > 0) kept = kept.slice(0, -1);
   for (const listener of listeners) listener();
 }
 
+function write(conversations: Conversation[]) {
+  try {
+    localStorage.setItem(key, JSON.stringify(conversations));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The messages are the AI SDK's to describe; the list only needs to be one.
+const stored = z.array(
+  z.object({
+    id: z.string(),
+    title: z.string(),
+    updatedAt: z.number(),
+    messages: z.array(z.unknown()),
+  }),
+);
+
 function parse(raw: string | null): Conversation[] {
   try {
-    return raw ? JSON.parse(raw) : none;
+    const list = stored.safeParse(raw ? JSON.parse(raw) : none);
+    return list.success ? (list.data as Conversation[]) : none;
   } catch {
     return none;
   }
