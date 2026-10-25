@@ -1,6 +1,6 @@
 # Routing: 2 providers, 1 codebase
 
-Every model call in WorkBot names a task, not a model. `src/lib/routing.ts` maps each task to its route, a provider and a size, and to the routes that take over when the first cannot answer. Ids and prices stay in `src/lib/providers.ts`. The table below is what `pnpm routes` measured on 2026-10-25, and the routing after it is what the table decided.
+Every model call in WorkBot names a task, not a model. `content/defaults.json` maps each task to its route, a provider and a size, and to the routes that take over when the first cannot answer; a customer's file may override a task's routes, and `src/lib/settings.ts` resolves the levels. `src/lib/routing.ts` turns a route into a model. Ids and prices stay in `src/lib/providers.ts`. The table below is what `pnpm routes` measured on 2026-10-25, and the routing after it is what the table decided.
 
 ## Where the providers differ
 

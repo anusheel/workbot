@@ -4,63 +4,64 @@ The Linear workspace for WorkBot, mirrored here so agents can read it by path.
 One ticket per small change. The acceptance criteria are what the review
 checks. Sizes: S is under an hour, M is a few hours.
 
-| Ticket | Title                                                                                              | Size | Status |
-| ------ | -------------------------------------------------------------------------------------------------- | ---- | ------ |
-| WB-1   | Landing page                                                                                       | S    | done   |
-| WB-2   | Health endpoint                                                                                    | S    | done   |
-| WB-3   | Deployment settings page                                                                           | S    | done   |
-| WB-4   | CI on every pull request                                                                           | S    | done   |
-| WB-5   | Request model with validation                                                                      | S    | done   |
-| WB-6   | Intake form                                                                                        | M    | done   |
-| WB-7   | Requests list                                                                                      | S    | done   |
-| WB-8   | Requests API                                                                                       | S    | done   |
-| WB-9   | Admin console shell                                                                                | S    | done   |
-| WB-10  | Request counts on the admin overview                                                               | S    | done   |
-| WB-11  | Settings inside the admin console                                                                  | S    | done   |
-| WB-12  | Request detail page                                                                                | S    | done   |
-| WB-13  | Change a request's status                                                                          | S    | done   |
-| WB-14  | Filter requests by team and status                                                                 | S    | done   |
-| WB-15  | Policies as Markdown documents                                                                     | M    | done   |
-| WB-16  | Public site scaffold                                                                               | S    | done   |
-| WB-17  | Postgres persistence for requests                                                                  | M    | done   |
-| WB-18  | Analytics on the intake funnel                                                                     | S    | done   |
-| WB-19  | Validation messages from the API in the UI                                                         | S    | open   |
-| WB-20  | Request detail: comments                                                                           | M    | open   |
-| WB-21  | Admin assistant in the terminal                                                                    | M    | done   |
-| WB-22  | Tools for the assistant                                                                            | M    | done   |
-| WB-23  | Research with citations                                                                            | M    | done   |
-| WB-24  | Web chat                                                                                           | M    | done   |
-| WB-25  | Assistant in the admin console                                                                     | S    | done   |
-| WB-26  | Generated dashboards, forms and timelines                                                          | M    | done   |
-| WB-27  | Memory of the person across conversations                                                          | M    | done   |
-| WB-28  | Long conversations within budget                                                                   | S    | done   |
-| WB-29  | Investigation agent                                                                                | M    | done   |
-| WB-30  | Explainer pipeline for customer replies                                                            | M    | done   |
-| WB-31  | Intake workflow: triage to the queue                                                               | S    | done   |
-| WB-32  | Knowledge base of 50 or more documents                                                             | M    | done   |
-| WB-33  | Agentic retrieval tools                                                                            | M    | done   |
-| WB-34  | Scraper for supplier pages                                                                         | S    | done   |
-| WB-35  | Browser agent for portals with no API                                                              | M    | done   |
-| WB-36  | Research analyst: the investigation with specialists, filed on the ticket                          | M    | done   |
-| WB-37  | Voice intake line                                                                                  | M    | done   |
-| WB-38  | Recordings read into tickets                                                                       | M    | done   |
-| WB-39  | Extraction engine                                                                                  | M    | done   |
-| WB-40  | Document intake                                                                                    | S    | done   |
-| WB-41  | Document approval workflow                                                                         | M    | done   |
-| WB-42  | Scheduled check-ins and reminders                                                                  | S    | done   |
-| WB-43  | Tracing with cost per tenant                                                                       | M    | done   |
-| WB-44  | Prompts outside the code                                                                           | S    | done   |
-| WB-45  | Evals and alerting                                                                                 | M    | done   |
-| WB-46  | Deployment                                                                                         | S    | open   |
-| WB-47  | The architecture written up, and a design pitched                                                  | M    | done   |
-| WB-48  | One policy across 3 CLIs, the company brain, the way of working                                    | M    | done   |
-| WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue                           | M    | done   |
-| WB-50  | The research agent on 3 frameworks, compared on 5 topics                                           | M    | done   |
-| WB-51  | Two providers behind one layer, routed per task, with a fallback that keeps WorkBot up             | M    | done   |
-| WB-52  | Evals as the development loop: 30 cases a task, a calibrated judge, the gate in CI, the scoreboard | M    | done   |
-| WB-53  | Audited against the principles; the customer in configuration; one agent where the eval allows     | M    | done   |
-| WB-54  | The ticketing system through its MCP server: the sync, 3 product-level tools, the routes compared  | M    | done   |
-| WB-55  | One shape for tickets and contacts, 3 sync paths, the rule table, a cache with its freshness       | M    | done   |
+| Ticket | Title                                                                                                         | Size | Status |
+| ------ | ------------------------------------------------------------------------------------------------------------- | ---- | ------ |
+| WB-1   | Landing page                                                                                                  | S    | done   |
+| WB-2   | Health endpoint                                                                                               | S    | done   |
+| WB-3   | Deployment settings page                                                                                      | S    | done   |
+| WB-4   | CI on every pull request                                                                                      | S    | done   |
+| WB-5   | Request model with validation                                                                                 | S    | done   |
+| WB-6   | Intake form                                                                                                   | M    | done   |
+| WB-7   | Requests list                                                                                                 | S    | done   |
+| WB-8   | Requests API                                                                                                  | S    | done   |
+| WB-9   | Admin console shell                                                                                           | S    | done   |
+| WB-10  | Request counts on the admin overview                                                                          | S    | done   |
+| WB-11  | Settings inside the admin console                                                                             | S    | done   |
+| WB-12  | Request detail page                                                                                           | S    | done   |
+| WB-13  | Change a request's status                                                                                     | S    | done   |
+| WB-14  | Filter requests by team and status                                                                            | S    | done   |
+| WB-15  | Policies as Markdown documents                                                                                | M    | done   |
+| WB-16  | Public site scaffold                                                                                          | S    | done   |
+| WB-17  | Postgres persistence for requests                                                                             | M    | done   |
+| WB-18  | Analytics on the intake funnel                                                                                | S    | done   |
+| WB-19  | Validation messages from the API in the UI                                                                    | S    | open   |
+| WB-20  | Request detail: comments                                                                                      | M    | open   |
+| WB-21  | Admin assistant in the terminal                                                                               | M    | done   |
+| WB-22  | Tools for the assistant                                                                                       | M    | done   |
+| WB-23  | Research with citations                                                                                       | M    | done   |
+| WB-24  | Web chat                                                                                                      | M    | done   |
+| WB-25  | Assistant in the admin console                                                                                | S    | done   |
+| WB-26  | Generated dashboards, forms and timelines                                                                     | M    | done   |
+| WB-27  | Memory of the person across conversations                                                                     | M    | done   |
+| WB-28  | Long conversations within budget                                                                              | S    | done   |
+| WB-29  | Investigation agent                                                                                           | M    | done   |
+| WB-30  | Explainer pipeline for customer replies                                                                       | M    | done   |
+| WB-31  | Intake workflow: triage to the queue                                                                          | S    | done   |
+| WB-32  | Knowledge base of 50 or more documents                                                                        | M    | done   |
+| WB-33  | Agentic retrieval tools                                                                                       | M    | done   |
+| WB-34  | Scraper for supplier pages                                                                                    | S    | done   |
+| WB-35  | Browser agent for portals with no API                                                                         | M    | done   |
+| WB-36  | Research analyst: the investigation with specialists, filed on the ticket                                     | M    | done   |
+| WB-37  | Voice intake line                                                                                             | M    | done   |
+| WB-38  | Recordings read into tickets                                                                                  | M    | done   |
+| WB-39  | Extraction engine                                                                                             | M    | done   |
+| WB-40  | Document intake                                                                                               | S    | done   |
+| WB-41  | Document approval workflow                                                                                    | M    | done   |
+| WB-42  | Scheduled check-ins and reminders                                                                             | S    | done   |
+| WB-43  | Tracing with cost per tenant                                                                                  | M    | done   |
+| WB-44  | Prompts outside the code                                                                                      | S    | done   |
+| WB-45  | Evals and alerting                                                                                            | M    | done   |
+| WB-46  | Deployment                                                                                                    | S    | open   |
+| WB-47  | The architecture written up, and a design pitched                                                             | M    | done   |
+| WB-48  | One policy across 3 CLIs, the company brain, the way of working                                               | M    | done   |
+| WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue                                      | M    | done   |
+| WB-50  | The research agent on 3 frameworks, compared on 5 topics                                                      | M    | done   |
+| WB-51  | Two providers behind one layer, routed per task, with a fallback that keeps WorkBot up                        | M    | done   |
+| WB-52  | Evals as the development loop: 30 cases a task, a calibrated judge, the gate in CI, the scoreboard            | M    | done   |
+| WB-53  | Audited against the principles; the customer in configuration; one agent where the eval allows                | M    | done   |
+| WB-54  | The ticketing system through its MCP server: the sync, 3 product-level tools, the routes compared             | M    | done   |
+| WB-55  | One shape for tickets and contacts, 3 sync paths, the rule table, a cache with its freshness                  | M    | done   |
+| WB-56  | Config-first: three levels, the rule language and the model's proposals, the entity generator, the task graph | M    | done   |
 
 ## Acceptance criteria
 
@@ -337,3 +338,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `src/inngest/sync.ts` and `src/app/api/webhooks/github/`: the pull every 15 minutes, a signed delivery replacing a row now, the nightly full pull that logs what the other paths missed and drops what the system no longer lists; every refresh logged with how far behind the copy was
 - `content/rules.json` and `src/lib/rules.ts`: the rule table, applied in order before the model sees a record, every change written on it; a phone in any written form finds its contact
 - `src/lib/cache.ts`: page reads cached per tenant, served stale while refreshed, with when they were fetched in the tool's answer; hit rate and age measured; `/admin/tickets` shows the paths, the rules and the cache; `docs/data-layer.md`; D17
+
+### WB-56 Config-first: three levels, the rule language and the model's proposals, the entity generator, the task graph
+
+- `content/customers/<id>.json`, `content/defaults.json`, `src/lib/settings.ts`: the product's defaults, the customer's file chosen by `CUSTOMER`, the environment, with the precedence written once; a second tenant from a file alone; the request model pure, built from the customer's teams on the server
+- `content/rules.rules`, `src/lib/rule-language.ts`: the rules in a language of 15 productions, an Ohm grammar, semantics onto the Day 28 engine, a printer that round-trips, 20 tests; `pnpm rule` asks the model for a line, tries it on the copy, and a person approves it into the file
+- `content/entities/*.json`, `src/lib/entity-generator.ts`, `pnpm generate`: a description becomes the table, the model, the route with its test, the page with its form; `--check` first in `pnpm check`; vendors and locations from descriptions alone
+- `turbo.json`: the check as a task graph over the root and the site, cached by inputs, restored in CI; `docs/config.md`; D18
