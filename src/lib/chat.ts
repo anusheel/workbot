@@ -1,11 +1,12 @@
 import { type ToolSet, tool } from "ai";
 import type { Access } from "./auth-model";
+import type { Tool } from "./tool";
 import { toolsFor } from "./tools";
 
-/** The web chat's tools for a caller, in the AI SDK's shape: the public gets the customer set, a signed-in employee what their role reaches. */
-export const chatToolsFor = (role: Access): ToolSet =>
+/** Tools in the AI SDK's shape, each still checking the caller's role when it runs. */
+export const toolSet = (tools: Tool[]): ToolSet =>
   Object.fromEntries(
-    toolsFor(role).map((t) => [
+    tools.map((t) => [
       t.name,
       tool({
         description: t.description,
@@ -14,3 +15,6 @@ export const chatToolsFor = (role: Access): ToolSet =>
       }),
     ]),
   );
+
+/** The web chat's tools for a caller: the public gets the customer set, a signed-in employee what their role reaches. */
+export const chatToolsFor = (role: Access): ToolSet => toolSet(toolsFor(role));

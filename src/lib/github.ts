@@ -78,8 +78,8 @@ const skew = 3_600_000;
  */
 export function githubTools(
   connect: () => Promise<Mcp> = githubConnect,
+  { owner, repo, slug } = repository(),
 ): Tool[] {
-  const { owner, repo, slug } = repository();
   const key = z
     .string()
     .min(1)

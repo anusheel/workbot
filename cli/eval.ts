@@ -4,6 +4,7 @@ import { parseArgs } from "node:util";
 import { close } from "@/lib/db";
 import { detectable, stats } from "@/lib/eval";
 import { withBrowser } from "@/lib/eval-documents";
+import { securitySuite } from "@/lib/eval-security";
 import {
   type Case,
   type EvalTask,
@@ -22,7 +23,7 @@ import { spend, withTrace } from "@/lib/tracing";
 // times, scored, with the bill and the p95 of a call read back from the traces.
 // The gate exits 1 on a hard failure or a mean under the threshold and warns of
 // a soft regression against the last recorded run of the same subset. Usage:
-//   pnpm eval [--task chat|extract|triage|all] [--smoke] [--runs 2] [--only kind|id]
+//   pnpm eval [--task chat|extract|triage|security|all] [--smoke] [--runs 2] [--only kind|id]
 //            [--prompt workbot/system@2] [--gate] [--record] [--report file]
 const { values } = parseArgs({
   options: {
@@ -56,6 +57,9 @@ async function promptText(): Promise<[string, string]> {
   return [values.prompt, row.text];
 }
 
+/** The route a task's model comes from: the security cases attack the assistant, so they run on the chat's. */
+const routed = (task: EvalTask) => (task === "security" ? "chat" : task);
+
 async function suiteOf(task: EvalTask): Promise<[string, Case[]]> {
   switch (task) {
     case "chat": {
@@ -66,6 +70,8 @@ async function suiteOf(task: EvalTask): Promise<[string, Case[]]> {
       return ["code", await withBrowser(extractSuite)];
     case "triage":
       return ["code", await triageSuite()];
+    case "security":
+      return ["code", await securitySuite(modelFor("judge"))];
   }
 }
 
@@ -102,7 +108,10 @@ for (const task of tasks) {
     const scores: number[] = [];
     let reason = "";
     for (let run = 0; run < runs; run++) {
-      const verdict = await withTrace(ctx, () => c.run(modelFor(task)));
+      const verdict = await withTrace(ctx, () =>
+        // The assistant under attack runs on the chat route.
+        c.run(modelFor(task === "security" ? "chat" : task)),
+      );
       scores.push(verdict.score);
       reason = verdict.reason;
       if (verdict.violations.length) hard++;
@@ -141,7 +150,7 @@ for (const task of tasks) {
       commit,
       task,
       subset,
-      route: routes[task][0],
+      route: routes[routed(task)][0],
       prompt: label,
       cases: cases.length,
       runs,

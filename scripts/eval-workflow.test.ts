@@ -165,6 +165,7 @@ test("a pull request runs the smoke evals when a prompt, tool, model, eval or th
     "src/lib/eval.ts",
     "src/lib/eval-suite.ts",
     "src/lib/eval-documents.ts",
+    "src/lib/eval-security.ts",
     "cli/eval.ts",
     "content/eval/**",
     "content/knowledge/**",

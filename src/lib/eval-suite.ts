@@ -14,7 +14,7 @@ import { documentCases, extractionResult } from "./eval-documents";
 import { triage } from "./intake";
 import { currentContext, withTrace } from "./tracing";
 
-export const evalTasks = ["chat", "extract", "triage"] as const;
+export const evalTasks = ["chat", "extract", "triage", "security"] as const;
 export type EvalTask = (typeof evalTasks)[number];
 
 /** One case of a task: scored on a model, with the reason and the checks it failed outright. */
