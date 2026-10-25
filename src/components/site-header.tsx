@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const links = [{ href: "/settings", label: "Settings" }] as const;
+const links = [
+  { href: "/requests", label: "Requests" },
+  { href: "/settings", label: "Settings" },
+] as const;
 
 export function SiteHeader() {
   return (
