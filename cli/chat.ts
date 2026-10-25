@@ -2,7 +2,9 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { z } from "zod";
+import { aiModel } from "@/lib/chat";
 import { close } from "@/lib/db";
+import { investigate } from "@/lib/investigate";
 import { providerNames, providers } from "@/lib/providers";
 import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
@@ -30,12 +32,18 @@ const session = new Session(Provider.parse(values.provider), values.model, {
 });
 
 const help = `/research <question>       answer from the company's sources, with citations
+/investigate <question>    an agent searches the knowledge base and the web and writes a sourced report
 /model [provider] [model]  switch models; no arguments lists them
 /system [text]             show or replace the system prompt
 /cost                      tokens and dollars spent in this session
 /exit                      leave`;
 
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
+// A tool's input on one line; a long one, such as a report, is cut short.
+const brief = (input: unknown) => {
+  const text = JSON.stringify(input);
+  return text.length > 160 ? `${text.slice(0, 160)}…` : text;
+};
 
 async function command(line: string): Promise<string | null> {
   const [name, ...args] = line.slice(1).split(/\s+/);
@@ -71,9 +79,23 @@ async function command(line: string): Promise<string | null> {
       const { usage } = await research(args.join(" "), session.provider, {
         step: (message) => console.log(dim(`· ${message}`)),
         text: (text) => stdout.write(text),
-        spend: (model, usage) => session.record(model, usage),
+        spend: (model, usage) => session.record(model.id, usage, model.price),
       });
       return `\n${dim(`${usage.input} tokens in, ${usage.output} out`)}`;
+    }
+    case "investigate": {
+      if (!args.length) return "Usage: /investigate <question>";
+      const model = aiModel(session.provider.name, session.model.id);
+      const run = await investigate(args.join(" "), model, {
+        thought: (text) => console.log(dim(`· ${text}`)),
+        tool: ({ name, input, failed }) =>
+          console.log(
+            dim(`⚙ ${name} ${brief(input)}${failed ? " failed" : ""}`),
+          ),
+      });
+      session.record(session.model.id, run.usage, session.model.price);
+      const why = run.stopped === "answered" ? "" : `, stopped: ${run.stopped}`;
+      return `\n${run.report}\n${dim(`${run.steps} steps, ${run.usage.input} tokens in, ${run.usage.output} out${why}`)}`;
     }
     default:
       return `Unknown command /${name}. ${help}`;
@@ -102,9 +124,7 @@ for await (const raw of rl) {
         text: (text) => stdout.write(text),
         tool: ({ name, input, failed }) =>
           stdout.write(
-            dim(
-              `\n⚙ ${name} ${JSON.stringify(input)}${failed ? " failed" : ""}\n`,
-            ),
+            dim(`\n⚙ ${name} ${brief(input)}${failed ? " failed" : ""}\n`),
           ),
       });
       stdout.write("\n\n");

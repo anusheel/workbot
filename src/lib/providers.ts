@@ -256,3 +256,9 @@ export async function complete(provider: Provider, completion: Completion) {
   });
   return { text, usage };
 }
+
+/** The published price of a model from either catalogue, if there is one. */
+export const priceOf = (modelId: string) =>
+  Object.values(providers)
+    .flatMap((provider) => provider().models)
+    .find((m) => m.id === modelId)?.price;
