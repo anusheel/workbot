@@ -2,10 +2,11 @@ import { z } from "zod";
 import { config } from "./config";
 import { type Mcp, connectMcp, remote, withMcp } from "./mcp";
 import {
+  type Filing,
   type Ticket,
   filingOf,
   findTickets,
-  recordFiling,
+  once,
   repository,
 } from "./tickets";
 import { type Tool, tool } from "./tool";
@@ -29,6 +30,12 @@ const written = (text: string) =>
 
 const line = (t: Ticket) =>
   `#${t.number} (${t.state}${t.assignee ? `, ${t.assignee}` : ""}) ${t.title} ${t.url}`;
+
+/** What a repeated key gets: the first write, or word that it is still being made. */
+const already = (did: string, f: Filing) =>
+  f.url
+    ? `Already ${did} #${f.number}: ${f.url}`
+    : `Being ${did} now under the key ${f.key}; ask again in a moment.`;
 
 /**
  * The tickets as 3 product-level tools over GitHub's 46: a find that reads
@@ -73,23 +80,26 @@ export function githubTools(
       }),
       run: async ({ title, body, key, dry_run }) => {
         const filed = await filingOf(key);
-        if (filed) return `Already filed as #${filed.number}: ${filed.url}`;
+        if (filed) return already("filed as", filed);
         if (dry_run)
           return `Would file "${title}" in ${slug} under the key ${key}. Nothing filed.`;
-        const { url } = written(
-          await withMcp(connect, (mcp) =>
-            mcp.call("issue_write", {
-              method: "create",
-              owner,
-              repo,
-              title,
-              body: `${body}\n\nFiled by WorkBot (${key}).`.trim(),
-            }),
-          ),
-        );
-        const number = Number(url.split("/").pop());
-        await recordFiling({ key, number, url });
-        return `Filed #${number}: ${url}`;
+        const { filing, made } = await once(key, async () => {
+          const { url } = written(
+            await withMcp(connect, (mcp) =>
+              mcp.call("issue_write", {
+                method: "create",
+                owner,
+                repo,
+                title,
+                body: `${body}\n\nFiled by WorkBot (${key}).`.trim(),
+              }),
+            ),
+          );
+          return { number: Number(url.split("/").pop()), url };
+        });
+        return made
+          ? `Filed #${filing.number}: ${filing.url}`
+          : already("filed as", filing);
       },
     }),
     tool({
@@ -103,22 +113,26 @@ export function githubTools(
         dry_run: dryRun,
       }),
       run: async ({ number, text, key, dry_run }) => {
-        const made = await filingOf(key);
-        if (made) return `Already commented on #${made.number}: ${made.url}`;
+        const commented = await filingOf(key);
+        if (commented) return already("commented on", commented);
         if (dry_run)
           return `Would comment on #${number}: "${text}". Nothing added.`;
-        const { url } = written(
-          await withMcp(connect, (mcp) =>
-            mcp.call("add_issue_comment", {
-              owner,
-              repo,
-              issue_number: number,
-              body: text,
-            }),
-          ),
-        );
-        await recordFiling({ key, number, url });
-        return `Commented on #${number}: ${url}`;
+        const { filing, made } = await once(key, async () => {
+          const { url } = written(
+            await withMcp(connect, (mcp) =>
+              mcp.call("add_issue_comment", {
+                owner,
+                repo,
+                issue_number: number,
+                body: text,
+              }),
+            ),
+          );
+          return { number, url };
+        });
+        return made
+          ? `Commented on #${number}: ${filing.url}`
+          : already("commented on", filing);
       },
     }),
   ];

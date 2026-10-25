@@ -117,8 +117,8 @@ export async function lastSync(): Promise<Date | null> {
   return row.at;
 }
 
-/** A write made through the ticketing system, remembered by its key so it is made once. */
-export type Filing = { key: string; number: number; url: string };
+/** A write made through the ticketing system, remembered by its key; the number and link are null while it is in flight. */
+export type Filing = { key: string; number: number | null; url: string | null };
 
 export async function filingOf(key: string): Promise<Filing | undefined> {
   const [row] = await query<Filing>(
@@ -128,8 +128,30 @@ export async function filingOf(key: string): Promise<Filing | undefined> {
   return row;
 }
 
-export const recordFiling = (filing: Filing) =>
-  query(
-    `insert into filings (key, number, url) values ($1, $2, $3) on conflict (key) do nothing`,
-    [filing.key, filing.number, filing.url],
+/**
+ * Makes a write once per key. The key is claimed before the write, so a
+ * second call with the same key, at the same time or later, gets the first
+ * result and makes nothing; a write that fails gives its key back.
+ */
+export async function once(
+  key: string,
+  write: () => Promise<{ number: number; url: string }>,
+): Promise<{ filing: Filing; made: boolean }> {
+  const [claimed] = await query(
+    `insert into filings (key) values ($1) on conflict (key) do nothing returning key`,
+    [key],
   );
+  if (!claimed) return { filing: (await filingOf(key))!, made: false };
+  try {
+    const made = await write();
+    await query(`update filings set number = $2, url = $3 where key = $1`, [
+      key,
+      made.number,
+      made.url,
+    ]);
+    return { filing: { key, ...made }, made: true };
+  } catch (err) {
+    await query(`delete from filings where key = $1`, [key]);
+    throw err;
+  }
+}

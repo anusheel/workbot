@@ -126,8 +126,8 @@ export const schema = [
   `create index if not exists tickets_updated on tickets (source, updated_at)`,
   `create table if not exists filings (
     key text primary key,
-    number integer not null,
-    url text not null,
+    number integer,
+    url text,
     created_at timestamptz not null default now()
   )`,
 ];

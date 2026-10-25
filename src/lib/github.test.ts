@@ -112,6 +112,10 @@ function fakeGitHub() {
         },
       },
       async ({ issue_number, body }) => {
+        if (fake.failNext) {
+          fake.failNext = false;
+          return { content: [{ type: "text", text: "down" }], isError: true };
+        }
         comments.push({ issue: issue_number, body });
         return json({
           id: String(comments.length),
@@ -126,7 +130,8 @@ function fakeGitHub() {
     await serve().connect(transport);
     return connectMcp(client);
   };
-  return { issues, comments, since, connect };
+  const fake = { issues, comments, since, connect, failNext: false };
+  return fake;
 }
 
 const github = fakeGitHub();
@@ -193,13 +198,35 @@ test("files a ticket once per key, and not at all on a dry run", async () => {
   expect(github.issues).toHaveLength(4);
 });
 
-test("comments on a ticket once per key", async () => {
-  const input = { number: 1, text: "Toner ordered.", key: "REQ-88-toner" };
+test("two filings with one key at the same time make one issue", async () => {
+  const input = { title: "Van 3 brake light", key: "REQ-90" };
+  const results = await Promise.all([
+    tools.file_ticket.run(input),
+    tools.file_ticket.run(input),
+  ]);
+  expect(github.issues).toHaveLength(5);
+  expect(results.filter((r) => r.startsWith("Filed #5:"))).toHaveLength(1);
+});
+
+test("a write that fails gives its key back", async () => {
+  const input = { number: 1, text: "x", key: "REQ-91" };
+  github.failNext = true;
+  await expect(tools.comment_on_ticket.run(input)).rejects.toThrow("down");
   expect(await tools.comment_on_ticket.run(input)).toBe(
     "Commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-1",
   );
+});
+
+test("comments on a ticket once per key", async () => {
+  const input = { number: 1, text: "Toner ordered.", key: "REQ-88-toner" };
   expect(await tools.comment_on_ticket.run(input)).toBe(
-    "Already commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-1",
+    "Commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-2",
   );
-  expect(github.comments).toEqual([{ issue: 1, body: "Toner ordered." }]);
+  expect(await tools.comment_on_ticket.run(input)).toBe(
+    "Already commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-2",
+  );
+  expect(github.comments).toEqual([
+    { issue: 1, body: "x" },
+    { issue: 1, body: "Toner ordered." },
+  ]);
 });
