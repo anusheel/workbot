@@ -52,3 +52,12 @@ export async function getRequest(id: string): Promise<WorkRequest | undefined> {
   await io();
   return requests.find((r) => r.id === id);
 }
+
+export async function updateRequest(
+  id: string,
+  patch: Partial<Pick<WorkRequest, "status">>,
+) {
+  const request = requests.find((r) => r.id === id);
+  if (request) Object.assign(request, patch);
+  return request;
+}

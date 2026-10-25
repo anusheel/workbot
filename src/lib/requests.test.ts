@@ -4,6 +4,7 @@ import {
   createRequest,
   getRequest,
   listRequests,
+  updateRequest,
 } from "./requests";
 
 test("a new request is open, newest first", async () => {
@@ -51,4 +52,17 @@ test("a request is found by id, or undefined", async () => {
   });
   expect(await getRequest(request.id)).toBe(request);
   expect(await getRequest("missing")).toBeUndefined();
+});
+
+test("a request's status can change; an unknown id changes nothing", async () => {
+  const request = await createRequest({
+    title: "Replace the badge printer",
+    body: "",
+    team: "operations",
+    priority: "normal",
+  });
+  expect(await updateRequest(request.id, { status: "done" })).toMatchObject({
+    status: "done",
+  });
+  expect(await updateRequest("missing", { status: "done" })).toBeUndefined();
 });

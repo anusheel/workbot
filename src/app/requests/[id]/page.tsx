@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getRequest, statusLabels } from "@/lib/requests";
+import { getRequest, statusLabels, statuses } from "@/lib/requests";
+import { setStatus } from "../actions";
 
 export default function RequestPage(props: PageProps<"/requests/[id]">) {
   return (
@@ -51,6 +52,19 @@ async function RequestDetail({
       <p className="mt-6 text-sm leading-relaxed whitespace-pre-wrap">
         {request.body || "No details."}
       </p>
+      <form className="mt-8 flex gap-2">
+        {statuses
+          .filter((status) => status !== request.status)
+          .map((status) => (
+            <Button
+              key={status}
+              variant="outline"
+              formAction={setStatus.bind(null, request.id, status)}
+            >
+              Mark {statusLabels[status].toLowerCase()}
+            </Button>
+          ))}
+      </form>
     </article>
   );
 }
