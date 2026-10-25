@@ -32,6 +32,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-24  | Web chat                                   | M    | done   |
 | WB-25  | Assistant in the admin console             | S    | done   |
 | WB-26  | Generated dashboards, forms and timelines  | M    | done   |
+| WB-27  | Memory of the person across conversations  | M    | done   |
+| WB-28  | Long conversations within budget           | S    | done   |
 
 ## Acceptance criteria
 
@@ -141,3 +143,13 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `/dashboards` turns a description into a page composed from a catalog of 22 components: layout, metrics, tables, 3 chart kinds, a timeline, tabs and form fields
 - The route hands the model the live request counts and latest requests; the page fills in as the JSON streams, and a follow-up description edits the page on screen
 - Tabs switch through state; a generated form creates a request through the `submit_request` action
+
+### WB-27 Memory of the person across conversations
+
+- After each reply, a small model extracts up to 3 durable facts about the person (preferences, the people and systems they work with, the cases they are on); duplicates are not stored
+- The next conversation's system prompt carries what is known
+- `/settings` lists memories by kind; each can be forgotten, or all at once
+
+### WB-28 Long conversations within budget
+
+- Before each reply the history is cut to a token budget: the first message and the most recent ones stay, and a small model summarizes the rest into the system prompt

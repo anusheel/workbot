@@ -40,6 +40,7 @@ in `mcp/` only connect them to stdio. Both read `.env.local`.
 - The web chat is `src/components/chat.tsx` on `useChat` from the AI SDK, against `src/app/api/chat/route.ts`; `src/lib/chat.ts` adapts the provider and the tool registry to the SDK. `CHAT_PROVIDER` and `CHAT_MODEL` choose the model
 - Generated pages come from json-render: `src/lib/catalog.ts` is everything the model may put on screen, `src/components/generated-ui.tsx` implements each entry; the generate route gives the model live numbers so it lays out data rather than inventing it
 - Tools the model can call are defined once in `src/lib/tools.ts` as a Zod schema plus a function, and say in their description when to call them; each provider turns them into its own format. Steps of a chain are plain functions in `src/lib`, one model call each
+- Memory is per visitor in `src/lib/memory.ts`: a small model extracts durable facts after each reply, the system prompt carries them, and `/settings` lets the person forget them. Long conversations are cut to a budget by `src/lib/context.ts`, which summarizes what it drops
 - Product events go through `track` in `src/lib/analytics.tsx`: snake_case names, properties that identify records, never people
 - A folder with its own rules has a `CLAUDE.md` beside the files: `src/app/api/` for routes, `content/policies/` for policies
 - Comments say why, never what; no comment restates the line below it
