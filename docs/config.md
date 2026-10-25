@@ -14,17 +14,17 @@ Two anti-patterns kept out: configuration that is really code (a rule table that
 
 ## Three levels, one precedence
 
-| Level                  | Sets                                                        | Where                                               |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| the product's defaults | every task's routes; the age a page is kept                 | `content/defaults.json`                             |
-| the customer           | its name, teams, filing, sections; any default it overrides | `content/customers/<id>.json`, chosen by `CUSTOMER` |
-| the environment        | a route put first in a task's chain; an outage to rehearse  | `ROUTES`, `OUTAGE`                                  |
+| Level                  | Sets                                                                       | Where                                                                |
+| ---------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| the product's defaults | every task's routes; the age a page is kept                                | `content/defaults.json`                                              |
+| the customer           | its name, teams, filing, sections; any default it overrides; its own rules | `content/customers/<id>.json` and `<id>.rules`, chosen by `CUSTOMER` |
+| the environment        | a route put first in a task's chain; an outage to rehearse                 | `ROUTES`, `OUTAGE`                                                   |
 
-`resolve(defaults, overrides, env)` in `src/lib/settings.ts` is the precedence, written once: a customer's value replaces the default's, field by field; an environment route goes first in its task's chain. Every level is parsed by Zod at startup, so a wrong file or a wrong variable stops the start with the field named. A second tenant is a second file: `CUSTOMER=harbor-dental` serves Harbor Dental, its 2 teams, its assistant's name and its own chat route, with no change to code; the test in `src/lib/customer-selection.test.ts` starts the modules under that name and checks all four. User preferences, the third level the brief names, are not here: WorkBot has no users yet.
+`resolve(defaults, overrides, env)` in `src/lib/settings.ts` is the precedence, written once: a customer's value replaces the default's, field by field; an environment route goes first in its task's chain. Every level is parsed by Zod at startup, so a wrong file or a wrong variable stops the start with the field named. A second tenant is a second file: `CUSTOMER=harbor-dental` serves Harbor Dental, its 2 teams, its assistant's name and its own chat route, with no change to code; the test in `src/lib/customer-selection.test.ts` starts the modules under that name and checks all four. `CUSTOMER` is read when the app starts, and a page prerendered at build carries the build's customer, so a tenant is a build: `CUSTOMER=harbor-dental pnpm build && pnpm start`. Bringing Harbor Dental up found the routing rules naming teams it lacks and the app refusing to start: the product's rules, which name no team, stayed in one file, and a customer's rules moved beside its own. User preferences, the third level the brief names, are not here: WorkBot has no users yet.
 
 ## The rule language
 
-Day 28's rule table was JSON: a tree of conditions a person could not read in a diff and the model could not be asked to write. It is a language now, one line per rule, in `content/rules.rules`:
+Day 28's rule table was JSON: a tree of conditions a person could not read in a diff and the model could not be asked to write. It is a language now, one line per rule, in 2 files: `content/rules.rules` holds the product's rules, which name no team, and `content/customers/<id>.rules` the customer's, read after them:
 
 ```
 rule route-finance on ticket when team is missing and text matches "invoice|payment|refund|credit|statement" then set team = "finance"
@@ -56,7 +56,7 @@ comment    ::= "#" to the end of the line
 
 ## The model proposes, a person approves
 
-`pnpm rule "<what the rule should do>"` asks the model for one line in the language, with the grammar, the fields of each kind, the customer's teams and the rules so far in its instructions. A line that does not parse, or routes to a team the customer lacks, goes back to it once with the error. The line is then tried on the last 100 records of its kind, as the rules already left them, and what it would change is listed; `--approve` appends it to the file, which the next start reads. The rule at the end of `content/rules.rules` came this way: asked for tickets about a sync, a webhook or a reconciliation to go to operations, the model wrote `rule route-operations-sync on ticket when team is missing and title matches "sync|webhook|reconcil" then set team = "operations"`, the dry run named the 2 tickets it would change, and a person approved it.
+`pnpm rule "<what the rule should do>"` asks the model for one line in the language, with the grammar, the fields of each kind, the customer's teams and the rules so far in its instructions. A line that does not parse, or routes to a team the customer lacks, goes back to it once with the error. The line is then tried on up to 100 stored records of its kind, rows the rules already shaped, and what it would change is listed; `--approve` appends it to the customer's file, which the next start reads. The rule at the end of `content/customers/fieldstone.rules` came this way: asked for tickets about a sync, a webhook or a reconciliation to go to operations, the model wrote `rule route-operations-sync on ticket when team is missing and title matches "sync|webhook|reconcil" then set team = "operations"`, the dry run named the 2 tickets it would change, and a person approved it.
 
 ## The generator
 
