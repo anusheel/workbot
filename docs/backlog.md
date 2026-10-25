@@ -239,3 +239,23 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-42 Scheduled check-ins and reminders
 
 - A cron function runs every morning: a nudge for each review nobody has answered in a day, a check-in on each request open for a week, one step per notification; "Run the reminders now" triggers it on demand
+
+### WB-43 Tracing with cost per tenant
+
+- Every model call goes through `src/lib/tracing.ts`: a middleware on the AI SDK model records tokens, cached tokens, dollars (cached tokens at a tenth), latency and failure, under the request's tenant (a visitor, `api`, `admin`, `workflow`, `terminal`) and purpose; the terminal's calls are recorded from the session
+- `/admin/traces`: the last 24 hours as calls, spend, error rate, p50 and p95, spend by tenant, spend and latency by prompt version, and the latest calls; nothing of a call's content is stored
+
+### WB-44 Prompts outside the code
+
+- The assistant's system prompt lives in the `prompts` table, versioned; the code's text seeds version 1. `/admin/prompts` adds a version and splits traffic between versions by share; a visitor always lands on the same version, and the trace records which one answered
+- The chat route marks the prompt for the provider's cache, so a repeated prefix is billed at a tenth
+
+### WB-45 Evals and alerting
+
+- `content/eval/golden.json`: 12 golden cases, answers, escalations and refusals, each with criteria and forbidden phrases; `pnpm eval [--prompt name@version] [--runs n]` answers each with the assistant's tools, scores them with a judge model after the programmatic check, and prints mean and spread per case and in all
+- An hourly watch raises an alert in the outbox when more than a tenth of an hour's calls failed, or a day's spend is over the budget (`ALERT_DAILY_DOLLARS`)
+- `POST /api/chat` is rate limited per visitor: 20 messages in 5 minutes, 429 past it
+
+### WB-46 Deployment
+
+- Vercel for the app, Inngest Cloud for the workflows, a Postgres with pgvector for the database; the keys per environment in `.env.example`, the steps in the README, and `/pre-deploy` before each release

@@ -66,3 +66,20 @@ upload is a durable run on [Inngest](https://www.inngest.com) that classifies,
 extracts, pauses for a reviewer when a field is doubtful, files the request
 and notifies; a morning cron nudges reviewers and checks in on old requests.
 Run `pnpm inngest` beside `pnpm dev` for the engine and its dashboard.
+
+Every model call is traced with its tenant, tokens, cost and latency, and
+`/admin/traces` shows the last day; the system prompt is versioned at
+`/admin/prompts`, with traffic split between versions; `pnpm eval` scores the
+assistant against 12 golden cases with a judge model; an hourly watch raises
+alerts into the outbox for failures and spend.
+
+## Deploy
+
+The app runs on Vercel, the workflows on Inngest Cloud, the database on any
+Postgres with pgvector (Neon, for one). In the Vercel project set
+`ANTHROPIC_API_KEY`, `DATABASE_URL` and, optionally, the Brave, Voyage and
+PostHog keys; install Inngest's Vercel integration, which sets its 2 keys and
+syncs the functions on each deploy. Use one project per environment (preview
+deployments for staging, a production branch for production), each with its
+own database and keys. Run `/pre-deploy` in Claude Code before a release:
+it runs the checks and reads the diff for what a deploy would change.
