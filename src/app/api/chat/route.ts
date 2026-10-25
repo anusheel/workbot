@@ -1,4 +1,5 @@
 import {
+  type UIMessage,
   convertToModelMessages,
   createUIMessageStreamResponse,
   isStepCount,
@@ -17,7 +18,10 @@ import {
   memoryNote,
   remember,
 } from "@/lib/memory";
+import { promptOf } from "@/lib/prompts";
+import { allow } from "@/lib/rate-limit";
 import { systemPrompt } from "@/lib/system-prompt";
+import { withTrace } from "@/lib/tracing";
 import { visitorId } from "@/lib/visitor";
 import { ChatBody } from "./types";
 
@@ -25,6 +29,15 @@ import { ChatBody } from "./types";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  const visitor = await visitorId();
+  // A caller without a cookie (the API reached directly) is limited by its address instead.
+  const caller =
+    visitor ?? request.headers.get("x-forwarded-for")?.split(",")[0].trim();
+  if (!allow(caller ?? "anonymous"))
+    return Response.json(
+      { error: "Too many messages in a short time; try again in a minute." },
+      { status: 429 },
+    );
   const body = ChatBody.safeParse(await request.json().catch(() => null));
   if (!body.success)
     return Response.json(
@@ -37,22 +50,44 @@ export async function POST(request: Request) {
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const visitor = await visitorId();
+  const tenant = visitor ?? "web";
+  const prompt = await promptOf("workbot/system", tenant, systemPrompt);
+  return withTrace(
+    { tenant, name: "chat", prompt: `workbot/system@${prompt.version}` },
+    () => reply(body.data.id, validated.data, visitor, prompt.text),
+  );
+}
+
+async function reply(
+  conversationId: string,
+  input: UIMessage[],
+  visitor: string | undefined,
+  prompt: string,
+) {
   const [memories, { messages, summary }] = await Promise.all([
     visitor ? listMemories(visitor) : [],
-    compact(validated.data, chatModel("small")),
+    compact(input, chatModel("small")),
   ]);
 
-  await track("question_asked", { conversationId: body.data.id });
+  await track("question_asked", { conversationId });
+  // What is known about this person and this conversation; empty on a first message, and an empty block is rejected.
+  const known = [
+    memoryNote(memories),
+    summary && `Earlier in this conversation: ${summary}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const result = streamText({
     model: chatModel(),
+    // The prompt is the same for everyone and goes first, so the provider can serve it from its cache.
     instructions: [
-      systemPrompt,
-      memoryNote(memories),
-      summary && `Earlier in this conversation: ${summary}`,
-    ]
-      .filter(Boolean)
-      .join("\n\n"),
+      {
+        role: "system",
+        content: prompt,
+        providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
+      },
+      ...(known ? [{ role: "system" as const, content: known }] : []),
+    ],
     messages: await convertToModelMessages(messages),
     tools: chatTools,
     stopWhen: isStepCount(8),

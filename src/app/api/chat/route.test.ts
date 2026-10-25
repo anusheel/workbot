@@ -5,6 +5,7 @@ import { listMemories, remember } from "@/lib/memory";
 import { POST } from "./route";
 
 let instructions = "";
+let systemBlocks: string[] = [];
 const usage = {
   inputTokens: {
     total: 3,
@@ -45,7 +46,11 @@ vi.mock("@/lib/chat", () => ({
         warnings: [],
       }),
       doStream: async ({ prompt }) => {
-        instructions = String(prompt.find((m) => m.role === "system")?.content);
+        // The prompt and the memory note are 2 system messages.
+        systemBlocks = prompt
+          .filter((m) => m.role === "system")
+          .map((m) => String(m.content));
+        instructions = systemBlocks.join("\n");
         return {
           stream: simulateReadableStream({
             chunks: [
@@ -74,6 +79,28 @@ const post = (body: unknown) =>
     }),
   );
 
+// Runs first: no memory is stored for the visitor yet.
+test("a first message from a visitor with nothing known sends the prompt alone, never an empty block", async () => {
+  const response = await POST(
+    new Request("http://workbot/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "c-new",
+        messages: [
+          {
+            id: "m1",
+            role: "user",
+            parts: [{ type: "text", text: "Hello" }],
+          },
+        ],
+      }),
+    }),
+  );
+  expect(response.status).toBe(200);
+  await response.text();
+  expect(systemBlocks.every((block) => block.length > 0)).toBe(true);
+  expect(systemBlocks).toHaveLength(1);
+});
 test("streams the reply, tells the model what it knows, and remembers what it learns", async () => {
   await remember("visitor-1", "entity", "The person works in finance.");
   const response = await post({
