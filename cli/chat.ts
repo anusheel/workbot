@@ -10,33 +10,81 @@ import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
 import { employeeTools } from "@/lib/tools";
 
-const { values } = parseArgs({
-  options: {
-    provider: { type: "string", default: "anthropic" },
-    model: { type: "string" },
-    effort: { type: "string" },
-    temperature: { type: "string" },
-    "max-tokens": { type: "string", default: "2048" },
-  },
-});
-
-const Provider = z.enum(providerNames);
-const Effort = z.enum(["low", "medium", "high"]);
-
-const session = new Session(Provider.parse(values.provider), values.model, {
-  tools: employeeTools,
-  maxTokens: Number(values["max-tokens"]),
-  effort: values.effort === undefined ? undefined : Effort.parse(values.effort),
-  temperature:
-    values.temperature === undefined ? undefined : Number(values.temperature),
-});
-
 const help = `/research <question>       answer from the company's sources, with citations
 /investigate <question>    an agent searches the knowledge base and the web and writes a sourced report
 /model [provider] [model]  switch models; no arguments lists them
 /system [text]             show or replace the system prompt
 /cost                      tokens and dollars spent in this session
+/help                      show this text
 /exit                      leave`;
+const efforts = ["low", "medium", "high"] as const;
+
+const usage = `Usage: pnpm chat [--provider <name>] [--model <id>] [--effort <level>] [--temperature <n>] [--max-tokens <n>] [--help]`;
+const flags = `  --provider <name>     ${providerNames.join(", ")} (default anthropic)
+  --model <id>          a model of the provider
+  --effort <level>      ${efforts.join(", ")}
+  --temperature <n>     a number
+  --max-tokens <n>      a positive integer (default 2048)
+  --help                print this text`;
+
+function fail(message: string): never {
+  console.error(`${message}\n${usage}\n${flags}`);
+  process.exit(1);
+}
+
+function parse() {
+  return parseArgs({
+    options: {
+      provider: { type: "string", default: "anthropic" },
+      model: { type: "string" },
+      effort: { type: "string" },
+      temperature: { type: "string" },
+      "max-tokens": { type: "string", default: "2048" },
+      help: { type: "boolean", default: false },
+    },
+  });
+}
+let values: ReturnType<typeof parse>["values"];
+try {
+  values = parse().values;
+} catch (err) {
+  fail(err instanceof Error ? err.message : String(err));
+}
+
+if (values.help) {
+  console.log(`${usage}\n${flags}\n\n${help}`);
+  process.exit(0);
+}
+
+const provider = z.enum(providerNames).safeParse(values.provider);
+if (!provider.success)
+  fail(
+    `Unknown provider "${values.provider}". Valid providers: ${providerNames.join(", ")}.`,
+  );
+const effort = z.enum(efforts).optional().safeParse(values.effort);
+if (!effort.success)
+  fail(
+    `Unknown effort "${values.effort}". Valid efforts: ${efforts.join(", ")}.`,
+  );
+const maxTokens = Number(values["max-tokens"]);
+if (!Number.isInteger(maxTokens) || maxTokens < 1)
+  fail(
+    `--max-tokens must be a positive integer, got "${values["max-tokens"]}".`,
+  );
+const temperature =
+  values.temperature === undefined ? undefined : Number(values.temperature);
+if (
+  temperature !== undefined &&
+  (values.temperature?.trim() === "" || !Number.isFinite(temperature))
+)
+  fail(`--temperature must be a finite number, got "${values.temperature}".`);
+
+const session = new Session(provider.data, values.model, {
+  tools: employeeTools,
+  maxTokens,
+  effort: effort.data,
+  temperature,
+});
 
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
 const clock = (at: Date) => at.toISOString().slice(11, 19);
@@ -70,7 +118,12 @@ async function command(line: string): Promise<string | null> {
       if (args.length) session.system = args.join(" ");
       return session.system;
     case "model": {
-      if (args.length) session.use(Provider.parse(args[0]), args[1]);
+      if (args.length) {
+        const named = z.enum(providerNames).safeParse(args[0]);
+        if (!named.success)
+          return `Unknown provider "${args[0]}". Valid providers: ${providerNames.join(", ")}.`;
+        session.use(named.data, args[1]);
+      }
       const available = providerNames
         .map(
           (name) =>
