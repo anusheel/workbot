@@ -18,6 +18,7 @@ import {
   mkdirSync,
   openSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
@@ -209,6 +210,9 @@ function startLocal(issue) {
   const dir = join(pens, String(issue.number));
   mkdirSync(pens, { recursive: true });
   sh("git", ["worktree", "add", "-q", "-B", branchOf(issue), dir, base]);
+  // pnpm eval reads the keys from .env.local; the agent's rules still forbid reading it.
+  if (existsSync(join(home, ".env.local")))
+    symlinkSync(join(home, ".env.local"), join(dir, ".env.local"));
   sh("pnpm", ["install", "--frozen-lockfile", "--silent"], { cwd: dir });
   const session = randomUUID();
   const log = openSync(join(pens, `${issue.number}.log`), "w");
