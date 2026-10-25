@@ -1,6 +1,7 @@
 import { type LanguageModel, Output, generateText } from "ai";
 import { chromium } from "playwright-core";
 import { z } from "zod";
+import type { Usage } from "./providers";
 import { isPublic } from "./web";
 
 /** The few things the agent does to a page; Playwright is one implementation. */
@@ -37,11 +38,16 @@ const Action = z.discriminatedUnion("kind", [
 ]);
 export type Action = z.infer<typeof Action>;
 
-export type BrowseEvents = { step?(step: number, action: Action): void };
+export type BrowseEvents = {
+  step?(step: number, action: Action): void;
+  /** Each model call's tokens as it completes, so a caller can keep its own ledger. */
+  spend?(usage: Usage): void;
+};
 export type BrowseResult = {
   outcome: "done" | "gave_up" | "steps";
   result: string;
   steps: number;
+  usage: Usage;
 };
 
 export const viewport = { width: 1024, height: 768 };
@@ -61,9 +67,10 @@ export async function browse(
 ): Promise<BrowseResult> {
   await browser.goto(start);
   const history: string[] = [];
+  const usage: Usage = { input: 0, output: 0 };
   for (let step = 1; step <= maxSteps; step++) {
     const screenshot = await browser.screenshot();
-    const { output: action } = await generateText({
+    const { output: action, usage: used } = await generateText({
       model,
       output: Output.object({ schema: Action }),
       instructions: system,
@@ -80,13 +87,25 @@ export async function browse(
         },
       ],
     });
+    const spent = {
+      input: used.inputTokens ?? 0,
+      output: used.outputTokens ?? 0,
+    };
+    usage.input += spent.input;
+    usage.output += spent.output;
+    on.spend?.(spent);
     on.step?.(step, action);
     history.push(`${step}. ${action.kind}: ${action.why}`);
     switch (action.kind) {
       case "done":
-        return { outcome: "done", result: action.result, steps: step };
+        return { outcome: "done", result: action.result, steps: step, usage };
       case "give_up":
-        return { outcome: "gave_up", result: action.reason, steps: step };
+        return {
+          outcome: "gave_up",
+          result: action.reason,
+          steps: step,
+          usage,
+        };
       case "click":
         await browser.click(action.x, action.y);
         break;
@@ -117,6 +136,7 @@ export async function browse(
     outcome: "steps",
     result: `Stopped after ${maxSteps} steps.`,
     steps: maxSteps,
+    usage,
   };
 }
 

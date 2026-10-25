@@ -262,3 +262,11 @@ export const priceOf = (modelId: string) =>
   Object.values(providers)
     .flatMap((provider) => provider().models)
     .find((m) => m.id === modelId)?.price;
+
+/** What a run cost in dollars at the model's published price; 0 when it has none. */
+export function costOf(modelId: string, usage: Usage): number {
+  const price = priceOf(modelId);
+  return price
+    ? (usage.input * price.input + usage.output * price.output) / 1e6
+    : 0;
+}

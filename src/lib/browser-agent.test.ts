@@ -64,6 +64,7 @@ test("the agent acts on the page one step at a time until it is done", async () 
     outcome: "done",
     result: "Paid on 2026-09-10 by ACH.",
     steps: 4,
+    usage: { input: 40, output: 80 },
   });
   expect(log).toEqual([
     "goto file:///portal.html",
