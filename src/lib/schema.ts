@@ -34,4 +34,12 @@ export const schema = [
     embedding vector(1024)
   )`,
   `create index if not exists chunks_tsv on chunks using gin (tsv)`,
+  `create table if not exists reports (
+    id uuid primary key default gen_random_uuid(),
+    request_id uuid not null references requests(id) on delete cascade,
+    report text not null,
+    findings jsonb not null default '[]',
+    dollars double precision not null default 0,
+    created_at timestamptz not null default now()
+  )`,
 ];
