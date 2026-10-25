@@ -8,7 +8,7 @@ import { readPage, searchWeb } from "./web";
 export type Tool = {
   name: string;
   description: string;
-  input: z.ZodType;
+  input: z.ZodObject;
   run(input: unknown): Promise<string>;
 };
 

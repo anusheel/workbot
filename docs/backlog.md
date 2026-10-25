@@ -35,6 +35,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-27  | Memory of the person across conversations  | M    | done   |
 | WB-28  | Long conversations within budget           | S    | done   |
 | WB-29  | Investigation agent                        | M    | done   |
+| WB-30  | Explainer pipeline for customer replies    | M    | done   |
+| WB-31  | Intake workflow: triage to the queue       | S    | done   |
 
 ## Acceptance criteria
 
@@ -160,3 +162,13 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `/investigate <question>` in the terminal runs an agent loop written in the repository: the model searches the knowledge base and, with a search key, trusted web sources, reads what it finds, saves findings with their source and ends by writing a sourced summary
 - Guards: 15 steps, a dollar limit and a timeout; the loop stops with what it has and says why
 - Reasoning, tool calls and results stream as they happen; tests drive the loop with a scripted model
+
+### WB-30 Explainer pipeline for customer replies
+
+- `pnpm explain "<question>"` runs researcher (small model, knowledge base tools), writer and safety editor as Claude Agent SDK subagents under an orchestrator; the editor sends drafts back with numbered edits, at most twice
+- Guardrails in code: a researcher answer without sources and an editor verdict without specific edits are rejected and rerun
+- Every tool call and handoff is traced with its agent and time; the run reports turns and cost
+
+### WB-31 Intake workflow: triage to the queue
+
+- `POST /api/intake` takes a message from any channel; a small model writes the title, keeps the body in the sender's words and picks team and priority; the request lands in the queue for a person to review
