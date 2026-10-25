@@ -134,8 +134,8 @@ test("every task has a route, and the table resolves to the providers' models", 
     expect(routes[task].length).toBeGreaterThan(0);
     for (const route of routes[task]) expect(allRoutes).toContain(route);
   }
-  expect(modelFor("chat").modelId).toBe("claude-sonnet-5-5");
-  expect(modelFor("extract").modelId).toBe("claude-haiku-5-5");
+  expect(modelFor("generate").modelId).toBe("claude-sonnet-5-5");
+  expect(modelFor("chat").modelId).toBe("claude-haiku-5-5");
 });
 
 test("ROUTES names a task and a route, or the app does not start", () => {
@@ -150,9 +150,9 @@ test("ROUTES names a task and a route, or the app does not start", () => {
 });
 
 test("an override replaces a task's first model and keeps the rest behind it", async () => {
-  env.routes.chat = "anthropic/small";
+  env.routes.generate = "anthropic/small";
   vi.resetModules();
   const fresh = await import("./routing");
-  expect(fresh.modelFor("chat").modelId).toBe("claude-haiku-5-5");
-  delete env.routes.chat;
+  expect(fresh.modelFor("generate").modelId).toBe("claude-haiku-5-5");
+  delete env.routes.generate;
 });

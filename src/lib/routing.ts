@@ -41,7 +41,7 @@ export const allRoutes = providerNames.flatMap((provider) =>
  * has no fallback: a score from another model is not the same score.
  */
 export const routes: Record<Task, Route[]> = {
-  chat: ["anthropic/large", "anthropic/small"],
+  chat: ["anthropic/small", "anthropic/large"],
   generate: ["anthropic/large", "anthropic/small"],
   research: ["anthropic/large", "anthropic/small"],
   summarize: ["anthropic/small", "anthropic/large"],
