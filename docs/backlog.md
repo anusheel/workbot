@@ -39,6 +39,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-31  | Intake workflow: triage to the queue       | S    | done   |
 | WB-32  | Knowledge base of 50 or more documents     | M    | done   |
 | WB-33  | Agentic retrieval tools                    | M    | done   |
+| WB-34  | Scraper for supplier pages                 | S    | done   |
+| WB-35  | Browser agent for portals with no API      | M    | done   |
 
 ## Acceptance criteria
 
@@ -185,3 +187,15 @@ checks. Sizes: S is under an hour, M is a few hours.
 - The assistant and the agents get find (by meaning or words), ls, cat and grep over the knowledge base, and explore it coarse to fine instead of receiving a top-k dump
 - The tools are scoped by section: the terminal assistant and the agents read everything; the web chat, a public surface until sign-in exists, reads the FAQ and policies only
 - `pnpm compare:retrieval` runs 10 questions through top-5 retrieval and through the agent, for a side-by-side table
+
+### WB-34 Scraper for supplier pages
+
+- `pnpm scrape <url> [--pages n]` reads a public page, reduces it to text and has the small model return every record that fits a Zod schema; the schema is the contract and Zod checks the result
+- Pagination follows the page's `rel=next` link or its "next" or "more" link, up to the pages asked
+- Pages come through the same guarded fetch as the assistant's web tool: public addresses only, every redirect checked, the body read only as far as the cap
+
+### WB-35 Browser agent for portals with no API
+
+- `pnpm browse --start <url> "<task>"` opens the machine's Chrome headless through Playwright and loops: screenshot, one action from the model (click, type, press, scroll, wait, goto, done or give_up, each with a reason), repeat, within a step limit
+- The browser is an interface of 9 methods, so the unit test drives the loop with a fake browser and a scripted model; the live test works a legacy invoice portal fixture with the small model
+- Pages are untrusted: every request the browser makes is checked against the start site and the public-address rule of the web tool, so a page cannot steer the agent onto this machine or a private network
