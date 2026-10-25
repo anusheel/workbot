@@ -1,5 +1,9 @@
 module.exports = [
   [
+    36571,
+    (a, b, c) => {
+      b.exports = a.r(80236).vendored["react-rsc"].ReactJsxRuntime;
+    },
     84614,
     (a, b, c) => {
       b.exports = a.r(80236).vendored["react-rsc"].React;
@@ -8,79 +12,6 @@ module.exports = [
     (a) => {
       let b = { src: a.i(79186).default, width: 48, height: 48 };
       a.s(["default", 0, b]);
-    },
-    33702,
-    (a) => {
-      var b = a.i(36571);
-      let c = [
-        {
-          title: "Requests, from intake to done",
-          body: "A form any employee can use, a list the team works from, and a status on every request.",
-        },
-        {
-          title: "Policies in one place",
-          body: "The company's rules as plain documents, each owned by a team, readable by everyone.",
-        },
-        {
-          title: "One console for the teams",
-          body: "Operations, finance and support see their open work, by status and by priority, in one place.",
-        },
-      ];
-      a.s([
-        "default",
-        0,
-        function () {
-          return (0, b.jsxs)("main", {
-            className:
-              "mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-20 px-6 py-24",
-            children: [
-              (0, b.jsxs)("section", {
-                className: "max-w-2xl",
-                children: [
-                  (0, b.jsx)("p", {
-                    className: "text-sm font-medium text-neutral-500",
-                    children: "WorkBot",
-                  }),
-                  (0, b.jsx)("h1", {
-                    className:
-                      "mt-4 text-5xl font-semibold tracking-tight text-balance",
-                    children:
-                      "The assistant for the teams that keep a company running",
-                  }),
-                  (0, b.jsx)("p", {
-                    className: "mt-6 text-xl leading-relaxed text-neutral-600",
-                    children:
-                      "WorkBot takes in the requests that operations, finance and support teams receive, keeps the company's policies where everyone can read them, and gives each team one place to work from.",
-                  }),
-                ],
-              }),
-              (0, b.jsx)("section", {
-                className:
-                  "grid gap-10 border-t border-neutral-200 pt-12 sm:grid-cols-3",
-                children: c.map((a) =>
-                  (0, b.jsxs)(
-                    "div",
-                    {
-                      children: [
-                        (0, b.jsx)("h2", {
-                          className: "font-medium",
-                          children: a.title,
-                        }),
-                        (0, b.jsx)("p", {
-                          className:
-                            "mt-2 text-sm leading-relaxed text-neutral-600",
-                          children: a.body,
-                        }),
-                      ],
-                    },
-                    a.title,
-                  ),
-                ),
-              }),
-            ],
-          });
-        },
-      ]);
     },
   ],
   54799,
@@ -253,10 +184,6 @@ module.exports = [
         (globalThis.NEXT_CLIENT_ASSET_SUFFIX || ""),
     );
   },
-  66090,
-  function (a) {
-    a.n(a.i(33702));
-  },
 ];
 
-//# sourceMappingURL=%5Broot-of-the-server%5D__1fuzfa620vhsz._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__0bdvtaubhi6ts._.js.map
