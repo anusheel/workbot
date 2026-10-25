@@ -1,0 +1,87 @@
+import {
+  type Completion,
+  type Message,
+  type Model,
+  type Provider,
+  type ProviderName,
+  type Usage,
+  providers,
+} from "./providers";
+import { systemPrompt } from "./system-prompt";
+
+export type Options = Pick<Completion, "effort" | "temperature" | "maxTokens">;
+
+type Turn = { model: Model; usage: Usage };
+
+/** One conversation: its history, the model answering it, and what it has cost so far. */
+export class Session {
+  provider: Provider;
+  model: Model;
+  system = systemPrompt;
+  readonly messages: Message[] = [];
+  readonly turns: Turn[] = [];
+
+  constructor(
+    name: ProviderName,
+    modelId?: string,
+    public options: Options = { maxTokens: 2048 },
+  ) {
+    [this.provider, this.model] = resolve(name, modelId);
+  }
+
+  /** Switches provider and model; the conversation carries on. */
+  use(name: ProviderName, modelId?: string) {
+    [this.provider, this.model] = resolve(name, modelId);
+  }
+
+  /** Sends one user message; the reply streams through onText and is kept in the history. */
+  async send(text: string, onText: (text: string) => void): Promise<Usage> {
+    this.messages.push({ role: "user", content: text });
+    let reply = "";
+    try {
+      const usage = await this.provider.stream(
+        {
+          ...this.options,
+          model: this.model.id,
+          system: this.system,
+          messages: this.messages,
+        },
+        (delta) => {
+          reply += delta;
+          onText(delta);
+        },
+      );
+      this.messages.push({ role: "assistant", content: reply });
+      this.turns.push({ model: this.model, usage });
+      return usage;
+    } catch (err) {
+      this.messages.pop();
+      throw err;
+    }
+  }
+
+  /** Tokens and dollars so far; models without a published price are named instead of guessed. */
+  cost() {
+    const total = { input: 0, output: 0, dollars: 0 };
+    const unpriced = new Set<string>();
+    for (const { model, usage } of this.turns) {
+      total.input += usage.input;
+      total.output += usage.output;
+      if (model.price)
+        total.dollars +=
+          (usage.input * model.price.input +
+            usage.output * model.price.output) /
+          1e6;
+      else unpriced.add(model.id);
+    }
+    return { ...total, unpriced: [...unpriced] };
+  }
+}
+
+function resolve(name: ProviderName, modelId?: string): [Provider, Model] {
+  const provider = providers[name]();
+  const model = modelId
+    ? (provider.models.find((m) => m.id === modelId) ?? { id: modelId })
+    : provider.models[0];
+  return [provider, model];
+}
