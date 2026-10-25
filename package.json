@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:live": "vitest run --config vitest.live.config.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter workbot-site check"
   },
   "dependencies": {
