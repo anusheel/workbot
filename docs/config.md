@@ -76,7 +76,7 @@ The table statements live in a file that imports nothing. The first version put 
 
 ## The task graph
 
-The repository is a pnpm workspace of 2 packages, the app at the root and the site in `site/`. Turborepo runs the check over both as a task graph (`turbo.json`): generate:check, lint, typecheck, test and build at the root, lint, typecheck and build in the site, each cached by its inputs, so a task whose inputs did not change since a cached run is not run again. CI restores the cache from the previous run by commit. Measured on this machine, `pnpm check` cold {{COLD}} and warm {{WARM}}.
+The repository is a pnpm workspace of 2 packages, the app at the root and the site in `site/`. Turborepo runs the check over both as a task graph (`turbo.json`): generate:check, lint, typecheck, test and build at the root, lint, typecheck and build in the site, each cached by its inputs, so a task whose inputs did not change since a cached run is not run again. CI restores the cache from the previous run by commit. Measured on this machine: the same work as a sequential chain 32 s; through the graph, cold, with the eight tasks in parallel and Next's own compiler cache warm, 17 s; warm, with nothing changed, 0.2 s and every task restored.
 
 The layout the brief describes, `apps/web`, `apps/api`, `apps/workers` and `packages/schemas`, `config`, `agent`, `integrations`, is the move to make when a second app exists or a second consumer of a package does. WorkBot has one deployable by decision (D15): its API is the app's route handlers, its workers are the Inngest functions the app serves, and a package with one consumer is a layer with no second reader. The move is written down here so it is made once, for a reason, not by default.
 
