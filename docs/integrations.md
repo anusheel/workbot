@@ -16,7 +16,7 @@ Every customer runs a different stack, and the first week of an engagement is us
 | `file_ticket`       | a new issue, with a line saying WorkBot filed it and for what | nothing    | `issue_write`  | yes | yes     |
 | `comment_on_ticket` | a comment on an issue by number                               | nothing    | `add_comment`  | yes | yes     |
 
-The key names what a write is about (a request id, an invoice number); the `filings` table claims each key before the write and remembers the issue it produced, so a second call with the same key, at the same time or later, returns the first result rather than filing again, whether the model repeated itself or a retry replayed it. A dry run describes the write and makes none. Nothing closes, reassigns or deletes a ticket: those stay with a person in GitHub.
+The key names what a write is about (a request id, an invoice number); the `filings` table claims each key before the write and remembers the issue it produced, so a second call with the same key, at the same time or later, returns the first result rather than filing again, whether the model repeated itself or a retry replayed it; a claim with no result after 5 minutes is a crashed write, and the key is free again. A dry run describes the write and makes none. Nothing closes, reassigns or deletes a ticket: those stay with a person in GitHub.
 
 ## The 3 routes compared
 

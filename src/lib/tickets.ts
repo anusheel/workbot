@@ -54,6 +54,7 @@ export async function pullTickets(
   );
   let after: string | undefined;
   let pulled = 0;
+  // No state filter: closed issues come too, and a closure is a change.
   do {
     const page = JSON.parse(
       await mcp.call("list_issues", {
@@ -120,9 +121,14 @@ export async function lastSync(): Promise<Date | null> {
 /** A write made through the ticketing system, remembered by its key; the number and link are null while it is in flight. */
 export type Filing = { key: string; number: number | null; url: string | null };
 
+/** How long a claim with no result counts as a write in flight rather than a crashed one. */
+const inFlight = "5 minutes";
+
+/** The write made under a key, or the claim of one in flight; a crashed claim is invisible here and free below. */
 export async function filingOf(key: string): Promise<Filing | undefined> {
   const [row] = await query<Filing>(
-    `select key, number, url from filings where key = $1`,
+    `select key, number, url from filings
+     where key = $1 and (url is not null or created_at > now() - interval '${inFlight}')`,
     [key],
   );
   return row;
@@ -131,14 +137,18 @@ export async function filingOf(key: string): Promise<Filing | undefined> {
 /**
  * Makes a write once per key. The key is claimed before the write, so a
  * second call with the same key, at the same time or later, gets the first
- * result and makes nothing; a write that fails gives its key back.
+ * result and makes nothing; a write that fails gives its key back, and a
+ * claim with no result after 5 minutes is a crashed write, free to retry.
  */
 export async function once(
   key: string,
   write: () => Promise<{ number: number; url: string }>,
 ): Promise<{ filing: Filing; made: boolean }> {
   const [claimed] = await query(
-    `insert into filings (key) values ($1) on conflict (key) do nothing returning key`,
+    `insert into filings (key) values ($1)
+     on conflict (key) do update set created_at = now()
+       where filings.url is null and filings.created_at < now() - interval '${inFlight}'
+     returning key`,
     [key],
   );
   if (!claimed) return { filing: (await filingOf(key))!, made: false };

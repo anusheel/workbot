@@ -32,10 +32,10 @@ const line = (t: Ticket) =>
   `#${t.number} (${t.state}${t.assignee ? `, ${t.assignee}` : ""}) ${t.title} ${t.url}`;
 
 /** What a repeated key gets: the first write, or word that it is still being made. */
-const already = (did: string, f: Filing) =>
+const already = (done: string, doing: string, f: Filing) =>
   f.url
-    ? `Already ${did} #${f.number}: ${f.url}`
-    : `Being ${did} now under the key ${f.key}; ask again in a moment.`;
+    ? `Already ${done} #${f.number}: ${f.url}`
+    : `Being ${doing} now under the key ${f.key}; ask again in a moment.`;
 
 /**
  * The tickets as 3 product-level tools over GitHub's 46: a find that reads
@@ -80,7 +80,7 @@ export function githubTools(
       }),
       run: async ({ title, body, key, dry_run }) => {
         const filed = await filingOf(key);
-        if (filed) return already("filed as", filed);
+        if (filed) return already("filed as", "filed", filed);
         if (dry_run)
           return `Would file "${title}" in ${slug} under the key ${key}. Nothing filed.`;
         const { filing, made } = await once(key, async () => {
@@ -99,7 +99,7 @@ export function githubTools(
         });
         return made
           ? `Filed #${filing.number}: ${filing.url}`
-          : already("filed as", filing);
+          : already("filed as", "filed", filing);
       },
     }),
     tool({
@@ -114,7 +114,8 @@ export function githubTools(
       }),
       run: async ({ number, text, key, dry_run }) => {
         const commented = await filingOf(key);
-        if (commented) return already("commented on", commented);
+        if (commented)
+          return already("commented on", "commented on", commented);
         if (dry_run)
           return `Would comment on #${number}: "${text}". Nothing added.`;
         const { filing, made } = await once(key, async () => {
@@ -132,7 +133,7 @@ export function githubTools(
         });
         return made
           ? `Commented on #${number}: ${filing.url}`
-          : already("commented on", filing);
+          : already("commented on", "commented on", filing);
       },
     }),
   ];

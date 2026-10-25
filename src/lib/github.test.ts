@@ -4,6 +4,7 @@ import { expect, test, vi } from "vitest";
 import { z } from "zod";
 import { githubTools } from "./github";
 import { connectMcp } from "./mcp";
+import { query } from "./db";
 import { listTickets, pullTickets } from "./tickets";
 
 vi.hoisted(() => {
@@ -215,6 +216,18 @@ test("a write that fails gives its key back", async () => {
   expect(await tools.comment_on_ticket.run(input)).toBe(
     "Commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-1",
   );
+});
+
+test("a claim with no result is in flight for 5 minutes, then free", async () => {
+  await query(
+    `insert into filings (key, created_at) values ('REQ-92', now()), ('REQ-93', now() - interval '6 minutes')`,
+  );
+  expect(
+    await tools.file_ticket.run({ title: "Dock door stuck", key: "REQ-92" }),
+  ).toBe("Being filed now under the key REQ-92; ask again in a moment.");
+  expect(
+    await tools.file_ticket.run({ title: "Dock door stuck", key: "REQ-93" }),
+  ).toBe("Filed #6: https://github.com/acme/helpdesk/issues/6");
 });
 
 test("comments on a ticket once per key", async () => {
