@@ -97,8 +97,10 @@ function file(path) {
 
 // Only a maintainer's issues and pull requests are the fleet's: anyone can file
 // an issue or name one in a pull request on a public repository.
-const ours = ({ authorAssociation }) =>
-  ["OWNER", "MEMBER", "COLLABORATOR"].includes(authorAssociation);
+const maintainers = () =>
+  new Set(
+    ghJson("api", "repos/{owner}/{repo}/collaborators", "--jq", "[.[].login]"),
+  );
 
 function tasks() {
   const issues = ghJson(
@@ -111,7 +113,7 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,title,createdAt,authorAssociation",
+    "number,title,createdAt,author",
   );
   const prs = ghJson(
     "pr",
@@ -123,10 +125,12 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,body,state,mergedAt,statusCheckRollup,headRefOid,authorAssociation",
+    "number,body,state,mergedAt,statusCheckRollup,headRefOid,author",
   );
   const state = runs();
   const rank = { MERGED: 0, OPEN: 1, CLOSED: 2 };
+  const team = maintainers();
+  const ours = ({ author }) => team.has(author.login);
   return issues
     .filter(ours)
     .sort((a, b) => a.number - b.number)
@@ -136,7 +140,7 @@ function tasks() {
       pr: prs
         .filter(
           (pr) =>
-            ours(pr) && new RegExp(`Closes #${issue.number}\b`).test(pr.body),
+            ours(pr) && new RegExp(`Closes #${issue.number}\\b`).test(pr.body),
         )
         .sort((a, b) => rank[a.state] - rank[b.state])[0],
     }));
