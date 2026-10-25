@@ -7,6 +7,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Markdown } from "@/components/markdown";
 import { PendingButton } from "@/components/pending-button";
 import { RecordingQuestion } from "@/components/recording-question";
+import { StatusActions } from "@/components/status-actions";
 import { Badge } from "@/components/ui/badge";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { schemas } from "@/lib/document-model";
 import { listDocuments } from "@/lib/documents";
 import { listRecordings } from "@/lib/recordings";
 import { latestReport } from "@/lib/reports";
-import { getRequest, statusLabels, statuses } from "@/lib/requests";
+import { getRequest, statusLabels } from "@/lib/requests";
 import { clock } from "@/lib/video";
 import {
   askAboutRecording,
@@ -72,19 +73,11 @@ async function RequestDetail({
       <p className="mt-6 text-sm leading-relaxed whitespace-pre-wrap">
         {request.body || "No details."}
       </p>
-      <form className="mt-8 flex gap-2">
-        {statuses
-          .filter((status) => status !== request.status)
-          .map((status) => (
-            <Button
-              key={status}
-              variant="outline"
-              formAction={setStatus.bind(null, request.id, status)}
-            >
-              Mark {statusLabels[status].toLowerCase()}
-            </Button>
-          ))}
-      </form>
+      <StatusActions
+        id={request.id}
+        status={request.status}
+        action={setStatus}
+      />
       <Documents requestId={request.id} />
       <Research requestId={request.id} />
       <Recordings requestId={request.id} />
