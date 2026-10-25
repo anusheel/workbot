@@ -153,7 +153,7 @@ async function Synced() {
         </Table>
       </div>
       <h2 className="mt-8 text-lg font-medium">Contacts</h2>
-      <div className="mt-3 rounded-xl border">
+      <div className="mt-3 rounded-xl border [&_td]:whitespace-normal">
         <Table>
           <TableHeader>
             <TableRow>
@@ -218,7 +218,7 @@ function TicketRow({ ticket: t, now }: { ticket: Ticket; now: Date }) {
 function ContactRow({ contact: c }: { contact: Contact }) {
   return (
     <TableRow>
-      <TableCell className="max-w-xs whitespace-normal">
+      <TableCell className="max-w-xs">
         {c.url ? (
           <a href={c.url} className="hover:underline">
             {c.name}
