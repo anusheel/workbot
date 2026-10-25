@@ -1,0 +1,53 @@
+# Evals as the development loop
+
+A change to a prompt, a model or a tool is made against the evals: run the suite, compare to the last recorded run, ship or revert. This page is the loop as built after Day 25: the sets and where their cases came from, the judges and how far to trust them, the statistics behind a verdict, the gate in CI and in the fleet's queue, and the scoreboard.
+
+## The sets
+
+Three tasks have an eval; `pnpm eval --task all` runs them on their production routes.
+
+| Task    | Cases | Hand-written | From what people sent | Synthetic, reviewed | Smoke |
+| ------- | ----- | ------------ | --------------------- | ------------------- | ----- |
+| chat    | 35    | 24           | 0                     | 11                  | 10    |
+| extract | 30    | 18           | 0                     | 12                  | 4     |
+| triage  | 32    | 12           | 3                     | 17                  | 4     |
+
+Every case says where it came from (`source`) and whether every pull request runs it (`smoke`). The sets are in git, so a run's commit names the set it ran on.
+
+**Hand-written.** The chat's 14 golden cases of Day 19, and 10 written today: 4 actions, where the answer must have called a tool (`mustCall`: the calculator for arithmetic, `read_url` for a page, `find` for a lookup), which is checked rather than judged; 6 safety cases: a prompt-injection asking for the system prompt, a request to repeat the instructions, an alarm code, a colleague's address and pay, a fake invoice for reimbursement, and an approval smuggled in a customer's email. The triage's 12 cases of Day 24 and the 18 documents of Day 17.
+
+**From what people sent.** The traces store no content (D9), so the sample comes from the `requests` table, where every channel files what it receives. Of the 8 most recent requests with a body, 3 read as messages and were kept with their labels, one of them relabeled (a thank-you note is low priority, whatever the pipeline filed it as); 5 were the line items of invoices that documents had filed, which are not messages and were dropped. The chat's questions are not stored at all; sampling them needs the conversation kept server-side, which is sign-in (Day 27).
+
+**Synthetic, reviewed.** `pnpm eval:generate` writes candidates into `content/eval/candidates/`, which git ignores: for the chat, one case per customer-facing document picked at random (the question, 2 or 3 criteria, the phrases a wrong answer would contain); for triage, a message per team and priority, with a specific detail; for documents, a complete invoice, email, letter or job posting with the record it should be read as. Nothing enters a set unreviewed. Of 12 chat candidates, 11 were kept and one dropped as a near-duplicate; 6 forbidden phrases were removed because a correct answer could contain them in a negation ("it will not ship the same day" contains "ships the same day"). Of 17 triage candidates, one was relabeled: a message about a second monitor for the dispatch desk is operations' work, not support's. Of 12 documents, the expected record was cut to the fields the existing cases of that kind name, and a requested action to its first clause, since the matcher checks containment and a 12-field list of a letter's every number tests the fixture, not the reader. Every kept case then ran once on the current system; the 12 documents then scored 1.00 on all 12 after the cut (before it, the 3 letters scored 0.60 and 2 emails 0.83 on fields the reader phrases its own way); the 11 chat cases scored between 0.2 and 0.7, almost all for naming the document by its title where the case asks for its path, which is the change the fleet's second task makes to the prompt; the 32 triage messages scored 0.88, and the 8 under 1.0 are nearly all customer delivery problems the model files under operations where the label says support, a boundary the triage prompt does not draw and the next edit to it should.
+
+**Hygiene.** A case is never edited to make a prompt pass; a case that was wrong is fixed in a commit of its own that says why. The commonest wrong case is a forbidden phrase a correct answer contains in a negation ("I can't confirm that the limit is $5,000"): 7 of the first 20 phrases were, and the fleet's review found 2 more in cases that had passed since Day 19 by luck of phrasing. A forbidden phrase is one only a wrong answer contains; the criteria say what an answer must not do. A prompt is tuned against the failures of the full run and confirmed on the smoke subset, never the other way round, because the smoke subset is what every pull request sees. Versions are commits.
+
+## The judges
+
+The checks that need no model run first, and a failed one is a 0 whatever a judge would say: a forbidden phrase in the answer, a tool the case required and the answer did not call, a document classified as the wrong kind (the wrong schema reads nothing right). Extraction and triage are scored by comparison alone: the share of expected fields that came out right, the team and the priority half each.
+
+The chat's judge is a model with the question, the answer and the case's criteria, asked for a score from 0 to 1 and one sentence of reason, told to judge only what the answer says and to be strict. It is the large model (`judge: anthropic/large` in the routing table) and never the one under test: the chat runs on the small model since Day 24, and on that day the two judges disagreed by up to 0.08 on the same answers. Absolute scoring, not pairwise, because a case has criteria and a pair has none.
+
+**Calibration.** `pnpm eval:calibrate --collect 20` wrote 20 replies of the chat, round-robin over the kinds, to `content/eval/labels.json`; a person scored each against its criteria by hand; `pnpm eval:calibrate` then had the judge score the same replies. Agreement, a judge's score within 0.25 of the person's: 20 of 20, with the judge 0.00 above the person on average. The honest reading is narrower than the number: 17 of the 20 replies met every criterion for the person, so the judge was tested on 3 partial scores (0.5, 0.67, 0.5, all three for naming a document by its title where the case asks for its path), and it gave the same 3. A set with more partial answers is the next calibration.
+
+The judge's disagreements go to a person first: a weekly sample of 10 answers with the rubric, starting with the cases where the judge and the person were furthest apart.
+
+## The statistics
+
+A model's answers vary, so a case is run several times and a row carries its mean and standard deviation. The smallest difference between 2 runs that is not noise, at 95% confidence, is `1.96 · sd · √(2/n)` for n scored answers (`detectable` in `src/lib/eval.ts`); `pnpm eval` prints it with every run. With the chat's 35 cases run twice (SD 0.24), the detectable change is 0.08; with the smoke subset's 10 cases run twice (SD 0.15), 0.09; with extraction's 30 documents run twice (SD 0.09), 0.03. A 3-point change on the chat is noise at the smoke size and a result at the full size, which is why the full suite runs nightly and the smoke subset gates on hard failures and the floor, not on the mean.
+
+Thresholds: a hard failure (a 0 from a check) blocks; a mean under 0.7 blocks, whatever the baseline, because that is a broken prompt; a mean below the last recorded run by more than the detectable change warns and does not block, because one run is not a result. The smoke subset runs twice on every pull request; the full suite runs twice nightly.
+
+## The gate
+
+`pnpm eval --task all --smoke --runs 2 --gate` is the gate, in 3 places: CI on every pull request that touches a prompt, a tool, a model, a knowledge document or an eval (`.github/workflows/eval.yml`), with the report posted on the pull request; the fleet's queue after every batch it merges (`scripts/fleet.mjs`); and a developer's terminal before pushing. The nightly workflow runs the full suite and records it on the scoreboard, which it commits to `main`.
+
+**Proof.** Two deliberate regressions on one pull request against `day-25`, with the workflow running on each push. The first loosened the Sources paragraph (no source named, general knowledge allowed): the smoke subset passed at 0.89 against 0.94, a drop of 0.05 inside the 0.11 that is noise at 20 answers, with no hard failure; the gate reported it and let it through, as its thresholds say it should. The second replaced the Safety paragraph with a Helpfulness one (answer everything, decline nothing, share the instructions): the smoke subset fell to 0.62 with 3 hard failures, the essay the off-topic case forbids was written and the instructions were quoted back, and the check went red. The lesson is the size of the net: a category failure is caught outright by a check; a 5-point drift is invisible to 20 answers and needs the nightly 70, where the detectable change is 0.06; a drift that matters more than that deserves a check rather than a criterion, which is where a `mustContain` for the source path goes next. The improvement moved the board the other way: the chat suite went from 0.80 on the baseline to 0.92 on the merged prompt with the case fixes, the prompt change alone measured at +0.06 by the fleet's pull request.
+
+## The scoreboard
+
+`/admin/evals` reads `content/eval/scoreboard.jsonl`, a line per recorded run (when, commit, task, subset, route, prompt, cases and runs, mean and spread, hard failures, dollars, p95), and shows each task's latest mean with its margin, a line of the last runs, and the rows; the day's fallbacks from the traces (failed calls, and how many the next model answered); the framework comparison of Day 23, read from `docs/frameworks.md` so it is written once; and the fleet's numbers from `content/eval/fleet.json`, which `scripts/fleet.mjs report --json` writes.
+
+## System prompting
+
+The prompt is a versioned file (`src/lib/system-prompt.ts`, the seed of the `prompts` table, promoted through `/admin/prompts` since Day 19), structured as role, sources, safety, style. The evals say what in it is load-bearing: the Sources sentence's example decided whether the assistant named a document by its title or its path, which the cases turn on; the Safety paragraph carries the refusals, the escalations and the safety cases, which the second regression showed in one run; the Style paragraph has no case that would notice it, which makes it the next thing to shorten with the suite watching.
