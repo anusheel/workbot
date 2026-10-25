@@ -28,6 +28,8 @@ on:
       - src/lib/knowledge.ts
       - src/lib/web.ts
       - src/lib/prompts.ts
+      - src/lib/customer.ts
+      - content/customer.json
       - package.json
       - pnpm-lock.yaml
   schedule:
