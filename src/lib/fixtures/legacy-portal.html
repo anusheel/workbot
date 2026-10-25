@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fieldstone Vendor Portal</title>
+    <style>
+      body {
+        font-family: Verdana, sans-serif;
+        margin: 40px;
+        background: #e8e8f0;
+      }
+      fieldset {
+        background: #fff;
+        padding: 16px;
+        width: 420px;
+      }
+      input {
+        font-size: 16px;
+        padding: 4px;
+      }
+      button {
+        font-size: 16px;
+        padding: 4px 12px;
+      }
+      #result {
+        margin-top: 16px;
+        padding: 12px;
+        background: #fff;
+        width: 420px;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Vendor Portal 2.3</h1>
+    <fieldset>
+      <legend>Invoice lookup</legend>
+      <label
+        >Invoice number <input id="invoice" placeholder="INV-0000"
+      /></label>
+      <button id="lookup">Look up</button>
+    </fieldset>
+    <div id="result">Enter an invoice number.</div>
+    <script>
+      const invoices = {
+        "INV-4411": "Paid on 2026-09-10 by ACH, reference FS-88213.",
+        "INV-4412": "Approved, in the payment run of 2026-10-30.",
+        "INV-4420": "Held: no purchase order on the invoice.",
+      };
+      document.getElementById("lookup").addEventListener("click", () => {
+        const number = document
+          .getElementById("invoice")
+          .value.trim()
+          .toUpperCase();
+        document.getElementById("result").textContent =
+          invoices[number] ?? `No invoice ${number} on file.`;
+      });
+    </script>
+  </body>
+</html>

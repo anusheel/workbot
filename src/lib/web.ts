@@ -42,9 +42,9 @@ const privateV4 =
 const privateV6 = /^(::1?$|f[cd]|fe[89ab])/;
 const maxBytes = 512_000;
 
-function assertPublic(url: URL) {
-  if (url.protocol !== "http:" && url.protocol !== "https:")
-    throw new Error("Only http and https pages can be read");
+/** Whether an address is on the public web: http or https, and not this machine, a private network or link-local. */
+export function isPublic(url: URL): boolean {
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
   const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
   // The URL parser writes an IPv4-mapped address as ::ffff:7f00:1; check it as the IPv4 it is.
   const mapped = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
@@ -54,10 +54,14 @@ function assertPublic(url: URL) {
         .flatMap((hex) => [parseInt(hex, 16) >> 8, parseInt(hex, 16) & 255])
         .join(".")
     : host;
-  const isPrivate =
+  return !(
     privateName.test(address) ||
-    (address.includes(":") ? privateV6.test(address) : privateV4.test(address));
-  if (isPrivate) throw new Error(`${url.hostname} is not a public address`);
+    (address.includes(":") ? privateV6.test(address) : privateV4.test(address))
+  );
+}
+
+function assertPublic(url: URL) {
+  if (!isPublic(url)) throw new Error(`${url} is not a public web address`);
 }
 
 async function readUpTo(response: Response, bytes: number): Promise<string> {
@@ -77,11 +81,13 @@ async function readUpTo(response: Response, bytes: number): Promise<string> {
 }
 
 /**
- * Fetches a public page and returns its text, capped so one page cannot
- * fill the context. Redirects are followed by hand so every hop is checked,
- * and the body is read only as far as the cap.
+ * Fetches a public page. Redirects are followed by hand so every hop is
+ * checked, and the body is read only as far as the cap. The address the page
+ * was finally read from comes back with it, for resolving its links.
  */
-export async function readPage(url: string, limit = 8_000): Promise<string> {
+export async function fetchPage(
+  url: string,
+): Promise<{ url: string; html: string }> {
   let target = new URL(url);
   for (let hop = 0; ; hop++) {
     assertPublic(target);
@@ -97,8 +103,13 @@ export async function readPage(url: string, limit = 8_000): Promise<string> {
       continue;
     }
     if (!response.ok) throw new Error(`${target} answered ${response.status}`);
-    return textOf(await readUpTo(response, maxBytes)).slice(0, limit);
+    return { url: target.href, html: await readUpTo(response, maxBytes) };
   }
+}
+
+/** The text of a public page, capped so one page cannot fill the context. */
+export async function readPage(url: string, limit = 8_000): Promise<string> {
+  return textOf((await fetchPage(url)).html).slice(0, limit);
 }
 
 /** Web search through Brave; needs the key in configuration. */

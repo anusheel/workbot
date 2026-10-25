@@ -40,3 +40,8 @@ searchable by words out of the box and by meaning with a `VOYAGE_API_KEY`
 `pnpm explain "<question>"` runs the customer-reply pipeline (researcher,
 writer, safety editor) on the Claude Agent SDK, which uses your Claude Code
 sign-in. `POST /api/intake` turns a message into a triaged request.
+
+`pnpm scrape <url> [--pages n]` pulls supplier records (hours, services,
+prices, contact) out of a public page, following its next links; `pnpm browse
+--start <url> "<task>"` lets the agent work a site with no API through the
+machine's Chrome, one screenshot and one action at a time.
