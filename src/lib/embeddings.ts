@@ -23,10 +23,27 @@ export function embedder(): Embed | undefined {
       }),
       signal: AbortSignal.timeout(30_000),
     });
-    if (!response.ok) throw new Error(`Voyage answered ${response.status}`);
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as {
+        detail?: unknown;
+      } | null;
+      const detail =
+        typeof body?.detail === "string"
+          ? body.detail.replace(/\s+/g, " ").trim().slice(0, 200)
+          : "";
+      throw new Error(
+        `Voyage answered ${response.status}${detail ? `: ${detail}` : ""}`,
+      );
+    }
     const { data } = (await response.json()) as {
-      data: { index: number; embedding: number[] }[];
+      data?: { index: number; embedding: number[] }[];
     };
+    if (!Array.isArray(data) || data.length !== texts.length) {
+      const got = Array.isArray(data) ? data.length : 0;
+      throw new Error(
+        `Voyage returned ${got} vectors for ${texts.length} inputs`,
+      );
+    }
     return data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
   };
 }
