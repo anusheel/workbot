@@ -77,11 +77,13 @@ async function readUpTo(response: Response, bytes: number): Promise<string> {
 }
 
 /**
- * Fetches a public page and returns its text, capped so one page cannot
- * fill the context. Redirects are followed by hand so every hop is checked,
- * and the body is read only as far as the cap.
+ * Fetches a public page. Redirects are followed by hand so every hop is
+ * checked, and the body is read only as far as the cap. The address the page
+ * was finally read from comes back with it, for resolving its links.
  */
-export async function readPage(url: string, limit = 8_000): Promise<string> {
+export async function fetchPage(
+  url: string,
+): Promise<{ url: string; html: string }> {
   let target = new URL(url);
   for (let hop = 0; ; hop++) {
     assertPublic(target);
@@ -97,8 +99,13 @@ export async function readPage(url: string, limit = 8_000): Promise<string> {
       continue;
     }
     if (!response.ok) throw new Error(`${target} answered ${response.status}`);
-    return textOf(await readUpTo(response, maxBytes)).slice(0, limit);
+    return { url: target.href, html: await readUpTo(response, maxBytes) };
   }
+}
+
+/** The text of a public page, capped so one page cannot fill the context. */
+export async function readPage(url: string, limit = 8_000): Promise<string> {
+  return textOf((await fetchPage(url)).html).slice(0, limit);
 }
 
 /** Web search through Brave; needs the key in configuration. */
