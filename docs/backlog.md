@@ -205,3 +205,15 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `/investigate` in the terminal and Investigate on a request's page run an analyst that delegates: ask_knowledge_base runs a specialist over the knowledge base tools, ask_web a specialist with read_url, the browser agent as browse_site and web_search when a key is set; all 3 agents save findings to one list, and the analyst ends with write_report
 - browse_site tries the browser once more when it fails, then falls back to the page's text, so a browser that will not start costs a page its clicks, not the run
 - Every thought, tool call and result is logged with its agent and time; each agent's spend is priced and the total shown; the report, its findings and its cost are saved on the request and shown under Research
+
+### WB-37 Voice intake line
+
+- `/voice` runs the support line in the browser: the caller speaks, WorkBot asks what it needs to know one question at a time, files the request through the intake workflow and says where it went; the caller can talk over it, and the line stops speaking and listens
+- The call is a state machine in `src/lib/voice-model.ts` (idle, listening, thinking, speaking) with its own tests; the browser's speech recognition and synthesis sit behind a 2-method listener and a 2-method speaker, so a hosted provider can replace either
+- A waveform shows the microphone is live; without speech services the same conversation is typed, against the same `POST /api/voice`
+
+### WB-38 Recordings read into tickets
+
+- Attach a recording on a request's page: ffmpeg takes 1 frame every 2 seconds, scaled to at most 1024 pixels wide, the small model describes each batch of frames, writes the timeline, and the recording is filed on the ticket with what every frame showed
+- A question box under each recording answers from the frame descriptions; `pnpm video <file> [--every n] [--ask "<question>"]` runs the same pipeline from the terminal
+- Recordings carry no transcript: audio needs a hosted speech-to-text provider, which this build does not have
