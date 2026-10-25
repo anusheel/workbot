@@ -1,6 +1,8 @@
 import { type LanguageModel, Output, generateText, isStepCount } from "ai";
 import { z } from "zod";
 import { chatTools } from "./chat";
+import type { Triage } from "./intake";
+import { priorities, teams } from "./request-model";
 
 /** A golden case: a question, what a good answer must do, and what it must not say. */
 export const Golden = z.object({
@@ -72,6 +74,24 @@ export async function judge(
   });
   return { ...output, violations };
 }
+
+/** A triage case: a message, and the team and priority it belongs to. */
+export const IntakeCase = z.object({
+  id: z.string(),
+  message: z.string(),
+  team: z.enum(teams),
+  priority: z.enum(priorities),
+});
+export type IntakeCase = z.infer<typeof IntakeCase>;
+
+/** How much of a triage was right: the team and the priority, half each. */
+export const triageScore = (
+  want: IntakeCase,
+  got: Pick<Triage, "team" | "priority">,
+) =>
+  ((want.team === got.team ? 1 : 0) +
+    (want.priority === got.priority ? 1 : 0)) /
+  2;
 
 /** Mean and standard deviation of a set of scores: a model's answers vary, so one run is not a result. */
 export function stats(scores: number[]) {

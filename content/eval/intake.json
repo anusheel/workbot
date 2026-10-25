@@ -1,0 +1,74 @@
+[
+  {
+    "id": "van-breakdown",
+    "message": "Van 3 broke down on the 880 with the morning's deliveries on board. We need a tow and a replacement van now.",
+    "team": "operations",
+    "priority": "high"
+  },
+  {
+    "id": "new-badge",
+    "message": "The new receiving clerk starts Monday and will need a badge and a locker.",
+    "team": "operations",
+    "priority": "normal"
+  },
+  {
+    "id": "aisle-labels",
+    "message": "Idea for whenever there is time: the racking in aisle 4 could be relabelled so picks go faster. Nothing urgent.",
+    "team": "operations",
+    "priority": "low"
+  },
+  {
+    "id": "forklift-down",
+    "message": "The forklift's hydraulics failed mid-shift. Nothing can be unloaded until it is repaired.",
+    "team": "operations",
+    "priority": "high"
+  },
+  {
+    "id": "invoice-hold",
+    "message": "Acme Supplies says invoice INV-4471 is 30 days overdue and will hold our next delivery until it is paid.",
+    "team": "finance",
+    "priority": "high"
+  },
+  {
+    "id": "trade-show-expenses",
+    "message": "Attaching my receipts from the Sacramento trade show for reimbursement, $412 in all.",
+    "team": "finance",
+    "priority": "normal"
+  },
+  {
+    "id": "early-payment-question",
+    "message": "Out of curiosity, do we ever pay vendors early for a discount? Just wondering, nothing pending.",
+    "team": "finance",
+    "priority": "low"
+  },
+  {
+    "id": "new-vendor-payment",
+    "message": "Please add Ridgeline Lumber to the next payment run; their W-9 and first invoice are attached.",
+    "team": "finance",
+    "priority": "normal"
+  },
+  {
+    "id": "refund-chargeback",
+    "message": "A customer has waited 3 weeks for the refund on order 7812 and is threatening a chargeback.",
+    "team": "support",
+    "priority": "high"
+  },
+  {
+    "id": "tile-return",
+    "message": "A customer wants to return 6 unopened boxes of tile bought 20 days ago. Can we take them back?",
+    "team": "support",
+    "priority": "normal"
+  },
+  {
+    "id": "faq-bulk-pricing",
+    "message": "Someday it would be nice if the FAQ had a section on bulk pricing. Low priority.",
+    "team": "support",
+    "priority": "low"
+  },
+  {
+    "id": "split-mortar-bags",
+    "message": "A customer says 2 of the 10 bags of mortar arrived split open and wants replacements with the next delivery.",
+    "team": "support",
+    "priority": "normal"
+  }
+]
