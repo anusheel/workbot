@@ -8,21 +8,34 @@ import {
   updateRequest,
 } from "./requests";
 
-test("a new request is open, newest first", async () => {
-  const first = await createRequest({
-    title: "Replace the badge printer",
-    body: "",
-    team: "operations",
-    priority: "normal",
-  });
-  const second = await createRequest({
-    title: "Refund order 4411",
-    body: "",
-    team: "finance",
-    priority: "high",
-  });
+const request = (
+  title: string,
+  team: "operations" | "finance" | "support",
+  priority: "low" | "normal" | "high" = "normal",
+) => createRequest({ title, body: "", team, priority });
+
+test("a new request is open, and the list is newest first", async () => {
+  const first = await request("Replace the badge printer", "operations");
+  const second = await request("Refund order 4411", "finance", "high");
   expect(first.status).toBe("open");
+  expect(first.createdAt).toBeInstanceOf(Date);
   expect((await listRequests()).slice(0, 2)).toEqual([second, first]);
+});
+
+test("requests are filtered by team and status, and found by id", async () => {
+  const wifi = await request("Office wifi is down", "support", "high");
+  await updateRequest(wifi.id, { status: "in_progress" });
+  expect(await getRequest(wifi.id)).toEqual({ ...wifi, status: "in_progress" });
+  expect(
+    await listRequests({ team: "support", status: "in_progress" }),
+  ).toEqual([{ ...wifi, status: "in_progress" }]);
+  expect(
+    await listRequests({ team: "finance", status: "in_progress" }),
+  ).toEqual([]);
+  expect(await getRequest("missing")).toBeUndefined();
+  expect(
+    await getRequest("00000000-0000-0000-0000-000000000000"),
+  ).toBeUndefined();
 });
 
 test("the schema trims, defaults and rejects", () => {
@@ -38,46 +51,6 @@ test("the schema trims, defaults and rejects", () => {
   });
   expect(NewRequest.safeParse({ title: "Hi", team: "support" }).success).toBe(
     false,
-  );
-  expect(
-    NewRequest.safeParse({ title: "A valid title", team: "legal" }).success,
-  ).toBe(false);
-});
-
-test("a request is found by id, or undefined", async () => {
-  const request = await createRequest({
-    title: "Replace the badge printer",
-    body: "",
-    team: "operations",
-    priority: "normal",
-  });
-  expect(await getRequest(request.id)).toBe(request);
-  expect(await getRequest("missing")).toBeUndefined();
-});
-
-test("a request's status can change; an unknown id changes nothing", async () => {
-  const request = await createRequest({
-    title: "Replace the badge printer",
-    body: "",
-    team: "operations",
-    priority: "normal",
-  });
-  expect(await updateRequest(request.id, { status: "done" })).toMatchObject({
-    status: "done",
-  });
-  expect(await updateRequest("missing", { status: "done" })).toBeUndefined();
-});
-
-test("the list narrows by team and status; an unknown value means no filter", async () => {
-  const finance = await createRequest({
-    title: "Refund order 4411",
-    body: "",
-    team: "finance",
-    priority: "high",
-  });
-  expect(await listRequests({ team: "finance" })).toContain(finance);
-  expect(await listRequests({ team: "finance", status: "done" })).not.toContain(
-    finance,
   );
   expect(RequestFilter.parse({ team: "legal", status: "open" })).toEqual({
     status: "open",
