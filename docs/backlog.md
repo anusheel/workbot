@@ -26,6 +26,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-18  | Analytics on the intake funnel             | S    | done   |
 | WB-19  | Validation messages from the API in the UI | S    | open   |
 | WB-20  | Request detail: comments                   | M    | open   |
+| WB-21  | Admin assistant in the terminal            | M    | done   |
 
 ## Acceptance criteria
 
@@ -101,3 +102,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-20 Request detail: comments
 
 - A request has comments with an author and a time; the detail page lists them and accepts a new one
+
+### WB-21 Admin assistant in the terminal
+
+- `pnpm chat` streams a conversation with WorkBot's system prompt; `--provider` picks Anthropic or OpenAI, `--model`, `--effort` and `--temperature` tune the call
+- `/model` switches provider or model mid-conversation and the history carries on; `/system` shows or replaces the prompt; `/cost` reports tokens and dollars for the session
+- Rate limits are retried by the SDK; other errors are shown and the failed turn leaves no trace in the history

@@ -18,3 +18,8 @@ Without a `DATABASE_URL`, the app runs on an embedded Postgres (PGlite) in
 `DATABASE_URL` in `.env.local` at a Postgres database. `.env.example` lists
 every variable. `pnpm check` runs what CI runs: lint, types, tests and a
 production build of both apps.
+
+`pnpm chat` starts WorkBot's assistant in the terminal, streaming from
+Anthropic by default or OpenAI with `--provider openai`, with `/model`,
+`/system` and `/cost` commands. It needs `ANTHROPIC_API_KEY` in `.env.local`.
+`pnpm test:live` runs the tests that call the real APIs.
