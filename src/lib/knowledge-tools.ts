@@ -1,3 +1,4 @@
+import { runInNewContext } from "node:vm";
 import { z } from "zod";
 import { embedder } from "./embeddings";
 import {
@@ -108,14 +109,108 @@ export function knowledgeTools(sections?: string[]) {
       path: z.string().default(""),
     }),
     run: async ({ pattern, path }) => {
-      const matches = await grep(pattern, path.replace(/^\//, ""), sections);
-      return matches.length
-        ? matches.join("\n")
+      const under = path.replace(/^\//, "");
+      const safe = safePattern(pattern);
+      await assertQuick(
+        safe.source,
+        (await listDocuments())
+          .filter(
+            (document) => document.path.startsWith(under) && allowed(document),
+          )
+          .map((document) => document.body)
+          .join("\n"),
+      );
+      const matches = await grep(safe.source, under, sections);
+      if (matches.length) return matches.join("\n");
+      return safe.literal
+        ? `No line matches ${pattern}, which is not a valid regular expression and was searched as plain text.`
         : `No line matches ${pattern}.`;
     },
   });
 
   return [findTool, lsTool, catTool, grepTool];
+}
+
+const maxPatternLength = 100;
+const matchBudgetMs = 250;
+
+/**
+ * The web chat hands the model's pattern straight to the regex engine, and a
+ * repeat inside a repeated group backtracks exponentially, so the thread that
+ * serves every visitor would stall on one line. Such patterns are refused with
+ * the reason, since the model can rewrite them; a pattern that does not compile
+ * is searched as the text it was probably meant to be. The shape check is only
+ * the early, explained refusal: `assertQuick` is what bounds the rest.
+ */
+function safePattern(pattern: string) {
+  if (pattern.length > maxPatternLength)
+    throw new Error(
+      `The pattern is ${pattern.length} characters; the limit is ${maxPatternLength}. Search for a shorter phrase.`,
+    );
+  try {
+    new RegExp(pattern, "i");
+  } catch {
+    return {
+      source: pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      literal: true,
+    };
+  }
+  if (repeatsARepeat(pattern))
+    throw new Error(
+      "The pattern repeats a group that already repeats, such as (a+)*, which can take too long to match. Search for a plain phrase, or repeat only single characters.",
+    );
+  return { source: pattern, literal: false };
+}
+
+/**
+ * No reading of a pattern tells every slow one from a fast one ((.|.)*x,
+ * .*.*.*.*Z and backreferences all stall without a nested repeat), so the
+ * pattern is tried on every line `grep` could reach under a time limit, which
+ * stops the thread wherever the engine backtracks. `grep` runs the same regex
+ * on the same lines afterwards, so what passes here finishes there.
+ */
+async function assertQuick(source: string, text: string) {
+  try {
+    runInNewContext(
+      'const regex = new RegExp(source, "i"); for (const line of text.split("\\n")) regex.test(line);',
+      { source, text },
+      { timeout: matchBudgetMs },
+    );
+  } catch (error) {
+    if (
+      (error as NodeJS.ErrnoException).code !== "ERR_SCRIPT_EXECUTION_TIMEOUT"
+    )
+      throw error;
+    throw new Error(
+      `The pattern took longer than ${matchBudgetMs} ms to match and was stopped; wildcards like .* repeated, or alternatives that match the same text, cause that. Search for a plain phrase instead.`,
+    );
+  }
+}
+
+/** Whether a quantifier follows a group that contains a quantifier; the pattern must be valid. */
+function repeatsARepeat(pattern: string) {
+  const quantifier = /^(?:[*+?]|\{\d+(?:,\d*)?\})/;
+  const groups: boolean[] = [];
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+    if (char === "\\") i++;
+    else if (char === "[") {
+      while (i < pattern.length - 1 && pattern[++i] !== "]")
+        if (pattern[i] === "\\") i++;
+    } else if (char === "(") {
+      groups.push(false);
+      if (pattern[i + 1] === "?") i++;
+    } else if (char === ")") {
+      const hasRepeat = groups.pop() ?? false;
+      const repeats = quantifier.test(pattern.slice(i + 1));
+      if (hasRepeat && repeats) return true;
+      if ((hasRepeat || repeats) && groups.length)
+        groups[groups.length - 1] = true;
+    } else if (groups.length && quantifier.test(pattern.slice(i))) {
+      groups[groups.length - 1] = true;
+    }
+  }
+  return false;
 }
 
 /** What a customer may read: the policies and the questions customers ask. */
