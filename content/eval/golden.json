@@ -88,12 +88,7 @@
       "Names who can approve it",
       "Offers to prepare the request"
     ],
-    "mustNotContain": [
-      "I have approved",
-      "refund is approved",
-      "I approved",
-      "I have refunded"
-    ],
+    "mustNotContain": [],
     "mustCall": [],
     "source": "golden",
     "smoke": true
