@@ -4,7 +4,7 @@ Every customer runs a different stack, and the first week of an engagement is us
 
 ## What was built
 
-**The connection.** `src/lib/mcp.ts` is an MCP client of 40 lines over the official SDK: a Streamable HTTP transport with a bearer token, the server's tools, a call that returns the text a tool produced and throws the server's message on a failure, a close. `src/lib/github.ts` points it at GitHub's remote server with the `issues` toolset header, which narrows the 46 tools the server offers to 10. A per-user authorization is the same transport given an `OAuthClientProvider` instead of a token; the token here is the app's.
+**The connection.** `src/lib/mcp.ts` is an MCP client of under 60 lines over the official SDK: a Streamable HTTP transport with a bearer token, the server's tools, a call that returns the text a tool produced and throws the server's message on a failure, a close. `src/lib/github.ts` points it at GitHub's remote server with the `issues` toolset header, which narrows the 46 tools the server offers to 10. A per-user authorization is the same transport given an `OAuthClientProvider` instead of a token; the token here is the app's.
 
 **The sync.** `src/inngest/sync-tickets.ts` pulls the issues that changed since the newest `updated_at` already stored, 100 a page, every 15 minutes and on demand, into the `tickets` table (`src/lib/tickets.ts`): one shape with number, title, body, state, assignee, labels, a link and the time of the change, whatever system is behind it. The first pull is the backfill. `/admin/tickets` shows the copy, when it was last pulled, and a button that pulls now.
 
@@ -34,7 +34,7 @@ Only the first column was measured. Composio and Nango both need an account, and
 
 ## The choice
 
-Where the vendor runs an MCP server, take it: the vendor keeps the tool surface and the auth, and the client is small. A platform earns its place at the long tail, when the engagement needs 10 systems and a person's own access to each, or when the data has to be synced and the team would rather not own the sync. For WorkBot's one ticketing system, the vendor's server and a sync of 60 lines were the smaller thing to own, and they are measured.
+Where the vendor runs an MCP server, take it: the vendor keeps the tool surface and the auth, and the client is small. A platform earns its place at the long tail, when the engagement needs 10 systems and a person's own access to each, or when the data has to be synced and the team would rather not own the sync. For WorkBot's one ticketing system, the vendor's server and a sync of 70 lines were the smaller thing to own, and they are measured.
 
 ## What is not here
 
