@@ -2,10 +2,10 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { expect, test, vi } from "vitest";
 import { z } from "zod";
+import { query } from "./db";
 import { githubTools } from "./github";
 import { connectMcp } from "./mcp";
-import { query } from "./db";
-import { listTickets, pullTickets } from "./tickets";
+import { lastSync, listTickets, pullTickets } from "./tickets";
 
 vi.hoisted(() => {
   process.env.GITHUB_REPO = "acme/helpdesk";
@@ -24,8 +24,16 @@ type Issue = {
 const json = (value: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(value) }],
 });
+const failure = (text: string) => ({
+  content: [{ type: "text" as const, text }],
+  isError: true,
+});
+const issueUrl = (number: number) =>
+  `https://github.com/acme/helpdesk/issues/${number}`;
+const commentUrl = (issue: number, id: number) =>
+  `${issueUrl(issue)}#issuecomment-${id}`;
 
-/** A ticketing system in memory with the three GitHub tools the app calls; it pages by two so the cursor loop runs. */
+/** A ticketing system in memory with the GitHub tools the app calls; it pages issues by two so the cursor loop runs. */
 function fakeGitHub() {
   const issues: Issue[] = [1, 2, 3].map((n) => ({
     number: n,
@@ -38,9 +46,18 @@ function fakeGitHub() {
     labels: n === 3 ? ["finance"] : [],
     updated_at: `2026-10-0${n}T00:00:00Z`,
   }));
-  const comments: { issue: number; body: string }[] = [];
+  const comments: { id: number; issue: number; body: string }[] = [];
   const since: (string | undefined)[] = [];
-  const serve = () => {
+  const fake = {
+    issues,
+    comments,
+    since,
+    connect,
+    // The next comment fails before it is made; the next filing is made, then its response is lost.
+    failNext: false,
+    loseNext: false,
+  };
+  function serve() {
     const server = new McpServer({ name: "github", version: "1.0.0" });
     server.registerTool(
       "list_issues",
@@ -53,6 +70,7 @@ function fakeGitHub() {
           direction: z.string(),
           since: z.string().optional(),
           after: z.string().optional(),
+          fields: z.array(z.string()).optional(),
         },
       },
       async (args) => {
@@ -64,9 +82,8 @@ function fakeGitHub() {
           )
           .sort((a, b) => a.updated_at.localeCompare(b.updated_at));
         const start = Number(args.after ?? 0);
-        const page = changed.slice(start, start + 2);
         return json({
-          issues: page,
+          issues: changed.slice(start, start + 2),
           pageInfo: {
             hasNextPage: start + 2 < changed.length,
             endCursor: String(start + 2),
@@ -96,10 +113,11 @@ function fakeGitHub() {
           labels: [],
           updated_at: new Date().toISOString(),
         });
-        return json({
-          id: String(number),
-          url: `https://github.com/acme/helpdesk/issues/${number}`,
-        });
+        if (fake.loseNext) {
+          fake.loseNext = false;
+          return failure("connection lost");
+        }
+        return json({ id: String(number), url: issueUrl(number) });
       },
     );
     server.registerTool(
@@ -115,23 +133,42 @@ function fakeGitHub() {
       async ({ issue_number, body }) => {
         if (fake.failNext) {
           fake.failNext = false;
-          return { content: [{ type: "text", text: "down" }], isError: true };
+          return failure("down");
         }
-        comments.push({ issue: issue_number, body });
-        return json({
-          id: String(comments.length),
-          url: `https://github.com/acme/helpdesk/issues/${issue_number}#issuecomment-${comments.length}`,
-        });
+        const id = comments.length + 1;
+        comments.push({ id, issue: issue_number, body });
+        return json({ id: String(id), url: commentUrl(issue_number, id) });
       },
     );
+    server.registerTool(
+      "issue_read",
+      {
+        inputSchema: {
+          method: z.literal("get_comments"),
+          owner: z.string(),
+          repo: z.string(),
+          issue_number: z.number(),
+          page: z.number(),
+          perPage: z.number(),
+        },
+      },
+      async ({ issue_number }) =>
+        json(
+          comments
+            .filter((c) => c.issue === issue_number)
+            .map((c) => ({
+              body: c.body,
+              html_url: commentUrl(issue_number, c.id),
+            })),
+        ),
+    );
     return server;
-  };
-  const connect = async () => {
+  }
+  async function connect() {
     const [client, transport] = InMemoryTransport.createLinkedPair();
     await serve().connect(transport);
     return connectMcp(client);
-  };
-  const fake = { issues, comments, since, connect, failNext: false };
+  }
   return fake;
 }
 
@@ -144,6 +181,7 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
   const mcp = await github.connect();
   expect(await pullTickets(mcp)).toEqual({ pulled: 3, since: null });
   expect(github.since).toEqual([undefined, undefined]);
+  const pulledAt = await lastSync();
 
   github.issues[1].state = "CLOSED";
   github.issues[1].updated_at = "2026-10-09T00:00:00Z";
@@ -151,6 +189,9 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
   const second = await pullTickets(mcp);
   expect(second.pulled).toBe(2);
   expect(second.since?.toISOString()).toBe("2026-10-03T00:00:00.000Z");
+  expect((await lastSync())!.getTime()).toBeGreaterThanOrEqual(
+    pulledAt!.getTime(),
+  );
 
   const tickets = await listTickets();
   expect(tickets.map((t) => [t.number, t.state])).toEqual([
@@ -162,14 +203,14 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
     id: "acme/helpdesk#1",
     source: "acme/helpdesk",
     assignee: "sam",
-    url: "https://github.com/acme/helpdesk/issues/1",
+    url: issueUrl(1),
   });
   await mcp.close();
 });
 
 test("finds tickets in the synced copy", async () => {
   expect(await tools.find_ticket.run({ query: "printer" })).toBe(
-    "#1 (open, sam) Badge printer jams https://github.com/acme/helpdesk/issues/1",
+    `#1 (open, sam) Badge printer jams ${issueUrl(1)}`,
   );
   expect(await tools.find_ticket.run({ query: "espresso" })).toBe(
     'No ticket matches "espresso".',
@@ -187,14 +228,12 @@ test("files a ticket once per key, and not at all on a dry run", async () => {
   );
   expect(github.issues).toHaveLength(3);
 
-  expect(await tools.file_ticket.run(input)).toBe(
-    "Filed #4: https://github.com/acme/helpdesk/issues/4",
-  );
+  expect(await tools.file_ticket.run(input)).toBe(`Filed #4: ${issueUrl(4)}`);
   expect(github.issues[3].body).toBe(
     "Reported by reception.\n\nFiled by WorkBot (REQ-88).",
   );
   expect(await tools.file_ticket.run({ ...input, title: "Again" })).toBe(
-    "Already filed as #4: https://github.com/acme/helpdesk/issues/4",
+    `Already filed as #4: ${issueUrl(4)}`,
   );
   expect(github.issues).toHaveLength(4);
 });
@@ -209,37 +248,64 @@ test("two filings with one key at the same time make one issue", async () => {
   expect(results.filter((r) => r.startsWith("Filed #5:"))).toHaveLength(1);
 });
 
-test("a write that fails gives its key back", async () => {
+test("a write that fails before it is made gives its key back", async () => {
   const input = { number: 1, text: "x", key: "REQ-91" };
   github.failNext = true;
   await expect(tools.comment_on_ticket.run(input)).rejects.toThrow("down");
   expect(await tools.comment_on_ticket.run(input)).toBe(
-    "Commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-1",
+    `Commented on #1: ${commentUrl(1, 1)}`,
   );
 });
 
 test("a claim with no result is in flight for 5 minutes, then free", async () => {
   await query(
-    `insert into filings (key, created_at) values ('REQ-92', now()), ('REQ-93', now() - interval '6 minutes')`,
+    `insert into filings (kind, key, created_at) values ('filing', 'REQ-92', now()), ('filing', 'REQ-93', now() - interval '6 minutes')`,
   );
   expect(
     await tools.file_ticket.run({ title: "Dock door stuck", key: "REQ-92" }),
   ).toBe("Being filed now under the key REQ-92; ask again in a moment.");
   expect(
     await tools.file_ticket.run({ title: "Dock door stuck", key: "REQ-93" }),
-  ).toBe("Filed #6: https://github.com/acme/helpdesk/issues/6");
+  ).toBe(`Filed #6: ${issueUrl(6)}`);
 });
 
-test("comments on a ticket once per key", async () => {
-  const input = { number: 1, text: "Toner ordered.", key: "REQ-88-toner" };
+test("a crashed filing that reached the system is found by its signature, not made again", async () => {
+  github.issues.push({
+    number: 7,
+    title: "Forklift charger",
+    body: "Filed by WorkBot (REQ-94).",
+    state: "OPEN",
+    assignees: [],
+    labels: [],
+    updated_at: new Date().toISOString(),
+  });
+  await query(
+    `insert into filings (kind, key, created_at) values ('filing', 'REQ-94', now() - interval '6 minutes')`,
+  );
+  expect(
+    await tools.file_ticket.run({ title: "Forklift charger", key: "REQ-94" }),
+  ).toBe(`Already filed as #7: ${issueUrl(7)}`);
+  expect(github.issues).toHaveLength(7);
+});
+
+test("a write whose response was lost is found by its signature, not made again", async () => {
+  github.loseNext = true;
+  expect(
+    await tools.file_ticket.run({ title: "Pallet jack", key: "REQ-95" }),
+  ).toBe(`Filed #8: ${issueUrl(8)}`);
+  expect(github.issues).toHaveLength(8);
+});
+
+test("comments on a ticket once per key, a key the filing also used", async () => {
+  const input = { number: 1, text: "Toner ordered.", key: "REQ-88" };
   expect(await tools.comment_on_ticket.run(input)).toBe(
-    "Commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-2",
+    `Commented on #1: ${commentUrl(1, 2)}`,
   );
   expect(await tools.comment_on_ticket.run(input)).toBe(
-    "Already commented on #1: https://github.com/acme/helpdesk/issues/1#issuecomment-2",
+    `Already commented on #1: ${commentUrl(1, 2)}`,
   );
-  expect(github.comments).toEqual([
-    { issue: 1, body: "x" },
-    { issue: 1, body: "Toner ordered." },
+  expect(github.comments.map((c) => c.body)).toEqual([
+    "x\n\nComment by WorkBot (REQ-91).",
+    "Toner ordered.\n\nComment by WorkBot (REQ-88).",
   ]);
 });

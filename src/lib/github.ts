@@ -3,9 +3,12 @@ import { config } from "./config";
 import { type Mcp, connectMcp, remote, withMcp } from "./mcp";
 import {
   type Filing,
+  type Kind,
   type Ticket,
   filingOf,
   findTickets,
+  issuePages,
+  issueUrl,
   once,
   repository,
 } from "./tickets";
@@ -28,6 +31,12 @@ export const githubConnect = () =>
 const written = (text: string) =>
   JSON.parse(text) as { id: string; url: string };
 
+/** The line every write ends with, so it can be found in the system by its key. */
+const signature = (kind: Kind, key: string) =>
+  `${kind === "filing" ? "Filed" : "Comment"} by WorkBot (${key}).`;
+const signed = (kind: Kind, text: string, key: string) =>
+  `${text}\n\n${signature(kind, key)}`.trim();
+
 const line = (t: Ticket) =>
   `#${t.number} (${t.state}${t.assignee ? `, ${t.assignee}` : ""}) ${t.title} ${t.url}`;
 
@@ -36,6 +45,8 @@ const already = (done: string, doing: string, f: Filing) =>
   f.url
     ? `Already ${done} #${f.number}: ${f.url}`
     : `Being ${doing} now under the key ${f.key}; ask again in a moment.`;
+
+const day = 86_400_000;
 
 /**
  * The tickets as 3 product-level tools over GitHub's 46: a find that reads
@@ -55,6 +66,46 @@ export function githubTools(
       "what this is about, so it is done once: a request id, an invoice number",
     );
   const dryRun = z.boolean().default(false);
+
+  /** The issue a filing under the key made, if a crashed or failed one did: by its signature, among the day's changes. */
+  const filedUnder = (key: string) =>
+    withMcp(connect, async (mcp) => {
+      const since = new Date(Date.now() - day).toISOString();
+      for await (const issues of issuePages(mcp, {
+        since,
+        fields: ["number", "body"],
+      })) {
+        const issue = issues.find((i) =>
+          i.body?.endsWith(signature("filing", key)),
+        );
+        if (issue)
+          return { number: issue.number, url: issueUrl(slug, issue.number) };
+      }
+      return undefined;
+    });
+
+  /** The comment under the key on an issue, if one was made: by its signature, over every page of comments. */
+  const commentedUnder = (key: string, number: number) =>
+    withMcp(connect, async (mcp) => {
+      for (let page = 1; ; page++) {
+        const comments = JSON.parse(
+          await mcp.call("issue_read", {
+            method: "get_comments",
+            owner,
+            repo,
+            issue_number: number,
+            page,
+            perPage: 100,
+          }),
+        ) as { body: string; html_url: string }[];
+        const comment = comments.find((c) =>
+          c.body.endsWith(signature("comment", key)),
+        );
+        if (comment) return { number, url: comment.html_url };
+        if (comments.length < 100) return undefined;
+      }
+    });
+
   return [
     tool({
       name: "find_ticket",
@@ -79,24 +130,29 @@ export function githubTools(
         dry_run: dryRun,
       }),
       run: async ({ title, body, key, dry_run }) => {
-        const filed = await filingOf(key);
+        const filed = await filingOf("filing", key);
         if (filed) return already("filed as", "filed", filed);
         if (dry_run)
           return `Would file "${title}" in ${slug} under the key ${key}. Nothing filed.`;
-        const { filing, made } = await once(key, async () => {
-          const { url } = written(
-            await withMcp(connect, (mcp) =>
-              mcp.call("issue_write", {
-                method: "create",
-                owner,
-                repo,
-                title,
-                body: `${body}\n\nFiled by WorkBot (${key}).`.trim(),
-              }),
-            ),
-          );
-          return { number: Number(url.split("/").pop()), url };
-        });
+        const { filing, made } = await once(
+          "filing",
+          key,
+          async () => {
+            const { url } = written(
+              await withMcp(connect, (mcp) =>
+                mcp.call("issue_write", {
+                  method: "create",
+                  owner,
+                  repo,
+                  title,
+                  body: signed("filing", body, key),
+                }),
+              ),
+            );
+            return { number: Number(url.split("/").pop()), url };
+          },
+          () => filedUnder(key),
+        );
         return made
           ? `Filed #${filing.number}: ${filing.url}`
           : already("filed as", "filed", filing);
@@ -113,24 +169,29 @@ export function githubTools(
         dry_run: dryRun,
       }),
       run: async ({ number, text, key, dry_run }) => {
-        const commented = await filingOf(key);
+        const commented = await filingOf("comment", key);
         if (commented)
           return already("commented on", "commented on", commented);
         if (dry_run)
           return `Would comment on #${number}: "${text}". Nothing added.`;
-        const { filing, made } = await once(key, async () => {
-          const { url } = written(
-            await withMcp(connect, (mcp) =>
-              mcp.call("add_issue_comment", {
-                owner,
-                repo,
-                issue_number: number,
-                body: text,
-              }),
-            ),
-          );
-          return { number, url };
-        });
+        const { filing, made } = await once(
+          "comment",
+          key,
+          async () => {
+            const { url } = written(
+              await withMcp(connect, (mcp) =>
+                mcp.call("add_issue_comment", {
+                  owner,
+                  repo,
+                  issue_number: number,
+                  body: signed("comment", text, key),
+                }),
+              ),
+            );
+            return { number, url };
+          },
+          () => commentedUnder(key, number),
+        );
         return made
           ? `Commented on #${number}: ${filing.url}`
           : already("commented on", "commented on", filing);

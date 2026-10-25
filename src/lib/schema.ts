@@ -120,14 +120,20 @@ export const schema = [
     assignee text,
     labels jsonb not null default '[]',
     url text not null,
-    updated_at timestamptz not null,
-    synced_at timestamptz not null default now()
+    updated_at timestamptz not null
   )`,
   `create index if not exists tickets_updated on tickets (source, updated_at)`,
+  `create table if not exists syncs (
+    source text primary key,
+    pulled_at timestamptz not null,
+    pulled integer not null
+  )`,
   `create table if not exists filings (
-    key text primary key,
+    kind text not null,
+    key text not null,
     number integer,
     url text,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    primary key (kind, key)
   )`,
 ];
