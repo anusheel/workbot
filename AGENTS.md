@@ -7,7 +7,7 @@ Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnp
 
 - `pnpm dev`: the dev server on http://localhost:3000
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
-- `pnpm check`: lint, types, tests and a production build; CI runs the same on every push
+- `pnpm check`: lint, types, tests and a production build; CI runs the same on every pull request and on `main`
 - `pnpm dlx shadcn@latest add <component>`: a UI primitive into `src/components/ui/`
 
 ## Claude Code

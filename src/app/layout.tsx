@@ -4,7 +4,11 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-sans", subsets: ["latin"] });
-const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const mono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: { default: "WorkBot", template: "%s · WorkBot" },
