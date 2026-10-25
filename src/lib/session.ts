@@ -9,6 +9,7 @@ import {
   providers,
 } from "./providers";
 import { systemPrompt } from "./system-prompt";
+import { recordTrace } from "./tracing";
 
 export type Options = Pick<
   Completion,
@@ -67,9 +68,22 @@ export class Session {
     }
   }
 
-  /** Adds a model call made on the session's behalf, so /cost counts it. */
+  /** Adds a model call made on the session's behalf, so /cost counts it, and to the traces. */
   record(modelId: string, usage: Usage, price?: Model["price"]) {
     this.turns.push({ modelId, usage, price });
+    void recordTrace({
+      tenant: "terminal",
+      name: "chat",
+      model: modelId,
+      ...usage,
+      cached: 0,
+      dollars: price
+        ? (usage.input * price.input + usage.output * price.output) / 1e6
+        : 0,
+      ms: 0,
+      ok: true,
+      error: null,
+    }).catch((err: unknown) => console.error("[tracing]", err));
   }
 
   /** Tokens and dollars so far; models without a published price are named instead of guessed. */

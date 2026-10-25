@@ -3,6 +3,7 @@ import { expect, test, vi } from "vitest";
 import { POST } from "./route";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("@/lib/chat", () => ({
   chatModel: () =>
     new MockLanguageModelV4({

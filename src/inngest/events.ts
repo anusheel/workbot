@@ -17,3 +17,6 @@ export const documentReviewed = eventType("document/reviewed", {
 
 /** Runs the daily reminders on demand. */
 export const remindersRequested = eventType("reminders/requested");
+
+/** Runs the hourly checks on demand. */
+export const watchRequested = eventType("watch/requested");

@@ -4,10 +4,11 @@ import { type ToolSet, tool } from "ai";
 import { config } from "./config";
 import { type ProviderName, providers } from "./providers";
 import { customerTools } from "./tools";
+import { traced } from "./tracing";
 
-/** A model as the AI SDK addresses it, from a provider name and a model id. */
+/** A model as the AI SDK addresses it, from a provider name and a model id, with every call traced. */
 export const aiModel = (provider: ProviderName, id: string) =>
-  provider === "openai" ? openai(id) : anthropic(id);
+  traced(provider === "openai" ? openai(id) : anthropic(id));
 
 /** The model behind the web chat: the configured one, else the provider's default, or its small model. */
 export function chatModel(size: "large" | "small" = "large") {
