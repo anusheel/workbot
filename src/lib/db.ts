@@ -11,6 +11,10 @@ export type Query = <T extends Row>(
 ) => Promise<T[]>;
 export type Connection = { query: Query; close(): Promise<void> };
 
+// The Postgres driver throws on undefined; both connections send null instead.
+const nullable = (params: unknown[]) =>
+  params.map((param) => (param === undefined ? null : param));
+
 /**
  * Connects to a postgres:// URL, or opens an embedded PGlite database at a
  * directory (`memory://` for none). A read-only connection rejects writes
@@ -29,7 +33,7 @@ export function connect(
     });
     return {
       query: async <T extends Row>(text: string, params: unknown[] = []) =>
-        (await client.unsafe<T[]>(text, params as never)) as T[],
+        (await client.unsafe<T[]>(text, nullable(params) as never)) as T[],
       close: () => client.end(),
     };
   }
@@ -40,7 +44,7 @@ export function connect(
   return {
     query: async <T extends Row>(text: string, params: unknown[] = []) => {
       await ready;
-      return (await pg.query<T>(text, params)).rows;
+      return (await pg.query<T>(text, nullable(params))).rows;
     },
     close: () => pg.close(),
   };
