@@ -8,6 +8,7 @@
     "chat": "node --env-file-if-exists=.env.local --import tsx cli/chat.ts",
     "explain": "node --import tsx cli/explain.ts",
     "knowledge:index": "node --env-file-if-exists=.env.local --import tsx cli/index-knowledge.ts",
+    "compare:retrieval": "node --env-file-if-exists=.env.local --import tsx cli/compare-retrieval.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0 && prettier --check .",
