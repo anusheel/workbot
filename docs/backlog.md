@@ -54,7 +54,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-46  | Deployment                                                                | S    | open   |
 | WB-47  | The architecture written up, and a design pitched                         | M    | done   |
 | WB-48  | One policy across 3 CLIs, the company brain, the way of working           | M    | done   |
-| WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue  | L    | done   |
+| WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue  | M    | done   |
 
 ## Acceptance criteria
 
