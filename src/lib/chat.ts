@@ -9,10 +9,15 @@ import { tools } from "./tools";
 export const aiModel = (provider: ProviderName, id: string) =>
   provider === "openai" ? openai(id) : anthropic(id);
 
-/** The model behind the web chat: the configured one, else the provider's default. */
-export function chatModel() {
+/** The model behind the web chat: the configured one, else the provider's default, or its small model. */
+export function chatModel(size: "large" | "small" = "large") {
   const { provider, model } = config.chat;
-  return aiModel(provider, model ?? providers[provider]().models[0].id);
+  const { models } = providers[provider]();
+  const id =
+    size === "large" && model
+      ? model
+      : (models.find((m) => m.size === size) ?? models[0]).id;
+  return aiModel(provider, id);
 }
 
 /** The assistant's tools in the AI SDK's shape, from the one registry. */
