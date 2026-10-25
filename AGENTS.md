@@ -12,7 +12,7 @@ Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnp
 
 ## Claude Code
 
-Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits.
+Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. `.mcp.json` registers the Linear, GitHub and Figma MCP servers; each asks you to sign in on first use. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path.
 
 ## Conventions
 
