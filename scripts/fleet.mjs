@@ -25,7 +25,7 @@ import { parseArgs, promisify } from "node:util";
 
 const LABEL = "fleet";
 const TOOLS =
-  "Edit,Write,Read,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr edit:*),Bash(gh issue view:*)";
+  "Edit,Write,Read,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr edit:*),Bash(gh pr checks:*),Bash(gh run view:*),Bash(gh issue view:*)";
 const NO_MCP = ["--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}'];
 const home = resolve(import.meta.dirname, "..");
 const pens = join(home, "..", "workbot-fleet");
@@ -234,12 +234,13 @@ const fixBrief = (
   issue,
   review,
   session,
-) => `The review below of the pull request for issue #${issue.number} (branch ${branchOf(issue)}, checked out here) requests changes. Address every blocking item, and the should-fix items where the change is small; keep every criterion of the issue met. If a blocking item cannot be fixed within the issue's constraints, say so in a comment on the pull request (\`gh pr comment\`) and stop. Run \`pnpm lint\`, \`pnpm typecheck\` and the tests you touched until they pass, commit (a new commit, imperative subject), push, and add the line "- Claude Code (fix): ${session}" under Session in the pull request body with \`gh pr edit --body-file\`.
+) => `The pull request for issue #${issue.number} (branch ${branchOf(issue)}, checked out here) cannot merge yet; below is why: a review that requests changes, or a failed check. Address every blocking item, and the should-fix items where the change is small; keep every criterion of the issue met. If a blocking item cannot be fixed within the issue's constraints, say so in a comment on the pull request (\`gh pr comment\`) and stop. Run \`pnpm lint\`, \`pnpm typecheck\` and the tests you touched until they pass, commit (a new commit, imperative subject), push, and add the line "- Claude Code (fix): ${session}" under Session in the pull request body with \`gh pr edit --body-file\`.
 
 ${review}`;
 
-// A review that requests changes goes back to an agent, once: a session on the
-// pull request's branch, in the task's worktree or a new one for a cloud branch.
+// A review that requests changes, or a failed check, goes back to an agent,
+// once: a session on the pull request's branch, in the task's worktree or a
+// new one for a cloud branch.
 function startFix(issue, review) {
   const dir = join(pens, String(issue.number));
   if (existsSync(dir)) sh("git", ["pull", "-q", "--ff-only"], { cwd: dir });
@@ -454,6 +455,17 @@ async function merge(batch) {
     );
     merged.push(issue);
     console.log(`#${pr.number}: merged`);
+  }
+  for (const { issue, pr, run } of tasks()) {
+    if (
+      pr?.state !== "OPEN" ||
+      ci(pr) !== "fail" ||
+      run?.fixing ||
+      run?.reviewed === pr.headRefOid
+    )
+      continue;
+    const why = `CI failed on pull request #${pr.number}: \`gh pr checks ${pr.number}\` names the run, \`gh run view <id> --log-failed\` shows the failure.`;
+    state[issue.number] = { ...startFix(issue, why), reviewed: pr.headRefOid };
   }
   save(state);
   if (!merged.length) return;
