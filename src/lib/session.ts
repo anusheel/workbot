@@ -15,7 +15,7 @@ export type Options = Pick<
   "effort" | "temperature" | "maxTokens" | "tools"
 >;
 
-type Turn = { model: Model; usage: Usage };
+type Turn = { modelId: string; usage: Usage; price?: Model["price"] };
 
 /** One conversation: its history, the model answering it, and what it has cost so far. */
 export class Session {
@@ -59,7 +59,7 @@ export class Session {
         },
       );
       this.messages.push({ role: "assistant", content: reply });
-      this.record(this.model, usage);
+      this.record(this.model.id, usage, this.model.price);
       return usage;
     } catch (err) {
       this.messages.pop();
@@ -68,23 +68,21 @@ export class Session {
   }
 
   /** Adds a model call made on the session's behalf, so /cost counts it. */
-  record(model: Model, usage: Usage) {
-    this.turns.push({ model, usage });
+  record(modelId: string, usage: Usage, price?: Model["price"]) {
+    this.turns.push({ modelId, usage, price });
   }
 
   /** Tokens and dollars so far; models without a published price are named instead of guessed. */
   cost() {
     const total = { input: 0, output: 0, dollars: 0 };
     const unpriced = new Set<string>();
-    for (const { model, usage } of this.turns) {
+    for (const { modelId, usage, price } of this.turns) {
       total.input += usage.input;
       total.output += usage.output;
-      if (model.price)
+      if (price)
         total.dollars +=
-          (usage.input * model.price.input +
-            usage.output * model.price.output) /
-          1e6;
-      else unpriced.add(model.id);
+          (usage.input * price.input + usage.output * price.output) / 1e6;
+      else unpriced.add(modelId);
     }
     return { ...total, unpriced: [...unpriced] };
   }

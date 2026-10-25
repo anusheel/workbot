@@ -12,7 +12,8 @@ export type Tool = {
   run(input: unknown): Promise<string>;
 };
 
-function tool<Schema extends z.ZodObject>(definition: {
+/** Defines a tool from a Zod schema and a function; the input type flows from the schema into run. */
+export function tool<Schema extends z.ZodObject>(definition: {
   name: string;
   description: string;
   input: Schema;

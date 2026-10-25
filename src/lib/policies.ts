@@ -42,3 +42,41 @@ async function readPolicy(slug: string): Promise<Policy> {
   );
   return { slug, body: match[2].trim(), ...FrontMatter.parse(fields) };
 }
+
+export type PolicyHit = { slug: string; title: string; snippets: string[] };
+
+/**
+ * Finds the policies that mention the words of a question, best match first,
+ * with the lines that matched. Plain word matching over a small corpus.
+ */
+export async function searchPolicies(
+  question: string,
+  limit = 3,
+): Promise<PolicyHit[]> {
+  const words = [
+    ...new Set(question.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []),
+  ];
+  const hits = (await listPolicies()).flatMap((policy) => {
+    const lines = policy.body.split("\n").filter((line) => line.trim());
+    const matching = lines.filter((line) =>
+      words.some((w) => line.toLowerCase().includes(w)),
+    );
+    const score =
+      matching.length +
+      words.filter((w) => policy.title.toLowerCase().includes(w)).length * 3;
+    return score
+      ? [
+          {
+            slug: policy.slug,
+            title: policy.title,
+            snippets: matching.slice(0, 4),
+            score,
+          },
+        ]
+      : [];
+  });
+  return hits
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ slug, title, snippets }) => ({ slug, title, snippets }));
+}
