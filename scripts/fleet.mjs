@@ -280,7 +280,8 @@ function startFix(issue, why, branch = branchOf(issue)) {
 }
 
 // A cloud agent pushes its branch but holds no GitHub token; the pull request
-// is opened here, with the agent's commit message and the session link.
+// is opened here, with the agent's commit message and the session link. The
+// branch may carry the name the brief gave or one the cloud chose at start.
 function collect(state) {
   for (const { issue, run, pr } of tasks()) {
     if (!run?.cloud || pr) continue;
@@ -290,6 +291,7 @@ function collect(state) {
       "origin",
       branchOf(issue),
       `claude/fleet-${issue.number}-*`,
+      `claude/issue-${issue.number}-*`,
     ])
       .split("\n")
       .find(Boolean)
