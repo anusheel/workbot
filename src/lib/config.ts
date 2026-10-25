@@ -3,6 +3,8 @@ export const config = {
   commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
   // A postgres:// URL, or a directory for an embedded PGlite database.
   database: process.env.DATABASE_URL || ".data/pg",
+  // Web search for the assistant; unset means the tool is not offered.
+  brave: { key: process.env.BRAVE_SEARCH_KEY },
   posthog: {
     // The project key, for capturing events; unset means no analytics.
     key: process.env.POSTHOG_KEY,
