@@ -1,0 +1,74 @@
+name: Eval
+
+on:
+  pull_request:
+    paths:
+      - src/lib/system-prompt.ts
+      - src/lib/tools.ts
+      - src/lib/knowledge-tools.ts
+      - src/lib/routing.ts
+      - src/lib/providers.ts
+      - src/lib/eval.ts
+      - src/lib/eval-suite.ts
+      - src/lib/eval-documents.ts
+      - cli/eval.ts
+      - content/eval/**
+      - content/knowledge/**
+      - .github/workflows/eval.yml
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The step's exit code is the job's, so a failed gate fails the check.
+      - run: pnpm eval --task all --smoke --runs 2 --gate --report eval-report.md
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: memory://
+      # The report is written before the gate exits, so a failing run is commented too.
+      - if: always() && hashFiles('eval-report.md') != ''
+        run: gh pr comment "$PR" --edit-last --create-if-none --body-file eval-report.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+
+  nightly:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm eval --task all --runs 2 --record
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: memory://
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/eval/scoreboard.jsonl
+          git diff --cached --quiet || {
+            git commit -m "Record the nightly evals"
+            git push origin HEAD:main
+          }
