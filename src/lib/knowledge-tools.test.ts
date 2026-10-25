@@ -61,6 +61,16 @@ test("grep rejects patterns that can hang the server, and says why", async () =>
   );
 });
 
+test("grep stops patterns that stall without a nested repeat", async () => {
+  for (const pattern of ["(.|.)*q", "(\\s|.)*z", ".*.*.*.*.*.*z"]) {
+    const started = performance.now();
+    await expect(grepTool.run({ pattern })).rejects.toThrow(
+      "took longer than 250 ms",
+    );
+    expect(performance.now() - started).toBeLessThan(1000);
+  }
+});
+
 test("grep accepts groups that do not nest a repeat", async () => {
   expect(await grepTool.run({ pattern: "(refund|credit)s? up to" })).toContain(
     "refunds:",
@@ -75,7 +85,9 @@ test("grep searches an invalid expression as plain text", async () => {
   const found = await grepTool.run({ pattern: "(", path: "manuals/" });
   expect(found).toContain("manuals/returns-processing:");
   expect(found).toContain("(resalable as new)");
-  expect(await grepTool.run({ pattern: "[a" })).toBe("No line matches [a.");
+  expect(await grepTool.run({ pattern: "[a" })).toBe(
+    "No line matches [a, which is not a valid regular expression and was searched as plain text.",
+  );
 });
 
 test("scoped tools see nothing outside their sections", async () => {
