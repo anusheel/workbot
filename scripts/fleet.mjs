@@ -13,14 +13,7 @@
 //   node scripts/fleet.mjs run [the same flags]             dispatch, merge and report every 2 minutes until done
 import { execFile, execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 
@@ -210,9 +203,6 @@ function startLocal(issue) {
   const dir = join(pens, String(issue.number));
   mkdirSync(pens, { recursive: true });
   sh("git", ["worktree", "add", "-q", "-B", branchOf(issue), dir, base]);
-  // pnpm eval reads the keys from .env.local; the agent's rules still forbid reading it.
-  if (existsSync(join(home, ".env.local")))
-    symlinkSync(join(home, ".env.local"), join(dir, ".env.local"));
   sh("pnpm", ["install", "--frozen-lockfile", "--silent"], { cwd: dir });
   const session = randomUUID();
   const log = openSync(join(pens, `${issue.number}.log`), "w");
