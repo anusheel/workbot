@@ -1,13 +1,15 @@
 # WorkBot
 
 An AI assistant and workflow engine for operations, finance and support teams.
-Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnpm.
+Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnpm. The public
+site is a second app in `site/`, with its own AGENTS.md.
 
 ## Commands
 
 - `pnpm dev`: the dev server on http://localhost:3000
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
-- `pnpm check`: lint, types, tests and a production build; CI runs the same on every pull request and on `main`
+- `pnpm check`: lint, types, tests and a production build, for both apps; CI runs the same on every pull request and on `main`
+- `pnpm --filter workbot-site dev`: the public site on http://localhost:3001
 - `pnpm dlx shadcn@latest add <component>`: a UI primitive into `src/components/ui/`
 
 ## Claude Code
@@ -22,6 +24,7 @@ Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-dep
 - Pages compose shadcn/ui primitives from `src/components/ui/`; the app's own components live in `src/components/`, are kebab-case files exporting a PascalCase name, have a render test beside them and are imported by path
 - Route handlers live at `src/app/api/<name>/route.ts` and return JSON
 - `src/lib/config.ts` is the only module that reads `process.env`
+- A folder with its own rules has a `CLAUDE.md` beside the files: `src/app/api/` for routes, `content/policies/` for policies
 - Comments say why, never what; no comment restates the line below it
 - Prettier formats everything (`pnpm format`); formatting is never a review comment
 
