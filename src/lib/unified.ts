@@ -194,9 +194,10 @@ const contactColumns = `id, source, key, name, email, phone, company, url, appli
  * undoes a pull, and the same version twice changes nothing.
  */
 export async function upsertTicket(input: TicketInput): Promise<Ticket> {
+  // The rules read the title: a body is long and says many things, a title says what the ticket is.
   const { record, applied } = applyRules("ticket", {
     ...input,
-    text: `${input.title}\n${input.body}`,
+    text: input.title,
   });
   const id = `${input.source}#${input.key}`;
   const [row] = await query<Ticket>(

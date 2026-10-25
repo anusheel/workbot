@@ -78,8 +78,9 @@ export async function pullTickets(
       await upsertTicket(input);
       seen.add(input.key);
       pulled++;
-      if (!full) await logSync("github", input.key, "pull", lag);
-      else if (since && (!before || before < input.updatedAt)) {
+      // The backfill is not a measure of the path; a pull since a time is.
+      if (!full && since) await logSync("github", input.key, "pull", lag);
+      else if (full && since && (!before || before < input.updatedAt)) {
         missed++;
         await logSync("github", input.key, "missed", lag);
       }
