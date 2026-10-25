@@ -1,8 +1,14 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
+import { uploadDocuments } from "@/app/admin/inbox/actions";
+import { maxFileBytes } from "@/lib/extract";
 import { POST } from "./route";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
+vi.mock("next/cache", () => ({ refresh: vi.fn() }));
+vi.mock("@/inngest/client", () => ({ inngest: { send: vi.fn() } }));
+vi.mock("@/lib/inbox", () => ({ receive: vi.fn(), discard: vi.fn() }));
+const generated = vi.hoisted(() => ({ calls: 0 }));
 vi.mock("@/lib/chat", () => {
   const replies = [
     { type: "email" },
@@ -22,6 +28,7 @@ vi.mock("@/lib/chat", () => {
     chatModel: () =>
       new MockLanguageModelV4({
         doGenerate: async () => ({
+          ...(generated.calls++, {}),
           content: [{ type: "text", text: JSON.stringify(replies.shift()) }],
           finishReason: { unified: "stop", raw: undefined },
           usage: {
@@ -81,4 +88,47 @@ test("a short text, a bad or private address, an empty body and a file of the wr
   );
   expect(upload.status).toBe(400);
   expect(JSON.stringify(await upload.json())).toContain("application/pdf");
+});
+
+const upload = (file: File) => {
+  const form = new FormData();
+  form.set("document", file);
+  return POST(
+    new Request("http://workbot/api/documents", { method: "POST", body: form }),
+  );
+};
+
+test("an empty file, a file over the limit and a malformed multipart body answer 400 before any model call", async () => {
+  generated.calls = 0;
+  const empty = await upload(
+    new File([], "empty.pdf", { type: "application/pdf" }),
+  );
+  expect(empty.status).toBe(400);
+  const big = await upload(
+    new File([new Uint8Array(maxFileBytes + 1)], "big.pdf", {
+      type: "application/pdf",
+    }),
+  );
+  expect(big.status).toBe(400);
+  expect(JSON.stringify(await big.json())).toContain("10 MB");
+  const garbage = await POST(
+    new Request("http://workbot/api/documents", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=x" },
+      body: "garbage",
+    }),
+  );
+  expect(garbage.status).toBe(400);
+  expect(generated.calls).toBe(0);
+});
+
+test("the inbox upload refuses an oversized file the same way", async () => {
+  const form = new FormData();
+  form.append(
+    "documents",
+    new File([new Uint8Array(maxFileBytes + 1)], "big.pdf", {
+      type: "application/pdf",
+    }),
+  );
+  await expect(uploadDocuments(form)).rejects.toThrow("10 MB");
 });
