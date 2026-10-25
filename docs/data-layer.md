@@ -15,13 +15,13 @@ An issue maps the same whether the server listed it (labels as names, `OPEN`) or
 
 Not unified: deals, since WorkBot has no CRM; invoices stay documents, with the rules applied as they are saved. The Day 27 table became this one by changing its create statement before anything was deployed; after a deployment the same change is a migration, written before the deploy.
 
-## Three sync paths
+## The pull, the webhook and the nightly read
 
-| Path      | Runs                          | Does                                                                                                    | Logs                                     | Measured here                                         |
-| --------- | ----------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------- |
-| pull      | every 15 minutes, on demand   | the issues changed since the latest `updated_at` stored, 100 a page; every request; every contact       | `pull`, with how far behind the copy was | median 80 s behind                                    |
-| webhook   | on a signed `issues` delivery | replaces the issue's row now                                                                            | `webhook`, with how far behind           | median 2 s behind, from a signed copy of a real issue |
-| reconcile | nightly at 03:30, on demand   | reads every issue; fixes rows the copy had older than the system; drops rows the system no longer lists | `missed` and `gone`, one row each        | 1 missed, 0 gone, over 62 issues                      |
+| Path      | Runs                          | Does                                                                                                                             | Logs                                     | Measured here                                         |
+| --------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------- |
+| pull      | every 15 minutes, on demand   | the issues changed since the latest `updated_at` stored, 100 a page; every request; every contact                                | `pull`, with how far behind the copy was | median 80 s behind                                    |
+| webhook   | on a signed `issues` delivery | replaces the issue's row now                                                                                                     | `webhook`, with how far behind           | median 2 s behind, from a signed copy of a real issue |
+| reconcile | nightly at 03:30, on demand   | reads every issue, open and closed by name; fixes rows the copy had older than the system; drops rows the system no longer lists | `missed` and `gone`, one row each        | 1 missed, 0 gone, over 62 issues                      |
 
 The pull is the cursor path of Day 27; the first pull is the backfill. The webhook is `POST /api/webhooks/github` (`src/app/api/webhooks/github/`), which checks the `X-Hub-Signature-256` against `GITHUB_WEBHOOK_SECRET` with a constant-time comparison and refuses what does not match. A real delivery needs a public address, which this run does not have; the receiver is exercised with a copy of a real issue, read through the server and signed as GitHub would. The reconciliation is the full pull: the same function with `full: true`.
 
@@ -44,7 +44,7 @@ Each rule sees the record as the ones before it left it, so the routing rules fi
 
 ## The cache
 
-`src/lib/cache.ts` caches a read per tenant: within its age the value is a hit; past it, the stale value is served while a fetch replaces it; absent, it is fetched first. Every read's outcome and age are logged. `read_url` keeps a page an hour and tells the model when it was fetched (`As of 14:02:`), so a cached policy source carries its freshness into the answer. Measured on this run: 2 reads, 50% hits, served 2 s old at the median.
+`src/lib/cache.ts` caches a read per tenant: within its age the value is a hit; past it, the stale value is served while a fetch replaces it; absent, it is fetched first. Every read's outcome and age are logged. `read_url` keeps a page an hour and tells the model when it was fetched (`As of 14:02:`), so a cached policy source carries its freshness into the answer. On this run's demo, 2 reads, 1 hit, the hit served 3 s old; a day of traffic gives the rate the age should be set from.
 
 What varies by source is the age: a page an hour, the tickets copy 15 minutes by pull and seconds by webhook. A CRM would want an age per field, a deal's stage hourly and an email yearly; that is the same table keyed by field, not built here. Invalidation: the webhook replaces the ticket's row, so the copy is refreshed by the system's own events; a ticket WorkBot files reaches the copy the same way, by the webhook or the next pull, rather than being written through.
 
