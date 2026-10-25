@@ -6,3 +6,4 @@
 {"at":"2026-10-25T17:18:34.447Z","commit":"3566b3f","task":"triage","subset":"smoke","route":"anthropic/small","prompt":"code","cases":4,"runs":2,"mean":0.875,"sd":0.217,"hard":0,"dollars":0.0008,"p95":1624}
 {"at":"2026-10-25T17:35:32.092Z","commit":"fdb177c","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.807,"sd":0.217,"hard":0,"dollars":0.0581,"p95":2977}
 {"at":"2026-10-25T17:44:26.846Z","commit":"fdb177c","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.87,"sd":0.243,"hard":1,"dollars":0.058,"p95":2963}
+{"at":"2026-10-25T19:11:14.120Z","commit":"c852bb6","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.915,"sd":0.179,"hard":0,"dollars":0.0579,"p95":3107}
