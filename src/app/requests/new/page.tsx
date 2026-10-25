@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Track } from "@/lib/analytics";
 import { priorities, teams } from "@/lib/requests";
 import { RequestForm } from "./request-form";
 
@@ -15,6 +17,9 @@ export default function NewRequestPage() {
         <div className="mt-8">
           <RequestForm teams={teams} priorities={priorities} />
         </div>
+        <Suspense>
+          <Track event="request_form_viewed" />
+        </Suspense>
       </div>
     </main>
   );
