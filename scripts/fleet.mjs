@@ -115,7 +115,7 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,title,createdAt,author",
+    "number,title,createdAt,author,state",
   );
   const prs = ghJson(
     "pr",
@@ -309,7 +309,8 @@ function startFix(issue, why, branch = branchOf(issue)) {
 // branch may carry the name the brief gave or one the cloud chose at start.
 function collect(state) {
   for (const { issue, run, pr } of tasks()) {
-    if (!run?.cloud || pr) continue;
+    // A closed issue is done, whatever branch a late cloud session pushed for it.
+    if (issue.state === "CLOSED" || !run?.cloud || pr) continue;
     const head = sh("git", [
       "ls-remote",
       "--heads",
@@ -364,7 +365,7 @@ function dispatch({ local, cloud }) {
       Object.values(state).filter((run) => run.cloud && !run.collected).length,
   };
   for (const { issue, pr, run } of tasks()) {
-    if (pr || run) continue;
+    if (issue.state === "CLOSED" || pr || run) continue;
     const lane = slots.local > 0 ? "local" : slots.cloud > 0 ? "cloud" : null;
     if (!lane) break;
     try {
