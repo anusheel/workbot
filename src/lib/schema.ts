@@ -2,7 +2,7 @@
 // to change it; never edit an earlier statement.
 import { entityTables } from "./entities/tables";
 
-export const schema = [
+const tables = [
   `create extension if not exists vector`,
   `create table if not exists requests (
     id uuid primary key default gen_random_uuid(),
@@ -198,12 +198,40 @@ export const schema = [
       end if;
     end $$`,
   ),
+
+  // People and services, the keys they sign in with, and the sessions a key opens in a browser; a key is stored only as its hash.
+  `create table if not exists users (
+    id uuid primary key default gen_random_uuid(),
+    name text not null,
+    role text not null check (role in ('viewer', 'agent', 'admin')),
+    created_at timestamptz not null default now()
+  )`,
+  `create table if not exists keys (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references users(id) on delete cascade,
+    hash text not null unique,
+    hint text not null,
+    created_at timestamptz not null default now(),
+    last_used_at timestamptz,
+    revoked_at timestamptz
+  )`,
+  `create table if not exists sessions (
+    hash text primary key,
+    key_id uuid not null references keys(id) on delete cascade,
+    created_at timestamptz not null default now(),
+    expires_at timestamptz not null
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
-  // Tenancy, last so it covers every table above. Every row belongs to the
-  // customer whose deployment wrote it (app.tenant, set on each connection),
-  // and every query sees only those rows. The app runs as a role that owns
-  // nothing and bypasses nothing, so the policies bind it.
+];
+
+/**
+ * Tenancy, applied after every table, generated ones included. Every row
+ * belongs to the customer whose deployment wrote it (app.tenant, set on each
+ * connection), and every query sees only those rows. The app runs as a role
+ * that owns nothing and bypasses nothing, so the policies bind it.
+ */
+const tenancy = [
   `do $$ begin
     if not exists (select 1 from pg_roles where rolname = 'workbot_app') then
       create role workbot_app nologin;
@@ -243,3 +271,5 @@ export const schema = [
   `grant select, insert, update, delete on all tables in schema public to workbot_app`,
   `grant usage, select on all sequences in schema public to workbot_app`,
 ];
+
+export const schema = [...tables, ...tenancy];
