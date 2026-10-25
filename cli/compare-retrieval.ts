@@ -1,9 +1,11 @@
 import { generateText } from "ai";
+import { idOf } from "@/lib/agent";
 import { chatModel } from "@/lib/chat";
 import { close } from "@/lib/db";
 import { embedder } from "@/lib/embeddings";
 import { investigate } from "@/lib/investigate";
 import { find, getDocument } from "@/lib/knowledge";
+import { costOf } from "@/lib/providers";
 
 // The same 10 questions, answered 2 ways: the 5 best-matching sections stuffed
 // into one prompt, and the agent exploring the knowledge base with its tools.
@@ -20,7 +22,7 @@ const questions = [
   "What should I do if I click a suspicious link?",
 ];
 
-const model = chatModel();
+const models = { analyst: chatModel(), specialist: chatModel("small") };
 const embed = embedder();
 
 async function classic(question: string) {
@@ -40,29 +42,32 @@ async function classic(question: string) {
     }),
   );
   const { text, usage } = await generateText({
-    model,
+    model: models.analyst,
     instructions:
       "Answer the question from the passages only, naming the passage you used in brackets. If they do not answer it, say so.",
     prompt: `Question: ${question}\n\n${context.join("\n\n")}`,
   });
   return {
     answer: text,
-    tokens: (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0),
+    dollars: costOf(idOf(models.analyst), {
+      input: usage.inputTokens ?? 0,
+      output: usage.outputTokens ?? 0,
+    }),
   };
 }
 
 console.log(
-  "| Question | Classic (top 5) | Agentic | Tokens classic / agentic |",
+  "| Question | Classic (top 5) | Agentic | Dollars classic / agentic |",
 );
 console.log("| --- | --- | --- | --- |");
 for (const question of questions) {
   const [a, b] = await Promise.all([
     classic(question),
-    investigate(question, model),
+    investigate(question, models),
   ]);
   const cell = (text: string) => text.replace(/\s+/g, " ").slice(0, 300);
   console.log(
-    `| ${question} | ${cell(a.answer)} | ${cell(b.report)} | ${a.tokens} / ${b.usage.input + b.usage.output} |`,
+    `| ${question} | ${cell(a.answer)} | ${cell(b.report)} | $${a.dollars.toFixed(4)} / $${b.dollars.toFixed(4)} |`,
   );
 }
 await close();

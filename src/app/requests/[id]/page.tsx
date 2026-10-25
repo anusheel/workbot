@@ -2,11 +2,17 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { InvestigateButton } from "@/components/investigate-button";
+import { Markdown } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { latestReport } from "@/lib/reports";
 import { getRequest, statusLabels, statuses } from "@/lib/requests";
-import { setStatus } from "../actions";
+import { investigateRequest, setStatus } from "../actions";
+
+// An investigation is a few model calls per agent; the action waits for all of them.
+export const maxDuration = 300;
 
 export default function RequestPage(props: PageProps<"/requests/[id]">) {
   return (
@@ -67,6 +73,36 @@ async function RequestDetail({
             </Button>
           ))}
       </form>
+      <Research requestId={request.id} />
     </article>
+  );
+}
+
+async function Research({ requestId }: { requestId: string }) {
+  const report = await latestReport(requestId);
+  return (
+    <section className="mt-12 border-t pt-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold">Research</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {report
+              ? `Written ${report.createdAt.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} · ${report.findings.length} findings · $${report.dollars.toFixed(3)}`
+              : "The analyst reads the knowledge base and the web and files a sourced report here."}
+          </p>
+        </div>
+        <form>
+          <InvestigateButton
+            action={investigateRequest.bind(null, requestId)}
+            again={Boolean(report)}
+          />
+        </form>
+      </div>
+      {report && (
+        <div className="mt-5 rounded-xl border bg-card p-6">
+          <Markdown>{report.report}</Markdown>
+        </div>
+      )}
+    </section>
   );
 }

@@ -199,3 +199,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `pnpm browse --start <url> "<task>"` opens the machine's Chrome headless through Playwright and loops: screenshot, one action from the model (click, type, press, scroll, wait, goto, done or give_up, each with a reason), repeat, within a step limit
 - The browser is an interface of 9 methods, so the unit test drives the loop with a fake browser and a scripted model; the live test works a legacy invoice portal fixture with the small model
 - Pages are untrusted: every request the browser makes is checked against the start site and the public-address rule of the web tool, so a page cannot steer the agent onto this machine or a private network
+
+### WB-36 Research analyst: the investigation with specialists, filed on the ticket
+
+- `/investigate` in the terminal and Investigate on a request's page run an analyst that delegates: ask_knowledge_base runs a specialist over the knowledge base tools, ask_web a specialist with read_url, the browser agent as browse_site and web_search when a key is set; all 3 agents save findings to one list, and the analyst ends with write_report
+- browse_site tries the browser once more when it fails, then falls back to the page's text, so a browser that will not start costs a page its clicks, not the run
+- Every thought, tool call and result is logged with its agent and time; each agent's spend is priced and the total shown; the report, its findings and its cost are saved on the request and shown under Research

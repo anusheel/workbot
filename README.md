@@ -28,8 +28,11 @@ starts it in the terminal, streaming from
 Anthropic by default or OpenAI with `--provider openai`, with a calculator,
 web page reading, notes and (with a Brave key) web search as tools, and
 `/research <question>` for an answer from the company's policies with
-citations, and `/investigate <question>` for an agent that searches the
-policies, reads them and writes a sourced report. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
+citations, and `/investigate <question>` for the research analyst: a
+knowledge-base specialist and a web specialist (pages, the browser agent,
+search) under an analyst, every step logged with its agent and time, each
+agent's cost shown, and a sourced report at the end. Investigate on a
+request's page runs the same analyst and files the report on the ticket. It needs `ANTHROPIC_API_KEY` in `.env.local`; `.env.example` lists
 every variable. `pnpm test:live` runs the tests that call the real APIs.
 
 The knowledge base is 52 Markdown documents under `content/knowledge`,

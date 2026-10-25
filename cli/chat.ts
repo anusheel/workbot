@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { z } from "zod";
 import { aiModel } from "@/lib/chat";
 import { close } from "@/lib/db";
-import { investigate } from "@/lib/investigate";
+import { type Entry, investigate } from "@/lib/investigate";
 import { providerNames, providers } from "@/lib/providers";
 import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
@@ -39,11 +39,18 @@ const help = `/research <question>       answer from the company's sources, with
 /exit                      leave`;
 
 const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
-// A tool's input on one line; a long one, such as a report, is cut short.
-const brief = (input: unknown) => {
-  const text = JSON.stringify(input);
-  return text.length > 160 ? `${text.slice(0, 160)}…` : text;
-};
+const clock = (at: Date) => at.toISOString().slice(11, 19);
+/** One line of an investigation's log: the time, the agent, and what it thought, called or finished. */
+const logLine = (e: Entry) =>
+  e.kind === "thought"
+    ? `${clock(e.at)} ${e.agent} · ${short(e.text.replace(/\s+/g, " "))}`
+    : e.kind === "tool"
+      ? `${clock(e.at)} ${e.agent} ⚙ ${e.name} ${brief(e.input)}${e.failed ? " failed" : ""}`
+      : `${clock(e.at)} ${e.agent} ✓ ${e.steps} steps, $${e.dollars.toFixed(4)}${e.stopped === "answered" ? "" : `, stopped: ${e.stopped}`}`;
+// A log line is one line: a long thought or tool input, such as a report, is cut short.
+const short = (text: string) =>
+  text.length > 160 ? `${text.slice(0, 160)}…` : text;
+const brief = (input: unknown) => short(JSON.stringify(input));
 
 async function command(line: string): Promise<string | null> {
   const [name, ...args] = line.slice(1).split(/\s+/);
@@ -85,17 +92,22 @@ async function command(line: string): Promise<string | null> {
     }
     case "investigate": {
       if (!args.length) return "Usage: /investigate <question>";
-      const model = aiModel(session.provider.name, session.model.id);
-      const run = await investigate(args.join(" "), model, {
-        thought: (text) => console.log(dim(`· ${text}`)),
-        tool: ({ name, input, failed }) =>
-          console.log(
-            dim(`⚙ ${name} ${brief(input)}${failed ? " failed" : ""}`),
-          ),
-      });
-      session.record(session.model.id, run.usage, session.model.price);
+      const small =
+        session.provider.models.find((m) => m.size === "small") ??
+        session.model;
+      const run = await investigate(
+        args.join(" "),
+        {
+          analyst: aiModel(session.provider.name, session.model.id),
+          specialist: aiModel(session.provider.name, small.id),
+        },
+        { on: { log: (entry) => console.log(dim(logLine(entry))) } },
+      );
+      const byAgent = Object.entries(run.cost)
+        .map(([agent, dollars]) => `${agent} $${dollars.toFixed(4)}`)
+        .join(" · ");
       const why = run.stopped === "answered" ? "" : `, stopped: ${run.stopped}`;
-      return `\n${run.report}\n${dim(`${run.steps} steps, ${run.usage.input} tokens in, ${run.usage.output} out${why}`)}`;
+      return `\n${run.report}\n${dim(`${byAgent} · $${run.dollars.toFixed(4)} in all${why}`)}`;
     }
     default:
       return `Unknown command /${name}. ${help}`;

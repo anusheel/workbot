@@ -5,7 +5,7 @@ import {
   generateText,
   tool as aiTool,
 } from "ai";
-import { type Usage, priceOf } from "./providers";
+import { type Usage, costOf } from "./providers";
 import type { Tool } from "./tool";
 
 type ToolResultPart = Extract<
@@ -45,6 +45,10 @@ type Options = {
   on?: AgentEvents;
 };
 
+/** A model's id, whether it came as a string or as an SDK model. */
+export const idOf = (model: LanguageModel) =>
+  typeof model === "string" ? model : model.modelId;
+
 /** A tool call raced against the run's deadline, so a slow tool cannot outlive the time limit. */
 function within<T>(deadline: number, work: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
@@ -73,11 +77,9 @@ export async function runAgent({
 }: Options): Promise<AgentRun> {
   const { steps = 15, dollars = 0.5, seconds = 120 } = limits;
   const deadline = Date.now() + seconds * 1000;
-  const modelId = typeof model === "string" ? model : model.modelId;
-  const price = priceOf(modelId);
+  const modelId = idOf(model);
   const usage: Usage = { input: 0, output: 0 };
-  const spent = () =>
-    price ? (usage.input * price.input + usage.output * price.output) / 1e6 : 0;
+  const spent = () => costOf(modelId, usage);
   const finish = (
     stopped: Stopped,
     answer: string,

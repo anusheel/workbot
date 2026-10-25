@@ -7,5 +7,8 @@ export default defineConfig({
     alias: { "@/": new URL("./src/", import.meta.url).pathname },
     // Each test file gets its own embedded database.
     env: { DATABASE_URL: "memory://" },
+    // A file's first query opens that database, with its extensions, while
+    // the other files open theirs; under load that outlives the 5 s default.
+    testTimeout: 20_000,
   },
 });
