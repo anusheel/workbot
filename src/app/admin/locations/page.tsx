@@ -57,7 +57,7 @@ export default function LocationsPage() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="kind">Kind</Label>
-          <NativeSelect id="kind" name="kind" defaultValue="warehouse">
+          <NativeSelect id="kind" name="kind" defaultValue={"warehouse"}>
             {locationKind.map((option) => (
               <NativeSelectOption key={option} value={option}>
                 {option}

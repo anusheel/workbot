@@ -109,6 +109,17 @@ test("the dry run says what the rule would change on the current copy, and nothi
   });
 });
 
+test("a customer without a rules file gets one on its first approval", () => {
+  const file = join(
+    mkdtempSync(join(tmpdir(), "rules-")),
+    "harbor-dental.rules",
+  );
+  approve(parseRules(forklifts)[0], file);
+  const text = readFileSync(file, "utf8");
+  expect(text.startsWith("# ")).toBe(true);
+  expect(parseRules(text).map((r) => r.id)).toEqual(["route-forklifts"]);
+});
+
 test("an approved rule is one more line in the file, and parses with the rest", () => {
   const file = join(mkdtempSync(join(tmpdir(), "rules-")), "rules.rules");
   const existing = rulesText();

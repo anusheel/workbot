@@ -1,4 +1,4 @@
-import { appendFileSync } from "node:fs";
+import { appendFileSync, existsSync, writeFileSync } from "node:fs";
 import { type LanguageModel, generateText } from "ai";
 import { customer } from "./customer";
 import { query } from "./db";
@@ -10,6 +10,7 @@ import {
   Rules,
   applyRules,
   customerRulesFile,
+  rules,
   rulesText,
 } from "./rules";
 
@@ -88,18 +89,25 @@ export async function dryRun(rule: Rule): Promise<DryRun> {
         : await query<Row>(
             `select name as label, data from documents where type = 'invoice' order by created_at desc limit 100`,
           );
+  // The whole chain runs, as it will at startup, and only the proposed rule's own changes are reported.
   const changed = rows.flatMap(({ label, ...record }) => {
     const { applied } = applyRules(
       rule.on,
       rule.on === "invoice" ? (record.data as Record<string, unknown>) : record,
-      [rule],
+      [...rules, rule],
     );
-    return applied.length ? [{ label, applied }] : [];
+    const own = applied.filter((a) => a.rule === rule.id);
+    return own.length ? [{ label, applied: own }] : [];
   });
   return { kind: rule.on, total: rows.length, changed };
 }
 
-/** Appends the rule to the customer's file, since a proposal is the customer's; the next start reads it with the rest. */
+/** Appends the rule to the customer's file, since a proposal is the customer's, starting the file when it is the first; the next start reads it with the rest. */
 export function approve(rule: Rule, file = customerRulesFile) {
+  if (!existsSync(file))
+    writeFileSync(
+      file,
+      `# ${customer.name}'s rules, read after the product's: the teams here are the customer's.\n\n`,
+    );
   appendFileSync(file, `${printRule(rule)}\n`);
 }

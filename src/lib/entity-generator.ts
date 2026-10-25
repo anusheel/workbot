@@ -3,6 +3,8 @@ import type { Entity, Field } from "./entity-model";
 export type Generated = { path: string; source: string };
 
 const cap = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+/** A value as a SQL string literal: a quote doubled. */
+const sql = (value: string) => `'${value.replace(/'/g, "''")}'`;
 const snake = (name: string) =>
   name.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 const label = (f: Field) =>
@@ -14,7 +16,7 @@ const header = (e: Entity) =>
 function column(f: Field) {
   const type = f.type === "number" ? "numeric" : "text";
   if (f.type === "choice")
-    return `${snake(f.name)} text not null default '${f.default ?? f.options![0]}'`;
+    return `${snake(f.name)} text not null default ${sql(f.default ?? f.options![0])}`;
   if (f.required) return `${snake(f.name)} ${type} not null`;
   if (f.type === "text") return `${snake(f.name)} text not null default ''`;
   return `${snake(f.name)} ${type}`;
@@ -24,7 +26,7 @@ function column(f: Field) {
 function zodType(e: Entity, f: Field) {
   switch (f.type) {
     case "choice":
-      return `z.enum(${e.name}${cap(f.name)}).default("${f.default ?? f.options![0]}")`;
+      return `z.enum(${e.name}${cap(f.name)}).default(${JSON.stringify(f.default ?? f.options![0])})`;
     case "number":
       return f.required
         ? "z.coerce.number()"
@@ -64,7 +66,7 @@ const input = (e: Entity, f: Field) => {
   const common = `id="${f.name}" name="${f.name}"${f.required ? " required" : ""}`;
   const control =
     f.type === "choice"
-      ? `<NativeSelect ${common} defaultValue="${f.default ?? f.options![0]}">
+      ? `<NativeSelect ${common} defaultValue={${JSON.stringify(f.default ?? f.options![0])}}>
           {${e.name}${cap(f.name)}.map((option) => (
             <NativeSelectOption key={option} value={option}>
               {option}

@@ -77,6 +77,29 @@ test("the index lists every table for the schema, in a file that imports nothing
   );
 });
 
+test("a choice value with a quote in it is escaped into the SQL and the code", () => {
+  const quoted = Entity.parse({
+    ...vendor,
+    fields: [
+      { name: "name", type: "text", required: true },
+      {
+        name: "pick",
+        type: "choice",
+        options: ["owner's choice", "ours"],
+        default: "owner's choice",
+      },
+    ],
+  });
+  expect(table(quoted)).toContain(
+    "pick text not null default 'owner''s choice'",
+  );
+  const [{ source }] = generate(quoted);
+  expect(source).toContain(`.default("owner's choice")`);
+  expect(generate(quoted).at(-1)?.source).toContain(
+    `defaultValue={"owner's choice"}`,
+  );
+});
+
 test("a description without a required field, with a repeated field or with a bad choice default is refused", () => {
   const field = { name: "name", type: "text", required: true };
   expect(() =>

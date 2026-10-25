@@ -47,7 +47,7 @@ export default function VendorsPage() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="terms">Payment terms</Label>
-          <NativeSelect id="terms" name="terms" defaultValue="net 30">
+          <NativeSelect id="terms" name="terms" defaultValue={"net 30"}>
             {vendorTerms.map((option) => (
               <NativeSelectOption key={option} value={option}>
                 {option}
