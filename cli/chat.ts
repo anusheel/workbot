@@ -2,8 +2,10 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { z } from "zod";
+import { close } from "@/lib/db";
 import { providerNames, providers } from "@/lib/providers";
 import { Session } from "@/lib/session";
+import { tools } from "@/lib/tools";
 
 const { values } = parseArgs({
   options: {
@@ -19,6 +21,7 @@ const Provider = z.enum(providerNames);
 const Effort = z.enum(["low", "medium", "high"]);
 
 const session = new Session(Provider.parse(values.provider), values.model, {
+  tools,
   maxTokens: Number(values["max-tokens"]),
   effort: values.effort === undefined ? undefined : Effort.parse(values.effort),
   temperature:
@@ -30,7 +33,9 @@ const help = `/model [provider] [model]  switch models; no arguments lists them
 /cost                      tokens and dollars spent in this session
 /exit                      leave`;
 
-function command(line: string): string | null {
+const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
+
+async function command(line: string): Promise<string | null> {
   const [name, ...args] = line.slice(1).split(/\s+/);
   switch (name) {
     case "exit":
@@ -75,19 +80,28 @@ prompt();
 
 for await (const raw of rl) {
   const line = raw.trim();
-  if (line.startsWith("/")) {
-    const output = command(line);
-    if (output === null) break;
-    console.log(output);
-  } else if (line) {
-    stdout.write("\nworkbot> ");
-    try {
-      await session.send(line, (text) => stdout.write(text));
+  try {
+    if (line.startsWith("/")) {
+      const output = await command(line);
+      if (output === null) break;
+      console.log(output);
+    } else if (line) {
+      stdout.write("\nworkbot> ");
+      await session.send(line, {
+        text: (text) => stdout.write(text),
+        tool: ({ name, input, failed }) =>
+          stdout.write(
+            dim(
+              `\n⚙ ${name} ${JSON.stringify(input)}${failed ? " failed" : ""}\n`,
+            ),
+          ),
+      });
       stdout.write("\n\n");
-    } catch (err) {
-      stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
     }
+  } catch (err) {
+    stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
   }
   prompt();
 }
 rl.close();
+await close();

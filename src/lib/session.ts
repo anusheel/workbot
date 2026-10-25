@@ -1,5 +1,6 @@
 import {
   type Completion,
+  type Events,
   type Message,
   type Model,
   type Provider,
@@ -9,7 +10,10 @@ import {
 } from "./providers";
 import { systemPrompt } from "./system-prompt";
 
-export type Options = Pick<Completion, "effort" | "temperature" | "maxTokens">;
+export type Options = Pick<
+  Completion,
+  "effort" | "temperature" | "maxTokens" | "tools"
+>;
 
 type Turn = { model: Model; usage: Usage };
 
@@ -34,8 +38,8 @@ export class Session {
     [this.provider, this.model] = resolve(name, modelId);
   }
 
-  /** Sends one user message; the reply streams through onText and is kept in the history. */
-  async send(text: string, onText: (text: string) => void): Promise<Usage> {
+  /** Sends one user message; the reply streams through the events and is kept in the history. */
+  async send(text: string, on: Events): Promise<Usage> {
     this.messages.push({ role: "user", content: text });
     let reply = "";
     try {
@@ -46,18 +50,26 @@ export class Session {
           system: this.system,
           messages: this.messages,
         },
-        (delta) => {
-          reply += delta;
-          onText(delta);
+        {
+          ...on,
+          text: (delta) => {
+            reply += delta;
+            on.text(delta);
+          },
         },
       );
       this.messages.push({ role: "assistant", content: reply });
-      this.turns.push({ model: this.model, usage });
+      this.record(this.model, usage);
       return usage;
     } catch (err) {
       this.messages.pop();
       throw err;
     }
+  }
+
+  /** Adds a model call made on the session's behalf, so /cost counts it. */
+  record(model: Model, usage: Usage) {
+    this.turns.push({ model, usage });
   }
 
   /** Tokens and dollars so far; models without a published price are named instead of guessed. */
@@ -81,7 +93,10 @@ export class Session {
 function resolve(name: ProviderName, modelId?: string): [Provider, Model] {
   const provider = providers[name]();
   const model = modelId
-    ? (provider.models.find((m) => m.id === modelId) ?? { id: modelId })
+    ? (provider.models.find((m) => m.id === modelId) ?? {
+        id: modelId,
+        size: "large" as const,
+      })
     : provider.models[0];
   return [provider, model];
 }
