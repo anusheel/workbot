@@ -37,12 +37,12 @@ export default function Home() {
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
-            <Link href="/requests/new">
-              File a request <ArrowRight />
+            <Link href="/chat">
+              Ask WorkBot <ArrowRight />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/admin">Admin console</Link>
+            <Link href="/requests/new">File a request</Link>
           </Button>
         </div>
       </section>

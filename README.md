@@ -19,7 +19,9 @@ Without a `DATABASE_URL`, the app runs on an embedded Postgres (PGlite) in
 every variable. `pnpm check` runs what CI runs: lint, types, tests and a
 production build of both apps.
 
-`pnpm chat` starts WorkBot's assistant in the terminal, streaming from
+The web chat is at `/chat`, with conversations kept in the browser, and the
+same assistant sits in the admin console at `/admin/assistant`. `pnpm chat`
+starts it in the terminal, streaming from
 Anthropic by default or OpenAI with `--provider openai`, with a calculator,
 web page reading, notes and (with a Brave key) web search as tools, and
 `/research <question>` for an answer from the company's policies with

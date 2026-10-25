@@ -29,6 +29,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-21  | Admin assistant in the terminal            | M    | done   |
 | WB-22  | Tools for the assistant                    | M    | done   |
 | WB-23  | Research with citations                    | M    | done   |
+| WB-24  | Web chat                                   | M    | done   |
+| WB-25  | Assistant in the admin console             | S    | done   |
 
 ## Acceptance criteria
 
@@ -122,3 +124,13 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `/research <question>` answers from the company's policies, and from the web when search is configured, in 4 model calls: plan the sources (small model), read them, extract the relevant facts from each (large model), write the answer (large model)
 - Every fact in the answer carries a numbered citation and the sources are listed at the end; when the sources do not answer, the reply says what is missing and which team to ask
 - The session's `/cost` includes every call the chain made
+
+### WB-24 Web chat
+
+- `/chat` streams replies from `/api/chat`, which runs the configured model with the assistant's tools through the AI SDK
+- Replies render as Markdown with highlighted code blocks that can be copied; each tool call shows its state while it runs and its result when done
+- Conversations are kept in the browser: a list to switch between, a new chat, titles from the first question
+
+### WB-25 Assistant in the admin console
+
+- `/admin/assistant` shows the same chat in a panel of the console, on the same route handler
