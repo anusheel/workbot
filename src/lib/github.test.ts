@@ -215,9 +215,36 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
   await mcp.close();
 });
 
+test("a full pull finds what the other paths missed and drops what the system no longer lists", async () => {
+  const mcp = await github.connect();
+  github.issues[0].title = "Badge printer jams again";
+  github.issues[0].updated_at = "2026-10-10T00:00:00Z";
+  github.issues.splice(2, 1);
+  expect(await pullTickets(mcp, { full: true })).toMatchObject({
+    pulled: 2,
+    missed: 1,
+    gone: 1,
+  });
+  expect((await listTickets()).map((t) => [t.key, t.title])).toEqual([
+    ["1", "Badge printer jams again"],
+    ["2", "Van 3 brake light"],
+  ]);
+  github.issues.push({
+    number: 3,
+    title: "Invoice 4471 unpaid",
+    body: "",
+    state: "OPEN",
+    assignees: [],
+    labels: ["finance"],
+    updated_at: "2026-10-11T00:00:00Z",
+  });
+  await pullTickets(mcp);
+  await mcp.close();
+});
+
 test("finds tickets in the synced copy", async () => {
   expect(await tools.find_ticket.run({ query: "printer" })).toBe(
-    `#1 (open, sam, operations) Badge printer jams ${issueUrl(1)}`,
+    `#1 (open, sam, operations) Badge printer jams again ${issueUrl(1)}`,
   );
   expect(await tools.find_ticket.run({ query: "espresso" })).toBe(
     'No ticket matches "espresso".',

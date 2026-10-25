@@ -155,3 +155,21 @@ test("a stored ticket carries the team the rules gave it", async () => {
   ]);
   expect((await findTickets("4471"))[0].id).toBe("github#9");
 });
+
+test("a version older than the row's is dropped, so a late delivery never undoes a pull", async () => {
+  const version = (title: string, at: string) =>
+    upsertTicket(
+      fromIssue("acme/helpdesk", {
+        number: 10,
+        title,
+        state: "OPEN",
+        updated_at: at,
+      }),
+    );
+  await version("Dock door stuck", "2026-10-20T09:00:00Z");
+  const late = await version("Dock door", "2026-10-20T08:00:00Z");
+  expect(late.title).toBe("Dock door stuck");
+  expect((await findTickets("dock door")).map((t) => t.title)).toEqual([
+    "Dock door stuck",
+  ]);
+});

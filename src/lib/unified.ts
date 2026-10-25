@@ -188,21 +188,27 @@ export const fromLogin = (login: string, updatedAt: Date): ContactInput => ({
 const ticketColumns = `id, source, key, title, body, state, assignee, labels, team, url, applied, updated_at as "updatedAt"`;
 const contactColumns = `id, source, key, name, email, phone, company, url, applied, updated_at as "updatedAt"`;
 
-/** Stores a ticket as the rules leave it, with what they changed. */
+/**
+ * Stores a ticket as the rules leave it, with what they changed. A version
+ * older than the row's is dropped, so a delivery that arrives late never
+ * undoes a pull, and the same version twice changes nothing.
+ */
 export async function upsertTicket(input: TicketInput): Promise<Ticket> {
   const { record, applied } = applyRules("ticket", {
     ...input,
     text: `${input.title}\n${input.body}`,
   });
+  const id = `${input.source}#${input.key}`;
   const [row] = await query<Ticket>(
     `insert into tickets (id, source, key, title, body, state, assignee, labels, team, url, raw, applied, updated_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      on conflict (id) do update set title = excluded.title, body = excluded.body, state = excluded.state,
        assignee = excluded.assignee, labels = excluded.labels, team = excluded.team, url = excluded.url,
        raw = excluded.raw, applied = excluded.applied, updated_at = excluded.updated_at
+     where excluded.updated_at >= tickets.updated_at
      returning ${ticketColumns}`,
     [
-      `${input.source}#${input.key}`,
+      id,
       input.source,
       input.key,
       input.title,
@@ -217,7 +223,12 @@ export async function upsertTicket(input: TicketInput): Promise<Ticket> {
       input.updatedAt,
     ],
   );
-  return row;
+  if (row) return row;
+  const [kept] = await query<Ticket>(
+    `select ${ticketColumns} from tickets where id = $1`,
+    [id],
+  );
+  return kept;
 }
 
 /** Stores a contact as the rules leave it; a contact seen again keeps what it already knew. */
