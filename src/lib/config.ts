@@ -15,6 +15,8 @@ export const config = {
   voyage: { key: process.env.VOYAGE_API_KEY },
   // Web search for the assistant; unset means the tool is not offered.
   brave: { key: process.env.BRAVE_SEARCH_KEY },
+  // The spend in a day that raises an alert.
+  alerts: { dailyDollars: Number(process.env.ALERT_DAILY_DOLLARS || 5) },
   // The workflow engine's keys for Inngest Cloud; unset, the app talks to the dev server.
   inngest: {
     eventKey: process.env.INNGEST_EVENT_KEY,
