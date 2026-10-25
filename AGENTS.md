@@ -6,15 +6,20 @@ Next.js 16 (App Router) in `src/`, TypeScript strict, Tailwind 4, shadcn/ui, pnp
 ## Commands
 
 - `pnpm dev`: the dev server on http://localhost:3000
-- `pnpm check`: lint, types and a production build; CI runs the same on every push
+- `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
+- `pnpm check`: lint, types, tests and a production build; CI runs the same on every push
 - `pnpm dlx shadcn@latest add <component>`: a UI primitive into `src/components/ui/`
+
+## Claude Code
+
+Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits.
 
 ## Conventions
 
 - One day of the course per branch, `day-NN`, merged into `main` through a pull request and kept
 - Small commits with honest messages: imperative subject, a short body saying why when the diff does not
 - Server Components by default; `"use client"` only for state, effects or browser APIs
-- Pages compose shadcn/ui primitives from `src/components/ui/`; the app's own components live in `src/components/` and are imported by path
+- Pages compose shadcn/ui primitives from `src/components/ui/`; the app's own components live in `src/components/`, are kebab-case files exporting a PascalCase name, have a render test beside them and are imported by path
 - Route handlers live at `src/app/api/<name>/route.ts` and return JSON
 - `src/lib/config.ts` is the only module that reads `process.env`
 - Comments say why, never what; no comment restates the line below it
