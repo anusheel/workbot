@@ -21,48 +21,68 @@ const statusTone = {
   done: "outline",
 } as const;
 
-export function RequestList({ requests }: { requests: WorkRequest[] }) {
+export function RequestList({
+  requests,
+  filtered = false,
+}: {
+  requests: WorkRequest[];
+  filtered?: boolean;
+}) {
   if (requests.length === 0) {
-    return <p className="text-sm text-muted-foreground">No requests yet.</p>;
+    return filtered ? (
+      <p className="text-sm text-muted-foreground">
+        No requests match these filters.{" "}
+        <Link href="/requests" className="underline">
+          Clear filters
+        </Link>
+      </p>
+    ) : (
+      <p className="text-sm text-muted-foreground">No requests yet.</p>
+    );
   }
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Request</TableHead>
-          <TableHead>Team</TableHead>
-          <TableHead>Priority</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {requests.map((request) => (
-          <TableRow key={request.id}>
-            <TableCell className="font-medium">
-              <Link
-                href={`/requests/${request.id}`}
-                className="hover:underline"
-              >
-                {request.title}
-              </Link>
-            </TableCell>
-            <TableCell className="capitalize">{request.team}</TableCell>
-            <TableCell>
-              <Badge
-                variant={priorityTone[request.priority]}
-                className="capitalize"
-              >
-                {request.priority}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <Badge variant={statusTone[request.status]}>
-                {statusLabels[request.status]}
-              </Badge>
-            </TableCell>
+    <>
+      <p className="mb-2 text-sm text-muted-foreground">
+        {requests.length} {requests.length === 1 ? "request" : "requests"}
+      </p>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Request</TableHead>
+            <TableHead>Team</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {requests.map((request) => (
+            <TableRow key={request.id}>
+              <TableCell className="font-medium">
+                <Link
+                  href={`/requests/${request.id}`}
+                  className="hover:underline"
+                >
+                  {request.title}
+                </Link>
+              </TableCell>
+              <TableCell className="capitalize">{request.team}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={priorityTone[request.priority]}
+                  className="capitalize"
+                >
+                  {request.priority}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant={statusTone[request.status]}>
+                  {statusLabels[request.status]}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   );
 }
