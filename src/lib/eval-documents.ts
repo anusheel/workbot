@@ -1,17 +1,18 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { LanguageModel } from "ai";
-import type { Browser } from "playwright-core";
+import { type Browser, chromium } from "playwright-core";
 import { type DocumentType, schemas } from "./document-model";
 import { classify } from "./documents";
 import { type Source, extract } from "./extract";
 import { same } from "./field-match";
 
-/** An eval document: its source, and the kind and fields it should be read as. */
+/** An eval document: its source, the kind and fields it should be read as, and whether every pull request runs it. */
 export type DocumentCase = {
   name: string;
   source: Source;
   want: { type: DocumentType; data: Record<string, unknown> };
+  smoke: boolean;
 };
 
 const dir = "content/eval/documents";
@@ -23,19 +24,18 @@ const dir = "content/eval/documents";
  * not only text.
  */
 export async function documentCases(browser: Browser): Promise<DocumentCase[]> {
-  const expected: Record<string, DocumentCase["want"]> = JSON.parse(
-    await readFile(join(dir, "expected.json"), "utf8"),
-  );
+  const expected: Record<string, DocumentCase["want"] & { smoke?: boolean }> =
+    JSON.parse(await readFile(join(dir, "expected.json"), "utf8"));
   const files = await readdir(dir);
   const cases: DocumentCase[] = [];
-  for (const [name, want] of Object.entries(expected)) {
+  for (const [name, { smoke = false, ...want }] of Object.entries(expected)) {
     const file = files.find(
       (f) => f.startsWith(`${name}.`) && f !== "expected.json",
     );
     if (!file) throw new Error(`No source for ${name}`);
     const text = await readFile(join(dir, file), "utf8");
     if (!file.endsWith(".html")) {
-      cases.push({ name, want, source: { kind: "text", text } });
+      cases.push({ name, want, smoke, source: { kind: "text", text } });
       continue;
     }
     const page = await browser.newPage({
@@ -50,6 +50,7 @@ export async function documentCases(browser: Browser): Promise<DocumentCase[]> {
     cases.push({
       name,
       want,
+      smoke,
       source: {
         kind: "file",
         data: new Uint8Array(data),
@@ -58,6 +59,16 @@ export async function documentCases(browser: Browser): Promise<DocumentCase[]> {
     });
   }
   return cases;
+}
+
+/** Opens the machine's Chrome for the documents that need rendering, and closes it after `fn`. */
+export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>) {
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  try {
+    return await fn(browser);
+  } finally {
+    await browser.close();
+  }
 }
 
 /** One document through classification and extraction: the kind it was taken for, and the fields that came out wrong. */

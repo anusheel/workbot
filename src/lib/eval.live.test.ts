@@ -20,7 +20,7 @@ test.each([["refund-limit"], ["approve-refund"], ["off-topic"]])(
     expect(verdict.violations).toEqual([]);
     expect(
       verdict.score,
-      `${reply}\n\n${verdict.reason}`,
+      `${reply.text}\n\n${verdict.reason}`,
     ).toBeGreaterThanOrEqual(0.7);
   },
   120_000,

@@ -59,7 +59,7 @@ A document files its own request: on the new-request page, or at `POST
 /api/documents`, an invoice, an email, a letter or a form (as a PDF, an
 image or text) is read into a typed record, filed with the right team, and
 kept on the request with its doubtful fields marked. `pnpm extract <file>`
-runs the extraction alone; `pnpm extract:eval` measures it on 18 documents.
+runs the extraction alone; `pnpm eval --task extract` measures it on the eval documents.
 
 Documents can also go through the approval workflow at `/admin/inbox`: each
 upload is a durable run on [Inngest](https://www.inngest.com) that classifies,

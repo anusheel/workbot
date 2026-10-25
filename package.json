@@ -12,7 +12,6 @@
     "browse": "node --env-file-if-exists=.env.local --import tsx cli/browse.ts",
     "video": "node --env-file-if-exists=.env.local --import tsx cli/video.ts",
     "extract": "node --env-file-if-exists=.env.local --import tsx cli/extract.ts",
-    "extract:eval": "node --env-file-if-exists=.env.local --import tsx cli/extract-eval.ts",
     "eval": "node --env-file-if-exists=.env.local --import tsx cli/eval.ts",
     "routes": "node --env-file-if-exists=.env.local --import tsx cli/routes.ts",
     "frameworks": "node --env-file-if-exists=.env.local --import tsx cli/frameworks.ts",
