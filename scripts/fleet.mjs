@@ -25,7 +25,7 @@ import { parseArgs, promisify } from "node:util";
 
 const LABEL = "fleet";
 const TOOLS =
-  "Edit,Write,Read,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh issue view:*)";
+  "Edit,Write,Read,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr edit:*),Bash(gh issue view:*)";
 const NO_MCP = ["--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}'];
 const home = resolve(import.meta.dirname, "..");
 const pens = join(home, "..", "workbot-fleet");
@@ -118,7 +118,7 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,body,state,mergedAt,statusCheckRollup",
+    "number,body,state,mergedAt,statusCheckRollup,headRefOid",
   );
   const state = runs();
   const rank = { MERGED: 0, OPEN: 1, CLOSED: 2 };
@@ -148,6 +148,8 @@ function ci(pr) {
 
 function stage({ pr, run }) {
   if (pr?.state === "MERGED") return "merged";
+  if (pr?.state === "OPEN" && run?.fixing && alive(run.pid))
+    return `fixing pr #${pr.number}, ${minutes(run.started)} min`;
   if (pr?.state === "OPEN") return `pr #${pr.number}, ci ${ci(pr)}`;
   if (pr) return `pr #${pr.number} closed`;
   if (run?.cloud) return `cloud, ${minutes(run.started)} min, no branch yet`;
@@ -226,6 +228,53 @@ function startCloud(issue) {
   if (!cloud) throw new Error(`no cloud session for #${issue.number}: ${out}`);
   console.log(`#${issue.number} ${issue.title}: cloud, ${cloud}`);
   return { cloud, started: new Date().toISOString() };
+}
+
+const fixBrief = (
+  issue,
+  review,
+  session,
+) => `The review below of the pull request for issue #${issue.number} (branch ${branchOf(issue)}, checked out here) requests changes. Address every blocking item, and the should-fix items where the change is small; keep every criterion of the issue met. If a blocking item cannot be fixed within the issue's constraints, say so in a comment on the pull request (\`gh pr comment\`) and stop. Run \`pnpm lint\`, \`pnpm typecheck\` and the tests you touched until they pass, commit (a new commit, imperative subject), push, and add the line "- Claude Code (fix): ${session}" under Session in the pull request body with \`gh pr edit --body-file\`.
+
+${review}`;
+
+// A review that requests changes goes back to an agent, once: a session on the
+// pull request's branch, in the task's worktree or a new one for a cloud branch.
+function startFix(issue, review) {
+  const dir = join(pens, String(issue.number));
+  if (existsSync(dir)) sh("git", ["pull", "-q", "--ff-only"], { cwd: dir });
+  else {
+    sh("git", ["fetch", "-q", "origin", branchOf(issue)]);
+    sh("git", ["worktree", "add", "-q", dir, branchOf(issue)]);
+    sh("pnpm", ["install", "--frozen-lockfile", "--silent"], { cwd: dir });
+  }
+  const session = randomUUID();
+  const log = openSync(join(pens, `${issue.number}-fix.log`), "w");
+  const child = spawn(
+    "claude",
+    [
+      "-p",
+      fixBrief(issue, review, session),
+      "--model",
+      "sonnet",
+      "--session-id",
+      session,
+      "--permission-mode",
+      "acceptEdits",
+      "--allowedTools",
+      TOOLS,
+      ...NO_MCP,
+    ],
+    { cwd: dir, stdio: ["ignore", log, log], detached: true },
+  );
+  child.unref();
+  console.log(`#${issue.number}: fix session, pid ${child.pid}`);
+  return {
+    pid: child.pid,
+    started: new Date().toISOString(),
+    session,
+    fixing: true,
+  };
 }
 
 // A cloud agent pushes its branch but holds no GitHub token; the pull request
@@ -330,10 +379,9 @@ const review = (pr) =>
       "sonnet",
       "--allowedTools",
       "Read,Grep,Glob,Agent,Task,Bash(gh pr:*),Bash(gh issue view:*),Bash(git diff:*)",
-      ...NO_MCP,
-      ,
       "--output-format",
       "json",
+      ...NO_MCP,
     ],
     { cwd: home, encoding: "utf8", maxBuffer: 16 * 2 ** 20 },
   ).then(({ stdout }) => JSON.parse(stdout).result.trim());
@@ -360,19 +408,31 @@ function green() {
 // time with the agent's commit message, then check the branch; what broke it
 // is reverted, last in first out, and its issue reopened.
 async function merge(batch) {
+  const state = runs();
   const ready = tasks()
-    .filter(({ pr }) => pr?.state === "OPEN" && ci(pr) === "pass")
+    .filter(
+      ({ pr, run }) =>
+        pr?.state === "OPEN" &&
+        ci(pr) === "pass" &&
+        run?.reviewed !== pr.headRefOid,
+    )
     .slice(0, batch);
   const reviews = await Promise.all(ready.map(({ pr }) => review(pr)));
   const merged = [];
-  for (const [i, { issue, pr }] of ready.entries()) {
+  for (const [i, { issue, pr, run }] of ready.entries()) {
     execFileSync(
       "gh",
       ["pr", "comment", String(pr.number), "--body-file", "-"],
       { cwd: home, input: reviews[i] },
     );
+    state[issue.number] = { ...run, reviewed: pr.headRefOid };
     if (!/^Verdict: approve/im.test(reviews[i])) {
       console.log(`#${pr.number}: changes requested`);
+      if (!run?.fixing)
+        state[issue.number] = {
+          ...startFix(issue, reviews[i]),
+          reviewed: pr.headRefOid,
+        };
       continue;
     }
     const [commit] = ghJson(
@@ -395,6 +455,7 @@ async function merge(batch) {
     merged.push(issue);
     console.log(`#${pr.number}: merged`);
   }
+  save(state);
   if (!merged.length) return;
   sh("git", ["pull", "-q", "--ff-only"]);
   const shas = sh("git", [
