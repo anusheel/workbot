@@ -20,6 +20,12 @@ export const NewRequest = z.object({
 });
 export type NewRequest = z.infer<typeof NewRequest>;
 
+export const RequestFilter = z.object({
+  team: z.enum(teams).optional().catch(undefined),
+  status: z.enum(statuses).optional().catch(undefined),
+});
+export type RequestFilter = z.infer<typeof RequestFilter>;
+
 export type WorkRequest = NewRequest & {
   id: string;
   status: Status;
@@ -43,9 +49,15 @@ export async function createRequest(input: NewRequest): Promise<WorkRequest> {
   return request;
 }
 
-export async function listRequests(): Promise<WorkRequest[]> {
+export async function listRequests(
+  filter: RequestFilter = {},
+): Promise<WorkRequest[]> {
   await io();
-  return requests;
+  return requests.filter(
+    (r) =>
+      (!filter.team || r.team === filter.team) &&
+      (!filter.status || r.status === filter.status),
+  );
 }
 
 export async function getRequest(id: string): Promise<WorkRequest | undefined> {

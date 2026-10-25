@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   NewRequest,
+  RequestFilter,
   createRequest,
   getRequest,
   listRequests,
@@ -65,4 +66,20 @@ test("a request's status can change; an unknown id changes nothing", async () =>
     status: "done",
   });
   expect(await updateRequest("missing", { status: "done" })).toBeUndefined();
+});
+
+test("the list narrows by team and status; an unknown value means no filter", async () => {
+  const finance = await createRequest({
+    title: "Refund order 4411",
+    body: "",
+    team: "finance",
+    priority: "high",
+  });
+  expect(await listRequests({ team: "finance" })).toContain(finance);
+  expect(await listRequests({ team: "finance", status: "done" })).not.toContain(
+    finance,
+  );
+  expect(RequestFilter.parse({ team: "legal", status: "open" })).toEqual({
+    status: "open",
+  });
 });
