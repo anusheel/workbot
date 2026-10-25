@@ -1,6 +1,7 @@
 import { defineCatalog } from "@json-render/core";
 import { schema } from "@json-render/react/schema";
 import { z } from "zod";
+import { priorities, teams } from "./request-model";
 
 const text = z.string();
 const tone = z.enum(["neutral", "good", "warning", "bad"]);
@@ -144,8 +145,8 @@ export const catalog = defineCatalog(schema, {
       params: z.object({
         title: text,
         body: text.nullable(),
-        team: text,
-        priority: text.nullable(),
+        team: z.enum(teams),
+        priority: z.enum(priorities).nullable(),
       }),
     },
   },
