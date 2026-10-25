@@ -2,6 +2,7 @@ import { InngestTestEngine } from "@inngest/test";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { expect, test, vi } from "vitest";
+import { z } from "zod";
 import { connectMcp } from "@/lib/mcp";
 import { createRequest } from "@/lib/requests";
 import { listContacts, listTickets } from "@/lib/unified";
@@ -16,24 +17,31 @@ vi.mock("@/lib/github", () => ({
   githubEnabled: () => enabled.on,
   githubConnect: async () => {
     const server = new McpServer({ name: "github", version: "1.0.0" });
-    server.registerTool("list_issues", {}, async () => ({
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            issues: [
-              {
-                number: 7,
-                title: "Loading dock light",
-                state: "OPEN",
-                user: { login: "sam" },
-                updated_at: "2026-10-20T08:00:00Z",
-              },
-            ],
-          }),
-        },
-      ],
-    }));
+    server.registerTool(
+      "list_issues",
+      { inputSchema: { state: z.enum(["OPEN", "CLOSED"]).optional() } },
+      async ({ state }) => ({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              issues:
+                state === "CLOSED"
+                  ? []
+                  : [
+                      {
+                        number: 7,
+                        title: "Loading dock light",
+                        state: "OPEN",
+                        user: { login: "sam" },
+                        updated_at: "2026-10-20T08:00:00Z",
+                      },
+                    ],
+            }),
+          },
+        ],
+      }),
+    );
     const [client, transport] = InMemoryTransport.createLinkedPair();
     await server.connect(transport);
     return connectMcp(client);

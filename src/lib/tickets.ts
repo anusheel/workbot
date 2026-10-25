@@ -20,7 +20,7 @@ export function repository() {
 /** The issues changed since a time, oldest change first, a page of up to 100 at a time. */
 export async function* issuePages(
   mcp: Mcp,
-  args: { since?: string; fields?: string[] } = {},
+  args: { since?: string; fields?: string[]; state?: "OPEN" | "CLOSED" } = {},
 ): AsyncGenerator<Issue[]> {
   const { owner, repo } = repository();
   let after: string | undefined;
@@ -68,24 +68,26 @@ export async function pullTickets(
   const seen = new Set<string>();
   let pulled = 0;
   let missed = 0;
-  for await (const issues of issuePages(mcp, {
-    since: full ? undefined : since?.toISOString(),
-  })) {
-    for (const issue of issues) {
-      const input = fromIssue(slug, issue);
-      const lag = Date.now() - input.updatedAt.getTime();
-      const before = full ? await ticketUpdatedAt("github", input.key) : null;
-      await upsertTicket(input);
-      seen.add(input.key);
-      pulled++;
-      // The backfill is not a measure of the path; a pull since a time is.
-      if (!full && since) await logSync("github", input.key, "pull", lag);
-      else if (full && since && (!before || before < input.updatedAt)) {
-        missed++;
-        await logSync("github", input.key, "missed", lag);
+  // A pull since a time takes every state; the full read names both, so no default decides what is dropped.
+  const reads = full
+    ? (["OPEN", "CLOSED"] as const).map((state) => issuePages(mcp, { state }))
+    : [issuePages(mcp, { since: since?.toISOString() })];
+  for (const pages of reads)
+    for await (const issues of pages)
+      for (const issue of issues) {
+        const input = fromIssue(slug, issue);
+        const lag = Date.now() - input.updatedAt.getTime();
+        const before = full ? await ticketUpdatedAt("github", input.key) : null;
+        await upsertTicket(input);
+        seen.add(input.key);
+        pulled++;
+        // The backfill is not a measure of the path; a pull since a time is.
+        if (!full && since) await logSync("github", input.key, "pull", lag);
+        else if (full && since && (!before || before < input.updatedAt)) {
+          missed++;
+          await logSync("github", input.key, "missed", lag);
+        }
       }
-    }
-  }
   const gone = full ? await dropTicketsExcept("github", seen) : [];
   for (const key of gone) await logSync("github", key, "gone");
   await query(

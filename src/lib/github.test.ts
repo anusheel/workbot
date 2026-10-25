@@ -72,11 +72,13 @@ function fakeGitHub() {
           since: z.string().optional(),
           after: z.string().optional(),
           fields: z.array(z.string()).optional(),
+          state: z.enum(["OPEN", "CLOSED"]).optional(),
         },
       },
       async (args) => {
         since.push(args.since);
         const changed = issues
+          .filter((i) => !args.state || i.state === args.state)
           .filter(
             (i) =>
               !args.since || new Date(i.updated_at) >= new Date(args.since),
