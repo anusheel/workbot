@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -7,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { WorkRequest } from "@/lib/requests";
+import { statusLabels, type WorkRequest } from "@/lib/requests";
 
 const priorityTone = {
   low: "outline",
@@ -19,8 +20,6 @@ const statusTone = {
   in_progress: "secondary",
   done: "outline",
 } as const;
-
-export const label = (value: string) => value.replace("_", " ");
 
 export function RequestList({ requests }: { requests: WorkRequest[] }) {
   if (requests.length === 0) {
@@ -39,7 +38,14 @@ export function RequestList({ requests }: { requests: WorkRequest[] }) {
       <TableBody>
         {requests.map((request) => (
           <TableRow key={request.id}>
-            <TableCell className="font-medium">{request.title}</TableCell>
+            <TableCell className="font-medium">
+              <Link
+                href={`/requests/${request.id}`}
+                className="hover:underline"
+              >
+                {request.title}
+              </Link>
+            </TableCell>
             <TableCell className="capitalize">{request.team}</TableCell>
             <TableCell>
               <Badge
@@ -50,11 +56,8 @@ export function RequestList({ requests }: { requests: WorkRequest[] }) {
               </Badge>
             </TableCell>
             <TableCell>
-              <Badge
-                variant={statusTone[request.status]}
-                className="capitalize"
-              >
-                {label(request.status)}
+              <Badge variant={statusTone[request.status]}>
+                {statusLabels[request.status]}
               </Badge>
             </TableCell>
           </TableRow>

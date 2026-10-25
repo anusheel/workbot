@@ -4,6 +4,13 @@ import { z } from "zod";
 export const teams = ["operations", "finance", "support"] as const;
 export const priorities = ["low", "normal", "high"] as const;
 export const statuses = ["open", "in_progress", "done"] as const;
+export type Status = (typeof statuses)[number];
+
+export const statusLabels: Record<Status, string> = {
+  open: "Open",
+  in_progress: "In progress",
+  done: "Done",
+};
 
 export const NewRequest = z.object({
   title: z.string().trim().min(3).max(120),
@@ -15,7 +22,7 @@ export type NewRequest = z.infer<typeof NewRequest>;
 
 export type WorkRequest = NewRequest & {
   id: string;
-  status: (typeof statuses)[number];
+  status: Status;
   createdAt: Date;
 };
 
@@ -39,4 +46,9 @@ export async function createRequest(input: NewRequest): Promise<WorkRequest> {
 export async function listRequests(): Promise<WorkRequest[]> {
   await io();
   return requests;
+}
+
+export async function getRequest(id: string): Promise<WorkRequest | undefined> {
+  await io();
+  return requests.find((r) => r.id === id);
 }

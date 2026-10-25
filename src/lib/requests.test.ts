@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { NewRequest, createRequest, listRequests } from "./requests";
+import {
+  NewRequest,
+  createRequest,
+  getRequest,
+  listRequests,
+} from "./requests";
 
 test("a new request is open, newest first", async () => {
   const first = await createRequest({
@@ -35,4 +40,15 @@ test("the schema trims, defaults and rejects", () => {
   expect(
     NewRequest.safeParse({ title: "A valid title", team: "legal" }).success,
   ).toBe(false);
+});
+
+test("a request is found by id, or undefined", async () => {
+  const request = await createRequest({
+    title: "Replace the badge printer",
+    body: "",
+    team: "operations",
+    priority: "normal",
+  });
+  expect(await getRequest(request.id)).toBe(request);
+  expect(await getRequest("missing")).toBeUndefined();
 });
