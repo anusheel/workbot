@@ -15,11 +15,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { when } from "@/lib/format";
 import { traceSummary } from "@/lib/tracing";
 
 export const metadata: Metadata = { title: "Traces" };
 
 const dollars = (n: number) => `$${n.toFixed(4)}`;
+
+function Empty({ cols }: { cols: number }) {
+  return (
+    <TableRow>
+      <TableCell colSpan={cols} className="text-center text-muted-foreground">
+        No calls in the last 24 hours
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function TracesPage() {
   return (
@@ -43,11 +54,12 @@ export default function TracesPage() {
 async function Dashboard() {
   const day = await traceSummary(24);
   const errorRate = day.calls ? (100 * day.errors) / day.calls : 0;
+  const now = new Date();
   const tiles = [
     ["Calls", String(day.calls)],
     ["Spend", dollars(day.dollars)],
     ["Errors", `${errorRate.toFixed(1)}%`],
-    ["Latency p50 / p95", `${day.p50} / ${day.p95} ms`],
+    ["Latency p50 / p95", day.calls ? `${day.p50} / ${day.p95} ms` : "–"],
   ];
   return (
     <>
@@ -76,6 +88,7 @@ async function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {day.byTenant.length === 0 && <Empty cols={3} />}
                 {day.byTenant.map((row) => (
                   <TableRow key={row.tenant}>
                     <TableCell className="font-mono text-xs" title={row.tenant}>
@@ -106,6 +119,7 @@ async function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {day.byPrompt.length === 0 && <Empty cols={4} />}
                 {day.byPrompt.map((row) => (
                   <TableRow key={row.prompt}>
                     <TableCell className="font-mono text-xs">
@@ -142,12 +156,11 @@ async function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {day.recent.length === 0 && <Empty cols={8} />}
               {day.recent.map((trace) => (
                 <TableRow key={trace.id}>
                   <TableCell className="text-muted-foreground">
-                    {trace.at.toLocaleTimeString("en-GB", {
-                      timeStyle: "medium",
-                    })}
+                    {when(trace.at, now)}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {trace.tenant.slice(0, 8)}
@@ -167,9 +180,14 @@ async function Dashboard() {
                     {trace.ok ? (
                       <Badge variant="secondary">ok</Badge>
                     ) : (
-                      <Badge variant="destructive" title={trace.error ?? ""}>
-                        failed
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant="destructive">failed</Badge>
+                        {trace.error && (
+                          <p className="max-w-xs text-xs text-muted-foreground">
+                            {trace.error}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
