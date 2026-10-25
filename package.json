@@ -17,6 +17,7 @@
     "eval:calibrate": "node --env-file-if-exists=.env.local --import tsx cli/eval-calibrate.ts",
     "routes": "node --env-file-if-exists=.env.local --import tsx cli/routes.ts",
     "rule": "node --env-file-if-exists=.env.local --import tsx cli/rule.ts",
+    "generate": "node --import tsx cli/generate.ts",
     "frameworks": "node --env-file-if-exists=.env.local --import tsx cli/frameworks.ts",
     "sync:commands": "node scripts/sync-commands.mjs",
     "knowledge:index": "node --env-file-if-exists=.env.local --import tsx cli/index-knowledge.ts",
@@ -28,7 +29,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:live": "vitest run --config vitest.live.config.ts",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter workbot-site check"
+    "check": "pnpm generate --check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter workbot-site check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.88",

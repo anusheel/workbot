@@ -1,0 +1,24 @@
+{
+  "name": "location",
+  "plural": "locations",
+  "label": "Location",
+  "access": "employee",
+  "fields": [
+    { "name": "name", "type": "text", "required": true, "max": 80 },
+    {
+      "name": "address",
+      "type": "text",
+      "required": true,
+      "max": 200,
+      "multiline": true
+    },
+    { "name": "manager", "type": "text", "max": 80 },
+    { "name": "phone", "type": "phone" },
+    {
+      "name": "kind",
+      "type": "choice",
+      "options": ["warehouse", "yard", "office"],
+      "default": "warehouse"
+    }
+  ]
+}

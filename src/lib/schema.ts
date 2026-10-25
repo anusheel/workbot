@@ -1,5 +1,7 @@
 // The schema as idempotent statements, applied in order at startup. Append
 // to change it; never edit an earlier statement.
+import { entityTables } from "./entities/tables";
+
 export const schema = [
   `create extension if not exists vector`,
   `create table if not exists requests (
@@ -188,4 +190,6 @@ export const schema = [
     claimed_at timestamptz not null default now(),
     primary key (kind, key)
   )`,
+  // The entities content/entities describes; pnpm generate writes their statements.
+  ...entityTables,
 ];
