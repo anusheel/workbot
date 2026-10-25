@@ -6,3 +6,5 @@ Schemas in `types.ts` are the contract: the body schema parses input with
 codes: 201 on create, 400 with `z.flattenError(error)` on invalid input, 404
 when the resource does not exist; unexpected errors throw. Handlers call the
 functions in `src/lib`; they hold no logic of their own.
+`api/inngest` is the exception: the workflow engine's own handler, served by its SDK,
+with the functions listed in `src/inngest/`.

@@ -10,10 +10,19 @@ type Props = {
   label: string;
   busy: string;
   icon: ReactNode;
+  multiple?: boolean;
 };
 
-/** One button: pick a file, and the form submits itself. */
-export function FileUpload({ action, name, accept, label, busy, icon }: Props) {
+/** One button: pick a file, or several, and the form submits itself. */
+export function FileUpload({
+  action,
+  name,
+  accept,
+  label,
+  busy,
+  icon,
+  multiple = false,
+}: Props) {
   const form = useRef<HTMLFormElement>(null);
   const file = useRef<HTMLInputElement>(null);
   return (
@@ -23,6 +32,7 @@ export function FileUpload({ action, name, accept, label, busy, icon }: Props) {
         type="file"
         name={name}
         accept={accept}
+        multiple={multiple}
         aria-label={label}
         className="sr-only"
         onChange={() => form.current?.requestSubmit()}
