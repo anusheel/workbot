@@ -18,6 +18,12 @@ export const mediaTypes = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
 } as const;
+/** A file goes to the model whole, so an upload is checked against this before any call. */
+export const maxFileBytes = 10 * 1024 * 1024;
+export const fileSizeError = (size: number) =>
+  size === 0 || size > maxFileBytes
+    ? `document must not be empty or larger than ${maxFileBytes / 1024 / 1024} MB`
+    : null;
 export type MediaType = (typeof mediaTypes)[keyof typeof mediaTypes];
 
 /** Where a document comes from: its text, a page, or the file itself for a PDF or an image. */

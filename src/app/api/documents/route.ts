@@ -2,7 +2,12 @@ import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { chatModel } from "@/lib/chat";
 import { ingest } from "@/lib/documents";
-import { type MediaType, type Source, mediaTypes } from "@/lib/extract";
+import {
+  type MediaType,
+  type Source,
+  fileSizeError,
+  mediaTypes,
+} from "@/lib/extract";
 import { withTrace } from "@/lib/tracing";
 import { DocumentBody } from "./types";
 
@@ -14,7 +19,14 @@ type Invalid = { error: unknown };
 
 const media = new Set<string>(Object.values(mediaTypes));
 
-async function fromForm(form: FormData): Promise<Input | Invalid> {
+async function fromForm(form: FormData | null): Promise<Input | Invalid> {
+  if (!form)
+    return {
+      error: {
+        formErrors: ["the multipart body is malformed"],
+        fieldErrors: {},
+      },
+    };
   const file = form.get("document");
   if (!(file instanceof File) || !media.has(file.type))
     return {
@@ -25,6 +37,8 @@ async function fromForm(form: FormData): Promise<Input | Invalid> {
         fieldErrors: {},
       },
     };
+  const tooBig = fileSizeError(file.size);
+  if (tooBig) return { error: { formErrors: [tooBig], fieldErrors: {} } };
   return {
     name: file.name,
     source: {
@@ -47,7 +61,7 @@ export async function POST(request: Request) {
   const input = request.headers
     .get("content-type")
     ?.startsWith("multipart/form-data")
-    ? await fromForm(await request.formData())
+    ? await fromForm(await request.formData().catch(() => null))
     : fromBody(await request.json().catch(() => null));
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
