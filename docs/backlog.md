@@ -22,8 +22,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-14  | Filter requests by team and status         | S    | done   |
 | WB-15  | Policies as Markdown documents             | M    | done   |
 | WB-16  | Public site scaffold                       | S    | done   |
-| WB-17  | Postgres persistence for requests          | M    | open   |
-| WB-18  | Analytics on the intake funnel             | S    | open   |
+| WB-17  | Postgres persistence for requests          | M    | done   |
+| WB-18  | Analytics on the intake funnel             | S    | done   |
 | WB-19  | Validation messages from the API in the UI | S    | open   |
 | WB-20  | Request detail: comments                   | M    | open   |
 
