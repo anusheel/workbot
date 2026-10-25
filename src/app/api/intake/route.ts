@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       { error: z.flattenError(body.error) },
       { status: 400 },
     );
-  const created = await withTrace({ tenant: "api", name: "intake" }, () =>
+  const created = await withTrace({ caller: "api", name: "intake" }, () =>
     intake(body.data.message, modelFor("triage")),
   );
   await track("request_submitted", {

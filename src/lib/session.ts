@@ -45,7 +45,7 @@ export class Session {
     let reply = "";
     try {
       // The turn runs in the terminal's context, so what its tools read and cache is the terminal's.
-      const usage = await withTrace({ tenant: "terminal", name: "chat" }, () =>
+      const usage = await withTrace({ caller: "terminal", name: "chat" }, () =>
         this.provider.stream(
           {
             ...this.options,
@@ -75,7 +75,7 @@ export class Session {
   record(modelId: string, usage: Usage, price?: Model["price"]) {
     this.turns.push({ modelId, usage, price });
     void recordTrace({
-      tenant: "terminal",
+      caller: "terminal",
       name: "chat",
       model: modelId,
       ...usage,

@@ -13,7 +13,7 @@ import { costOf } from "./providers";
 
 /** Who a model call is for and what it is doing: set once per request, read by every call inside it; `request` tells one request's calls from another's. */
 export type Context = {
-  tenant: string;
+  caller: string;
   name: string;
   prompt?: string;
   request?: string;
@@ -33,22 +33,22 @@ export type Trace = Context & {
 };
 
 const context = new AsyncLocalStorage<Context>();
-const fallback: Context = { tenant: "system", name: "call" };
+const fallback: Context = { caller: "system", name: "call" };
 
 /** Runs `fn` with every model call inside it attributed to the context, under one request id. */
 export const withTrace = <T>(ctx: Context, fn: () => Promise<T>) =>
   context.run({ request: randomUUID(), ...ctx }, fn);
 export const currentContext = (): Context => context.getStore() ?? fallback;
 
-const columns = `id, at, tenant, name, prompt, request, model, input, output, cached, dollars, ms, ok, error`;
+const columns = `id, at, caller, name, prompt, request, model, input, output, cached, dollars, ms, ok, error`;
 
 export async function recordTrace(
   trace: Omit<Trace, "id" | "at">,
 ): Promise<void> {
   await query(
-    `insert into traces (tenant, name, prompt, request, model, input, output, cached, dollars, ms, ok, error) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    `insert into traces (caller, name, prompt, request, model, input, output, cached, dollars, ms, ok, error) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
-      trace.tenant,
+      trace.caller,
       trace.name,
       trace.prompt ?? null,
       trace.request ?? null,
@@ -106,7 +106,7 @@ async function record(
 
 /**
  * Every call to the model, recorded: tokens, cached tokens, dollars, latency
- * and whether it failed, under the request's tenant and name. The call
+ * and whether it failed, under the request's caller and name. The call
  * itself is unchanged; the record is written as the reply ends.
  */
 export function traced(model: LanguageModelV4): LanguageModelV4 {
@@ -184,8 +184,8 @@ export async function spend(ctx: Context, since: Date) {
   }>(
     `select count(*)::int as calls, coalesce(sum(dollars), 0)::float as dollars,
        percentile_cont(0.95) within group (order by ms) as p95
-     from traces where tenant = $1 and name = $2 and prompt is not distinct from $3 and at >= $4`,
-    [ctx.tenant, ctx.name, ctx.prompt ?? null, since],
+     from traces where caller = $1 and name = $2 and prompt is not distinct from $3 and at >= $4`,
+    [ctx.caller, ctx.name, ctx.prompt ?? null, since],
   );
   return { ...row, p95: Math.round(row.p95 ?? 0) };
 }
@@ -201,7 +201,7 @@ export async function failovers(hours: number) {
     `with calls as (
        select ok, at, lead(ok) over w as next_ok, lead(at) over w as next_at
        from traces where at > ${since}
-       window w as (partition by tenant, name, request order by at))
+       window w as (partition by caller, name, request order by at))
      select count(*) filter (where not ok)::int as failed,
        count(*) filter (where not ok and next_ok and next_at - at < interval '5 seconds')::int as recovered
      from calls`,
@@ -222,7 +222,7 @@ export type Summary = {
   cached: number;
   p50: number;
   p95: number;
-  byTenant: { tenant: string; calls: number; dollars: number }[];
+  byCaller: { caller: string; calls: number; dollars: number }[];
   byPrompt: { prompt: string; calls: number; dollars: number; p50: number }[];
   recent: Trace[];
 };
@@ -244,8 +244,8 @@ export async function traceSummary(hours: number): Promise<Summary> {
      from traces where at > ${since[0]}`,
     [...since[1]],
   );
-  const byTenant = await query<Summary["byTenant"][number]>(
-    `select tenant, count(*)::int as calls, sum(dollars)::float as dollars from traces where at > ${since[0]} group by tenant order by dollars desc limit 10`,
+  const byCaller = await query<Summary["byCaller"][number]>(
+    `select caller, count(*)::int as calls, sum(dollars)::float as dollars from traces where at > ${since[0]} group by caller order by dollars desc limit 10`,
     [...since[1]],
   );
   const byPrompt = await query<Summary["byPrompt"][number]>(
@@ -262,7 +262,7 @@ export async function traceSummary(hours: number): Promise<Summary> {
     cached: totals.cached,
     p50: Math.round(totals.p50 ?? 0),
     p95: Math.round(totals.p95 ?? 0),
-    byTenant,
+    byCaller,
     byPrompt: byPrompt.map((row) => ({ ...row, p50: Math.round(row.p50) })),
     recent,
   };

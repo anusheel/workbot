@@ -45,7 +45,7 @@ for (const task of evalTasks) {
     if (values.provider && provider !== values.provider) continue;
     for (const size of sizes) {
       const route: Route = `${provider}/${size}`;
-      const ctx: Context = { tenant: "routes", name: task, prompt: route };
+      const ctx: Context = { caller: "routes", name: task, prompt: route };
       const since = new Date();
       const scores: number[] = [];
       try {

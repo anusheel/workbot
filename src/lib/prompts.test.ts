@@ -18,21 +18,21 @@ test("a prompt is seeded from the code on first use, and new versions carry no t
   ]);
 });
 
-test("traffic splits by share, and a tenant always lands on the same version", async () => {
+test("traffic splits by share, and a caller always lands on the same version", async () => {
   await promptOf("test/split", "x", "A");
   await addVersion("test/split", "B");
   await expect(setShares("test/split", { 1: 60, 2: 30 })).rejects.toThrow("90");
   await setShares("test/split", { 1: 50, 2: 50 });
   const picks = new Map<number, number>();
   for (let i = 0; i < 200; i++) {
-    const { version } = await promptOf("test/split", `tenant-${i}`, "A");
+    const { version } = await promptOf("test/split", `caller-${i}`, "A");
     picks.set(version, (picks.get(version) ?? 0) + 1);
   }
   expect(picks.get(1)).toBeGreaterThan(60);
   expect(picks.get(2)).toBeGreaterThan(60);
-  const again = await promptOf("test/split", "tenant-7", "A");
+  const again = await promptOf("test/split", "caller-7", "A");
   expect(again.version).toBe(
-    (await promptOf("test/split", "tenant-7", "A")).version,
+    (await promptOf("test/split", "caller-7", "A")).version,
   );
   await setShares("test/split", { 2: 100 });
   expect((await promptOf("test/split", "anyone", "A")).text).toBe("B");

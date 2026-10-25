@@ -36,9 +36,9 @@ const unavailable =
 export async function POST(request: Request) {
   const visitor = await visitorId();
   // A caller without a cookie (the API reached directly) is limited by its address instead.
-  const caller =
+  const address =
     visitor ?? request.headers.get("x-forwarded-for")?.split(",")[0].trim();
-  if (!allow(caller ?? "anonymous"))
+  if (!allow(address ?? "anonymous"))
     return Response.json(
       { error: "Too many messages in a short time; try again in a minute." },
       { status: 429 },
@@ -55,10 +55,10 @@ export async function POST(request: Request) {
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const tenant = visitor ?? "web";
-  const prompt = await promptOf("workbot/system", tenant, systemPrompt);
+  const caller = visitor ?? "web";
+  const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(
-    { tenant, name: "chat", prompt: `workbot/system@${prompt.version}` },
+    { caller, name: "chat", prompt: `workbot/system@${prompt.version}` },
     () => reply(body.data.id, validated.data, visitor, prompt.text),
   );
 }

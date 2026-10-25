@@ -161,7 +161,7 @@ export const schema = [
     lag_s integer not null,
     at timestamptz not null default now()
   )`,
-  // Cached reads per tenant, and every read's outcome, so hit rate and staleness can be measured.
+  // Cached reads per caller, and every read's outcome, so hit rate and staleness can be measured.
   `create table if not exists cache (
     tenant text not null,
     key text not null,
@@ -190,6 +190,14 @@ export const schema = [
     claimed_at timestamptz not null default now(),
     primary key (kind, key)
   )`,
+  // A trace and a cached read name their caller: a visitor, a user, the terminal, the system. Tenant now means the customer.
+  ...["traces", "cache", "cache_reads"].map(
+    (table) => `do $$ begin
+      if exists (select 1 from information_schema.columns where table_name = '${table}' and column_name = 'tenant') then
+        alter table ${table} rename column tenant to caller;
+      end if;
+    end $$`,
+  ),
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];

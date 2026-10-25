@@ -88,7 +88,7 @@ for (const task of tasks) {
     console.log(`${task}: no case matched`);
     continue;
   }
-  const ctx = { tenant: "eval", name: task, prompt: label };
+  const ctx = { caller: "eval", name: task, prompt: label };
   const since = new Date();
   const lines = [
     `## ${task}: ${cases.length} cases, ${runs} runs each, prompt ${label}`,

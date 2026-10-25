@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     : fromBody(await request.json().catch(() => null));
   if ("error" in input)
     return Response.json({ error: input.error }, { status: 400 });
-  const result = await withTrace({ tenant: "api", name: "document" }, () =>
+  const result = await withTrace({ caller: "api", name: "document" }, () =>
     ingest(input.source, input.name, modelFor("extract")),
   );
   await track("request_submitted", {

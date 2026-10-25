@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const turn = await withTrace(
-    { tenant: (await visitorId()) ?? "web", name: "voice" },
+    { caller: (await visitorId()) ?? "web", name: "voice" },
     () => voiceTurn(body.data.turns, modelFor("triage")),
   );
   if (turn.request)
