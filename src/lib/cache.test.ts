@@ -18,7 +18,8 @@ test("a read is fetched once, served while fresh, and served stale while a fetch
   expect(fetches).toBe(2);
   expect(await cacheSummary()).toEqual({
     reads: 4,
-    hitRate: 0.75,
+    hitRate: 0.5,
+    stale: 1,
     medianAgeS: 0,
   });
 });

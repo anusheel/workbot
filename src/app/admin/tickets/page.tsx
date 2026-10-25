@@ -128,7 +128,7 @@ async function Synced() {
         <Stat
           label="Page cache"
           value={`${percent(cache.hitRate)} hits`}
-          note={`${cache.reads} reads, served ${seconds(cache.medianAgeS)} old`}
+          note={`${cache.reads} reads, ${cache.stale} stale, served ${seconds(cache.medianAgeS)} old`}
         />
       </div>
       <h2 className="mt-8 text-lg font-medium">Tickets</h2>

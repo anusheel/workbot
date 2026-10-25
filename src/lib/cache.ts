@@ -64,23 +64,27 @@ export async function cached<T>(
 export type CacheSummary = {
   reads: number;
   hitRate: number | null;
+  stale: number;
   medianAgeS: number | null;
 };
 
-/** The last day of cached reads: how many, how often the value was there, how old what was served was. */
+/** The last day of cached reads: how many, how often the value was there and fresh, how many were served stale, how old what was served was. */
 export async function cacheSummary(): Promise<CacheSummary> {
   const [row] = await query<{
     reads: number;
     hits: number;
+    stale: number;
     median: number | null;
   }>(
-    `select count(*)::int as reads, count(*) filter (where outcome <> 'miss')::int as hits,
+    `select count(*)::int as reads, count(*) filter (where outcome = 'hit')::int as hits,
+       count(*) filter (where outcome = 'stale')::int as stale,
        percentile_cont(0.5) within group (order by age_s)::int as median
      from cache_reads where at > now() - interval '1 day'`,
   );
   return {
     reads: row.reads,
     hitRate: row.reads ? row.hits / row.reads : null,
+    stale: row.stale,
     medianAgeS: row.median,
   };
 }
