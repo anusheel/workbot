@@ -90,10 +90,9 @@ async function Board() {
                   <TableRow>
                     <TableHead>When</TableHead>
                     <TableHead>Commit</TableHead>
-                    <TableHead>Subset</TableHead>
+                    <TableHead>Cases</TableHead>
                     <TableHead>Route</TableHead>
                     <TableHead>Prompt</TableHead>
-                    <TableHead className="text-right">Cases × runs</TableHead>
                     <TableHead className="text-right">Mean</TableHead>
                     <TableHead className="text-right">Hard</TableHead>
                     <TableHead className="text-right">Spend</TableHead>
@@ -104,7 +103,7 @@ async function Board() {
                   {recorded.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={9}
                         className="text-center text-muted-foreground"
                       >
                         No run recorded; pnpm eval --task {task} --record
@@ -119,7 +118,12 @@ async function Board() {
                       <TableCell className="font-mono text-xs">
                         {r.commit}
                       </TableCell>
-                      <TableCell>{r.subset}</TableCell>
+                      <TableCell>
+                        {r.cases} × {r.runs}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          {r.subset}
+                        </span>
+                      </TableCell>
                       <TableCell className="font-mono text-xs">
                         {r.route}
                       </TableCell>
@@ -127,14 +131,11 @@ async function Board() {
                         {r.prompt}
                       </TableCell>
                       <TableCell className="text-right">
-                        {r.cases} × {r.runs}
-                      </TableCell>
-                      <TableCell className="text-right">
                         {r.mean.toFixed(2)} ± {margin(r).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">{r.hard}</TableCell>
                       <TableCell className="text-right">
-                        ${r.dollars.toFixed(4)}
+                        ${r.dollars.toFixed(3)}
                       </TableCell>
                       <TableCell className="text-right">{r.p95} ms</TableCell>
                     </TableRow>
