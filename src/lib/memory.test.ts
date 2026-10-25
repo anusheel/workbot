@@ -44,6 +44,19 @@ test("the memory note lists what is known, and is empty when nothing is", () => 
   expect(note).toContain("- The person wants short answers. (preference)");
 });
 
+test("the note carries the newest 30 memories, and the list still has them all", async () => {
+  for (let i = 1; i <= 40; i++) {
+    await remember("v3", "case", `The person is on case ${i}.`);
+  }
+  const all = await listMemories("v3");
+  expect(all).toHaveLength(40);
+  expect(await listMemories("v3", 5)).toHaveLength(5);
+  const lines = memoryNote(all).split("\n").slice(1);
+  expect(lines).toHaveLength(30);
+  expect(lines[0]).toContain("case 40.");
+  expect(lines[29]).toContain("case 11.");
+});
+
 test("extraction asks a model for durable facts and returns them typed", async () => {
   let instructions = "";
   const model = new MockLanguageModelV4({
