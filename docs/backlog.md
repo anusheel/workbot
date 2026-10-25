@@ -10,18 +10,18 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-2   | Health endpoint                            | S    | done   |
 | WB-3   | Deployment settings page                   | S    | done   |
 | WB-4   | CI on every pull request                   | S    | done   |
-| WB-5   | Request model with validation              | S    | open   |
-| WB-6   | Intake form                                | M    | open   |
-| WB-7   | Requests list                              | S    | open   |
-| WB-8   | Requests API                               | S    | open   |
-| WB-9   | Admin console shell                        | S    | open   |
-| WB-10  | Request counts on the admin overview       | S    | open   |
-| WB-11  | Settings inside the admin console          | S    | open   |
-| WB-12  | Request detail page                        | S    | open   |
-| WB-13  | Change a request's status                  | S    | open   |
-| WB-14  | Filter requests by team and status         | S    | open   |
-| WB-15  | Policies as Markdown documents             | M    | open   |
-| WB-16  | Public site scaffold                       | S    | open   |
+| WB-5   | Request model with validation              | S    | done   |
+| WB-6   | Intake form                                | M    | done   |
+| WB-7   | Requests list                              | S    | done   |
+| WB-8   | Requests API                               | S    | done   |
+| WB-9   | Admin console shell                        | S    | done   |
+| WB-10  | Request counts on the admin overview       | S    | done   |
+| WB-11  | Settings inside the admin console          | S    | done   |
+| WB-12  | Request detail page                        | S    | done   |
+| WB-13  | Change a request's status                  | S    | done   |
+| WB-14  | Filter requests by team and status         | S    | done   |
+| WB-15  | Policies as Markdown documents             | M    | done   |
+| WB-16  | Public site scaffold                       | S    | done   |
 | WB-17  | Postgres persistence for requests          | M    | open   |
 | WB-18  | Analytics on the intake funnel             | S    | open   |
 | WB-19  | Validation messages from the API in the UI | S    | open   |
