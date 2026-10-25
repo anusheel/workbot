@@ -95,6 +95,11 @@ function file(path) {
   }
 }
 
+// Only a maintainer's issues and pull requests are the fleet's: anyone can file
+// an issue or name one in a pull request on a public repository.
+const ours = ({ authorAssociation }) =>
+  ["OWNER", "MEMBER", "COLLABORATOR"].includes(authorAssociation);
+
 function tasks() {
   const issues = ghJson(
     "issue",
@@ -106,7 +111,7 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,title,createdAt",
+    "number,title,createdAt,authorAssociation",
   );
   const prs = ghJson(
     "pr",
@@ -118,17 +123,21 @@ function tasks() {
     "--limit",
     "100",
     "--json",
-    "number,body,state,mergedAt,statusCheckRollup,headRefOid",
+    "number,body,state,mergedAt,statusCheckRollup,headRefOid,authorAssociation",
   );
   const state = runs();
   const rank = { MERGED: 0, OPEN: 1, CLOSED: 2 };
   return issues
+    .filter(ours)
     .sort((a, b) => a.number - b.number)
     .map((issue) => ({
       issue,
       run: state[issue.number],
       pr: prs
-        .filter((pr) => new RegExp(`Closes #${issue.number}\\b`).test(pr.body))
+        .filter(
+          (pr) =>
+            ours(pr) && new RegExp(`Closes #${issue.number}\b`).test(pr.body),
+        )
         .sort((a, b) => rank[a.state] - rank[b.state])[0],
     }));
 }
