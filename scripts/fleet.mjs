@@ -141,7 +141,7 @@ function tasks() {
         .filter(
           (pr) =>
             ours(pr) &&
-            new RegExp(`closes #${issue.number}\b`, "i").test(pr.body),
+            new RegExp(`closes #${issue.number}\\b`, "i").test(pr.body),
         )
         .sort((a, b) => rank[a.state] - rank[b.state])[0],
     }));
@@ -238,7 +238,7 @@ function startLocal(issue) {
 function startCloud(issue) {
   const command = ["claude", "--cloud", cloudBrief(issue), "--model", "sonnet"];
   const quoted = command
-    .map((arg) => `'${arg.replaceAll("'", "'\''")}'`)
+    .map((arg) => `'${arg.replaceAll("'", "'\\''")}'`)
     .join(" ");
   const out =
     process.platform === "darwin"
