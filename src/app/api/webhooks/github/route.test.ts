@@ -78,4 +78,15 @@ test("another event or another repository is acknowledged and ignored, and a mal
   ).toBe(204);
   expect(await findTickets("pallet")).toEqual([]);
   expect((await deliver({ action: "opened" })).status).toBe(400);
+  const notJson = await POST(
+    new Request("http://workbot/api/webhooks/github", {
+      method: "POST",
+      headers: {
+        "x-github-event": "issues",
+        "x-hub-signature-256": `sha256=${createHmac("sha256", "s3cret").update("{").digest("hex")}`,
+      },
+      body: "{",
+    }),
+  );
+  expect(notJson.status).toBe(400);
 });
