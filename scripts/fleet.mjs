@@ -453,6 +453,10 @@ async function merge(batch) {
       ["pr", "comment", String(pr.number), "--body-file", "-"],
       { cwd: home, input: reviews[i] },
     );
+    if (!/^Verdict:/m.test(reviews[i])) {
+      console.log(`#${pr.number}: no verdict in the review, again next round`);
+      continue;
+    }
     state[issue.number] = { ...run, reviewed: pr.headRefOid };
     if (!/^Verdict: approve/im.test(reviews[i])) {
       console.log(`#${pr.number}: changes requested`);
