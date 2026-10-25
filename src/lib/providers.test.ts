@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { anthropic, costOf, openai } from "./providers";
 import { calculator } from "./tools";
 
@@ -387,6 +387,78 @@ test("openai keeps the usage of a response cut short, and reports a failed one",
       text: () => {},
     }),
   ).rejects.toThrow("The server had an error.");
+});
+
+test("openai runs nothing when a response is cut off inside a function call", async () => {
+  const { requests, fetch } = capture(
+    sse([
+      [
+        "response.incomplete",
+        {
+          type: "response.incomplete",
+          sequence_number: 1,
+          response: {
+            id: "r",
+            object: "response",
+            created_at: 0,
+            status: "incomplete",
+            model: "test-model",
+            output: [
+              {
+                type: "function_call",
+                id: "fc_1",
+                call_id: "call_1",
+                name: "calculator",
+                arguments: '{"expression": "2 +',
+                status: "incomplete",
+              },
+            ],
+            incomplete_details: { reason: "max_output_tokens" },
+            usage: { input_tokens: 7, output_tokens: 64, total_tokens: 71 },
+          },
+        },
+      ],
+    ]),
+  );
+  const run = vi.fn(calculator.run);
+  const usage = await openai({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [{ ...calculator, run }] },
+    { text: () => {} },
+  );
+  expect(usage).toEqual({ input: 7, output: 64 });
+  expect(run).not.toHaveBeenCalled();
+  expect(requests).toHaveLength(1);
+});
+
+test("openai returns arguments that are not JSON to the model as a failed output", async () => {
+  const call = {
+    type: "function_call",
+    id: "fc_1",
+    call_id: "call_1",
+    name: "calculator",
+    arguments: '{"expression": "2 +',
+    status: "completed",
+  };
+  const { requests, fetch } = capture(
+    openaiCompleted([call]),
+    openaiCompleted([], ["Sorry."]),
+  );
+  const calls: { failed: boolean }[] = [];
+  const usage = await openai({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [calculator] },
+    { text: () => {}, tool: (c) => calls.push(c) },
+  );
+  expect(usage).toEqual({ input: 14, output: 6 });
+  expect(calls).toMatchObject([{ name: "calculator", failed: true }]);
+  expect(requests[1].input).toMatchObject([
+    {},
+    call,
+    {
+      type: "function_call_output",
+      call_id: "call_1",
+      output: expect.stringContaining("not valid JSON"),
+    },
+  ]);
 });
 
 test("a cache read is a tenth of the input price, a twentieth on the large models, and a write 1.25 times it", () => {
