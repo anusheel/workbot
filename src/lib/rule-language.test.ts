@@ -167,7 +167,7 @@ test("the Day 28 table, printed and parsed again, is the same table", () => {
   expect(parseRules(printRules(rules))).toEqual(rules);
 });
 
-test("the rules file holds the 6 rules of Day 28, in order", () => {
+test("the rules file holds the 6 rules of Day 28 and the one the model wrote, in order", () => {
   expect(parseRules(readFileSync(rulesFile, "utf8")).map((r) => r.id)).toEqual([
     "phone-e164",
     "company-from-domain",
@@ -175,6 +175,7 @@ test("the rules file holds the 6 rules of Day 28, in order", () => {
     "route-support",
     "route-operations",
     "large-invoice",
+    "route-operations-sync",
   ]);
 });
 

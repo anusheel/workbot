@@ -9,3 +9,4 @@ rule route-support on ticket when team is missing and text matches "customer|com
 rule route-operations on ticket when team is missing and text matches "van|truck|dock|warehouse|printer|light|facilit|vendor" then set team = "operations"
 
 rule large-invoice on invoice when total over 5000 then flag "Total over $5,000: the finance lead approves"
+rule route-operations-sync on ticket when team is missing and title matches "sync|webhook|reconcil" then set team = "operations"

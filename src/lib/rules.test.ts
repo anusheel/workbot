@@ -9,6 +9,7 @@ test("the rule table parses, routes only to the customer's teams, and keeps its 
     "route-support",
     "route-operations",
     "large-invoice",
+    "route-operations-sync",
   ]);
 });
 
