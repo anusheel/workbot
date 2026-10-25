@@ -41,7 +41,7 @@ in `mcp/` only connect them to stdio. Both read `.env.local`.
 - Server Components by default; `"use client"` only for state, effects or browser APIs
 - Pages compose shadcn/ui primitives from `src/components/ui/`; the app's own components live in `src/components/`, are kebab-case files exporting a PascalCase name, have a render test beside them and are imported by path
 - Route handlers live at `src/app/api/<name>/route.ts` and return JSON
-- `src/lib/config.ts` is the only module that reads `process.env`; `.env.example` lists the variables, required ones uncommented
+- `src/lib/config.ts` is the only module that reads `process.env`; `.env.example` lists the variables, required ones uncommented. `content/customer.json` is the customer: the company's name, its teams and what each files, where a document of each kind is filed, the sections customers may read; `src/lib/customer.ts` parses it and the prompts, the request model and the filing rules are functions of it, so no other file names the company
 - `src/lib/db.ts` is the only module that knows the database driver; everything else calls `query` with `$n` parameters, never values spliced into SQL
 - A schema change is one idempotent statement appended to `src/lib/schema.ts`
 - Pure models (schemas, constants, labels) live in `src/lib/<name>-model.ts` so client components can import them; queries stay in `src/lib/<name>.ts`

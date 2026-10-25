@@ -18,6 +18,10 @@ A building-supply company with a warehouse in Oakland, 6 delivery vans, and oper
 
 A queue that every channel feeds (form, API, email, voice, documents); answers with the document named; nothing approved, paid or refunded by the assistant; incidents, legal and HR questions pointed to the responsible team; the public chat limited to the customer-facing sections. Promised and measured: the golden cases in `content/eval/golden.json`, scored before a prompt takes traffic.
 
+## In the code
+
+The customer is configuration: `content/customer.json` holds the name, what the company is, the teams and what each files, where a document of each kind is filed, and the sections customers may read. The prompts, the request model and the filing rules read it; nothing else in `src/` names the company.
+
 ## Contacts
 
 Named in the knowledge base by role, never by person: the owner team on each document is the contact for it.

@@ -20,7 +20,6 @@
     "sync:commands": "node scripts/sync-commands.mjs",
     "knowledge:index": "node --env-file-if-exists=.env.local --import tsx cli/index-knowledge.ts",
     "compare:retrieval": "node --env-file-if-exists=.env.local --import tsx cli/compare-retrieval.ts",
-    "compare:agents": "node --env-file-if-exists=.env.local --import tsx cli/compare-agents.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0 && prettier --check .",

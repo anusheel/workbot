@@ -58,6 +58,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-50  | The research agent on 3 frameworks, compared on 5 topics                                           | M    | done   |
 | WB-51  | Two providers behind one layer, routed per task, with a fallback that keeps WorkBot up             | M    | done   |
 | WB-52  | Evals as the development loop: 30 cases a task, a calibrated judge, the gate in CI, the scoreboard | M    | done   |
+| WB-53  | Audited against the principles; the customer in configuration; one agent where the eval allows     | M    | done   |
 
 ## Acceptance criteria
 

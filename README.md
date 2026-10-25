@@ -95,6 +95,8 @@ both calls.
 
 `pnpm frameworks` runs the research agent on LangGraph.js, the Claude Agent SDK and the OpenAI Agents SDK, on 5 questions, and prints time, tool calls, tokens and cost per run; the comparison and the choice are in [docs/frameworks.md](docs/frameworks.md).
 
+The company WorkBot works for is configuration: `content/customer.json` names it, its teams and what each files, and the prompts and the request model read it, so a new customer is a new file. The principles the code is held to are in [brain/architecture/principles.md](brain/architecture/principles.md), with the audit behind them in the architecture document.
+
 How we work with Claude Code, the Codex CLI and OpenCode on this repository, under one policy, is in [docs/agentic-development.md](docs/agentic-development.md); the notes an agent reads first are in [brain/](brain/README.md). A fleet of agents on the backlog is `scripts/fleet.mjs`; what it did on 50 tasks is in [docs/fleet.md](docs/fleet.md). The system as built is written up in [docs/architecture.md](docs/architecture.md);
 [docs/design/brief-a.md](docs/design/brief-a.md) designs a customer support
 platform on the same parts and pitches it.

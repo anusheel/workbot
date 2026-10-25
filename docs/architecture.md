@@ -1,6 +1,6 @@
 # WorkBot: the architecture as built
 
-WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system after Day 25: what runs, where state lives, the models, the design choices and their tradeoffs. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-25. Day 40 revisits it.
+WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system after Day 26: what runs, where state lives, the models, the design choices and their tradeoffs. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-25. Day 40 revisits it.
 
 ## The system
 
@@ -8,14 +8,17 @@ WorkBot is the assistant and workflow engine for Fieldstone Supply's operations,
 flowchart LR
   subgraph clients [Clients]
     web["Web app: chat, requests, voice line, dashboards, admin"]
-    cli["Terminal: pnpm chat, explain, scrape, browse, video, extract, eval"]
+    cli["Terminal: pnpm chat, explain, scrape, browse, video, extract, eval, routes"]
+    site["Public site: site/, static"]
     api["API: /api/chat, /api/intake, /api/documents, /api/voice, /api/generate, /api/requests"]
   end
   subgraph app ["Next.js app (Vercel)"]
     routes["Route handlers and Server Actions"]
-    lib["src/lib: agents, tools, extraction, tracing, prompts"]
+    lib["src/lib: agents, tools, extraction, tracing, prompts, routing"]
     serve["/api/inngest"]
+    config["Configuration: content/customer.json, the routing table, the prompt versions, content/knowledge"]
   end
+  mcp["MCP servers for the CLIs: database, posthog (not deployed)"]
   subgraph engine ["Inngest"]
     approval["document-approval"]
     crons["reminders, watch"]
@@ -29,6 +32,8 @@ flowchart LR
   lib --> tables
   routes -- events --> engine --> serve --> lib
   lib --> outside
+  config --> lib
+  mcp --> tables
 ```
 
 The product is one Next.js app; the marketing site in `site/` is a second, static one. Model calls go through one of three paths: the AI SDK for the web routes, the actions, the agents and the workflows (`modelFor(task)`, routed and traced); the provider SDKs directly for the terminal session; and the Claude Agent SDK for the explainer pipeline. Inngest runs the document workflow as checkpointed steps, calling back into the app for each.
