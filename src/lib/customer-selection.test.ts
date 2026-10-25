@@ -21,4 +21,10 @@ test("a deployment serves the customer CUSTOMER names, teams, prompt and setting
     "anthropic/small",
     "anthropic/large",
   ]);
+  // No rules file of its own yet: the product\'s rules, and none naming a team it lacks.
+  expect(rules.map((r) => r.id)).toEqual([
+    "phone-e164",
+    "company-from-domain",
+    "large-invoice",
+  ]);
 });
