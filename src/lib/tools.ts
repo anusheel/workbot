@@ -3,6 +3,7 @@ import { type Tool } from "./tool";
 import { calculate } from "./calculator";
 import { customerSections, knowledgeTools } from "./knowledge-tools";
 import { config } from "./config";
+import { githubEnabled, githubTools } from "./github";
 import { saveNote } from "./notes";
 import { tool } from "./tool";
 import { readPage, searchWeb } from "./web";
@@ -50,13 +51,14 @@ export const webSearch = tool({
 
 const web = config.brave.key ? [webSearch] : [];
 
-/** What the assistant can call for an employee: the whole knowledge base, notes and the web. */
+/** What the assistant can call for an employee: the whole knowledge base, notes, the web, and the tickets when a ticketing system is configured. */
 export const employeeTools: Tool[] = [
   ...knowledgeTools(),
   calculator,
   readUrl,
   noteTaker,
   ...web,
+  ...(githubEnabled() ? githubTools() : []),
 ];
 
 /** What it can call for anyone else: the customer-facing documents, no notes. */

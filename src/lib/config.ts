@@ -33,6 +33,8 @@ export const config = {
   outages: list(process.env.OUTAGE),
   // Embeddings for the knowledge base; unset means search by words.
   voyage: { key: process.env.VOYAGE_API_KEY },
+  // The ticketing system: a GitHub token and the repository whose issues are the tickets; unset, the ticket tools and the sync are off.
+  github: { token: process.env.GITHUB_TOKEN, repo: process.env.GITHUB_REPO },
   // Web search for the assistant; unset means the tool is not offered.
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   // The spend in a day that raises an alert.
