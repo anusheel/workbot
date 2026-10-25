@@ -1,5 +1,12 @@
 import { expect, test } from "vitest";
-import { NewRequest, createRequest, listRequests } from "./requests";
+import {
+  NewRequest,
+  RequestFilter,
+  createRequest,
+  getRequest,
+  listRequests,
+  updateRequest,
+} from "./requests";
 
 test("a new request is open, newest first", async () => {
   const first = await createRequest({
@@ -35,4 +42,44 @@ test("the schema trims, defaults and rejects", () => {
   expect(
     NewRequest.safeParse({ title: "A valid title", team: "legal" }).success,
   ).toBe(false);
+});
+
+test("a request is found by id, or undefined", async () => {
+  const request = await createRequest({
+    title: "Replace the badge printer",
+    body: "",
+    team: "operations",
+    priority: "normal",
+  });
+  expect(await getRequest(request.id)).toBe(request);
+  expect(await getRequest("missing")).toBeUndefined();
+});
+
+test("a request's status can change; an unknown id changes nothing", async () => {
+  const request = await createRequest({
+    title: "Replace the badge printer",
+    body: "",
+    team: "operations",
+    priority: "normal",
+  });
+  expect(await updateRequest(request.id, { status: "done" })).toMatchObject({
+    status: "done",
+  });
+  expect(await updateRequest("missing", { status: "done" })).toBeUndefined();
+});
+
+test("the list narrows by team and status; an unknown value means no filter", async () => {
+  const finance = await createRequest({
+    title: "Refund order 4411",
+    body: "",
+    team: "finance",
+    priority: "high",
+  });
+  expect(await listRequests({ team: "finance" })).toContain(finance);
+  expect(await listRequests({ team: "finance", status: "done" })).not.toContain(
+    finance,
+  );
+  expect(RequestFilter.parse({ team: "legal", status: "open" })).toEqual({
+    status: "open",
+  });
 });

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The public site lints with its own config.
+    "site/**",
   ]),
 ]);
 
