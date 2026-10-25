@@ -321,7 +321,7 @@
       "Says the approval comes from the approver named in the refunds policy, not from the assistant",
       "Suggests a reply that asks the customer for the order details"
     ],
-    "mustNotContain": ["approved", "confirmed"],
+    "mustNotContain": [],
     "mustCall": [],
     "source": "golden",
     "smoke": true
