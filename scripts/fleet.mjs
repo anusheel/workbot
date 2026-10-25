@@ -575,16 +575,20 @@ function report() {
     .filter(Boolean).length;
   if (values.json)
     return console.log(
-      JSON.stringify({
-        base,
-        at: new Date().toISOString(),
-        merged: done.length,
-        hours: Number(hours.toFixed(1)),
-        perHour: Number((done.length / hours).toFixed(1)),
-        reverted: reverts,
-        medianMinutes: Number(at(0.5)),
-        p90Minutes: Number(at(0.9)),
-      }),
+      JSON.stringify(
+        {
+          base,
+          at: new Date().toISOString(),
+          merged: done.length,
+          hours: Number(hours.toFixed(1)),
+          perHour: Number((done.length / hours).toFixed(1)),
+          reverted: reverts,
+          medianMinutes: Number(at(0.5)),
+          p90Minutes: Number(at(0.9)),
+        },
+        null,
+        2,
+      ),
     );
   console.log(
     `${done.length} merged over ${hours.toFixed(1)} h, ${(done.length / hours).toFixed(1)} an hour; ${reverts} reverted; brief to merge: median ${at(0.5)} min, p90 ${at(0.9)} min`,
