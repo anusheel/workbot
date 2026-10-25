@@ -1,0 +1,7 @@
+# The product's rules, for every customer: no team is named here. Grammar: docs/config.md.
+# Rules run in order; each sees the record as the ones before it left it, and a customer's rules run after these.
+
+rule phone-e164 on contact when phone matches "\d" then normalize phone
+rule company-from-domain on contact when company is missing and email matches "@" then company from email
+
+rule large-invoice on invoice when total over 5000 then flag "Total over $5,000: the finance lead approves"

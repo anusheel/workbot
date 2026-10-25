@@ -9,6 +9,7 @@ import { githubEnabled, githubTools } from "./github";
 import { type Contact, findContacts } from "./unified";
 import { saveNote } from "./notes";
 import { tool } from "./tool";
+import { settings } from "./settings";
 import { readPage, searchWeb } from "./web";
 
 export const calculator = tool({
@@ -21,9 +22,6 @@ export const calculator = tool({
   run: ({ expression }) => String(calculate(expression)),
 });
 
-/** A page is kept an hour per tenant; the model is told how old what it reads is. */
-const pageAge = 3_600_000;
-
 export const readUrl = tool({
   name: "read_url",
   description:
@@ -32,7 +30,7 @@ export const readUrl = tool({
   run: async ({ url }) => {
     const { value, fetchedAt, outcome } = await cached(
       `page:${url}`,
-      pageAge,
+      settings.pages.maxAgeMinutes * 60_000,
       () => readPage(url),
     );
     return `As of ${when(fetchedAt)}${outcome === "stale" ? ", a fresh copy on its way" : ""}:\n${value}`;

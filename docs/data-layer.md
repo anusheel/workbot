@@ -29,7 +29,7 @@ Requests are mapped whole on every run, since they live in this database; contac
 
 ## Rules
 
-`content/rules.json` is an ordered table; `src/lib/rules.ts` parses it at load, refuses a team the customer does not have, and applies it:
+`content/rules.rules` is an ordered table, one rule a line in the language of `docs/config.md`; `src/lib/rules.ts` parses it at load, refuses a team the customer does not have, and applies it:
 
 | Rule                  | On      | When                                                                  | Then                                    |
 | --------------------- | ------- | --------------------------------------------------------------------- | --------------------------------------- |

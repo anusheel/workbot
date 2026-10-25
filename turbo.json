@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "//#generate:check": {},
+    "//#lint": {},
+    "//#typecheck": {},
+    "//#test": { "env": ["DATABASE_URL", "CUSTOMER"] },
+    "//#build": {
+      "dependsOn": ["//#typecheck"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": ["CUSTOMER", "VERCEL_ENV", "VERCEL_GIT_COMMIT_SHA"]
+    },
+    "lint": {},
+    "typecheck": {},
+    "build": {
+      "dependsOn": ["typecheck"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    }
+  }
+}

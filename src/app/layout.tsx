@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { customer } from "@/lib/customer";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-sans", subsets: ["latin"] });
@@ -11,7 +12,10 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "WorkBot", template: "%s · WorkBot" },
+  title: {
+    default: customer.assistant,
+    template: `%s · ${customer.assistant}`,
+  },
   description:
     "An AI assistant and workflow engine for operations, finance and support teams.",
 };

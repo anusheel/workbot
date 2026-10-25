@@ -1,6 +1,6 @@
 import { query } from "./db";
 import type { DocumentRecord } from "./documents";
-import { WorkRequest } from "./request-model";
+import { WorkRequest } from "./requests";
 import { type Applied, applyRules, normalizePhone } from "./rules";
 
 /** One ticket wherever it lives: a GitHub issue, a WorkBot request. */

@@ -1,0 +1,135 @@
+import { expect, test } from "vitest";
+import { generate, index, table } from "./entity-generator";
+import { Entity } from "./entity-model";
+
+const vendor = Entity.parse({
+  name: "vendor",
+  plural: "vendors",
+  label: "Vendor",
+  fields: [
+    { name: "name", type: "text", required: true, max: 120 },
+    { name: "email", type: "email" },
+    {
+      name: "terms",
+      type: "choice",
+      options: ["net 15", "net 30"],
+      default: "net 30",
+    },
+    { name: "notes", type: "text", max: 2000, multiline: true },
+  ],
+});
+
+test("a description becomes its module, route, types, test, action and page, under the access it names", () => {
+  expect(generate(vendor).map((f) => f.path)).toEqual([
+    "src/lib/entities/vendor.ts",
+    "src/app/api/admin/vendors/types.ts",
+    "src/app/api/admin/vendors/route.ts",
+    "src/app/api/admin/vendors/route.test.ts",
+    "src/app/admin/vendors/actions.ts",
+    "src/app/admin/vendors/page.tsx",
+  ]);
+  const customer = generate({ ...vendor, access: "customer" }).map(
+    (f) => f.path,
+  );
+  expect(customer).toContain("src/app/api/vendors/route.ts");
+  expect(customer).toContain("src/app/vendors/page.tsx");
+});
+
+test("a required field is not null, a choice carries its default, optional text defaults to empty", () => {
+  const statement = table(vendor);
+  expect(statement).toContain("name text not null,");
+  expect(statement).toContain("email text,");
+  expect(statement).toContain("terms text not null default 'net 30',");
+  expect(statement).toContain("notes text not null default '',");
+  const [{ source }] = generate(vendor);
+  expect(source).toContain('terms: z.enum(vendorTerms).default("net 30"),');
+  expect(source).toContain("email: z.email().nullable().default(null),");
+});
+
+test("the generated test sends the required fields and leaves the first one out to be refused", () => {
+  const source = generate(vendor).find((f) =>
+    f.path.endsWith("route.test.ts"),
+  )!.source;
+  expect(source).toContain('post({"name":"Sample name"})');
+  expect(source).toContain(
+    'expect(Object.keys(error.fieldErrors)).toContain("name");',
+  );
+});
+
+test("the index lists every table for the schema, in a file that imports nothing, and every page for the navigation", () => {
+  const [tables, pages] = index([
+    vendor,
+    {
+      ...vendor,
+      name: "site",
+      plural: "sites",
+      label: "Site",
+      access: "customer",
+    },
+  ]);
+  expect(tables.path).toBe("src/lib/entities/tables.ts");
+  expect(tables.source).not.toContain("import ");
+  expect(tables.source).toContain("create table if not exists vendors");
+  expect(tables.source).toContain("create table if not exists sites");
+  expect(pages.source).toContain(
+    '{ href: "/admin/vendors", label: "Vendors", access: "employee" as const },',
+  );
+  expect(pages.source).toContain(
+    '{ href: "/sites", label: "Sites", access: "customer" as const },',
+  );
+});
+
+test("an optional number takes an empty string as no value, not zero", () => {
+  const counted = Entity.parse({
+    ...vendor,
+    fields: [
+      { name: "name", type: "text", required: true },
+      { name: "vans", type: "number" },
+    ],
+  });
+  expect(generate(counted)[0].source).toContain(
+    'vans: z.preprocess((v) => (v === "" ? null : v), z.coerce.number().nullable()).default(null),',
+  );
+});
+
+test("a choice value with a quote in it is escaped into the SQL and the code", () => {
+  const quoted = Entity.parse({
+    ...vendor,
+    fields: [
+      { name: "name", type: "text", required: true },
+      {
+        name: "pick",
+        type: "choice",
+        options: ["owner's choice", "ours"],
+        default: "owner's choice",
+      },
+    ],
+  });
+  expect(table(quoted)).toContain(
+    "pick text not null default 'owner''s choice'",
+  );
+  const [{ source }] = generate(quoted);
+  expect(source).toContain(`.default("owner's choice")`);
+  expect(generate(quoted).at(-1)?.source).toContain(
+    `defaultValue={"owner's choice"}`,
+  );
+});
+
+test("a description without a required field, with a repeated field or with a bad choice default is refused", () => {
+  const field = { name: "name", type: "text", required: true };
+  expect(() =>
+    Entity.parse({ ...vendor, fields: [{ name: "x", type: "text" }] }),
+  ).toThrow(/required field/);
+  expect(() => Entity.parse({ ...vendor, fields: [field, field] })).toThrow(
+    /repeat/,
+  );
+  expect(() =>
+    Entity.parse({
+      ...vendor,
+      fields: [
+        field,
+        { name: "kind", type: "choice", options: ["a"], default: "b" },
+      ],
+    }),
+  ).toThrow(/one of its options/);
+});

@@ -1,0 +1,19 @@
+{
+  "name": "vendor",
+  "plural": "vendors",
+  "label": "Vendor",
+  "access": "employee",
+  "fields": [
+    { "name": "name", "type": "text", "required": true, "max": 120 },
+    { "name": "email", "type": "email" },
+    { "name": "phone", "type": "phone" },
+    {
+      "name": "terms",
+      "label": "Payment terms",
+      "type": "choice",
+      "options": ["net 15", "net 30", "net 60"],
+      "default": "net 30"
+    },
+    { "name": "notes", "type": "text", "max": 2000, "multiline": true }
+  ]
+}

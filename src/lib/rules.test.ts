@@ -1,14 +1,15 @@
 import { expect, test } from "vitest";
 import { applyRules, companyFromEmail, normalizePhone, rules } from "./rules";
 
-test("the rule table parses, routes only to the customer's teams, and keeps its order", () => {
+test("the product's rules come first, then the customer's, routed only to its teams", () => {
   expect(rules.map((r) => r.id)).toEqual([
     "phone-e164",
     "company-from-domain",
+    "large-invoice",
     "route-finance",
     "route-support",
     "route-operations",
-    "large-invoice",
+    "route-operations-sync",
   ]);
 });
 

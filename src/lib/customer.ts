@@ -1,11 +1,14 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { z } from "zod";
-import data from "../../content/customer.json";
+import { config } from "./config";
 
 /**
  * The company the assistant works for, as configuration: its name, what it
  * is, its teams and what each files, where a document of each kind is filed,
- * and which sections of the knowledge base its customers may read. A new
- * customer is a new file, not a change to the code.
+ * which sections of the knowledge base its customers may read, and what it
+ * overrides in the product's defaults. A new customer is a new file in
+ * content/customers, and `CUSTOMER` names the one a deployment serves.
  */
 export const Customer = z
   .object({
@@ -30,6 +33,8 @@ export const Customer = z
       other: z.string(),
     }),
     customerSections: z.array(z.string().min(1)).min(1),
+    // Checked against the product's settings, which know the tasks and routes.
+    settings: z.unknown().optional(),
   })
   .refine(
     (c) =>
@@ -40,7 +45,14 @@ export const Customer = z
   );
 export type Customer = z.infer<typeof Customer>;
 
-export const customer: Customer = Customer.parse(data);
+/** The customer's file, read once at startup. */
+export function customerFile(id: string) {
+  return path.join(process.cwd(), "content/customers", `${id}.json`);
+}
+
+export const customer: Customer = Customer.parse(
+  JSON.parse(readFileSync(customerFile(config.customer), "utf8")),
+);
 
 /** "operations, finance and support". */
 export const teamList = (c: Customer) => {

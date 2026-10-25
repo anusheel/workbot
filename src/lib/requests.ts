@@ -1,19 +1,24 @@
 import { io } from "next/cache";
 import { z } from "zod";
 import { query } from "./db";
+import { customer } from "./customer";
 import {
-  NewRequest,
   type Priority,
-  RequestFilter,
   type Status,
   type Team,
-  WorkRequest,
   priorities,
+  requestModel,
   statuses,
-  teams,
 } from "./request-model";
 
 export * from "./request-model";
+
+/** The customer's teams, from its configuration, and the request schemas built on them. */
+export const teams = customer.teams.map((t) => t.id) as [string, ...string[]];
+export const { NewRequest, RequestFilter, WorkRequest } = requestModel(teams);
+export type NewRequest = z.infer<typeof NewRequest>;
+export type RequestFilter = z.infer<typeof RequestFilter>;
+export type WorkRequest = z.infer<typeof WorkRequest>;
 
 const columns = `id, title, body, team, priority, status, created_at as "createdAt"`;
 

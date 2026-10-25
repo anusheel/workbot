@@ -2,9 +2,11 @@ import { expect, test } from "vitest";
 import { catalog } from "./catalog";
 
 test("the catalog has the components a dashboard, a form and a timeline need, and the prompt names them", () => {
-  const names = Object.keys(catalog.data.components);
+  const names = Object.keys(
+    catalog(["operations", "finance", "support"]).data.components,
+  );
   expect(names.length).toBeGreaterThanOrEqual(15);
-  const prompt = catalog.prompt();
+  const prompt = catalog(["operations", "finance", "support"]).prompt();
   for (const name of [
     "Metric",
     "Table",
@@ -18,7 +20,8 @@ test("the catalog has the components a dashboard, a form and a timeline need, an
   expect(prompt).toContain("submit_request");
 });
 
-const submitParams = catalog.data.actions.submit_request.params;
+const submitParams = catalog(["operations", "finance", "support"]).data.actions
+  .submit_request.params;
 const valid = {
   title: "Replace the label printer",
   body: null,

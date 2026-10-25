@@ -7,71 +7,21 @@ import {
 } from "@ai-sdk/provider";
 import { wrapLanguageModel } from "ai";
 import { config } from "./config";
-import {
-  type ProviderName,
-  type Size,
-  providerNames,
-  providers,
-  sizes,
-} from "./providers";
+import { type ProviderName, type Size, providers } from "./providers";
+import { type Route, type Task, settings } from "./settings";
 import { traced } from "./tracing";
 
-/** What the app asks a model to do. Each task is routed on its own. */
-export const tasks = [
-  "chat",
-  "generate",
-  "research",
-  "summarize",
-  "extract",
-  "triage",
-  "read",
-  "judge",
-] as const;
-export type Task = (typeof tasks)[number];
+export {
+  type Route,
+  type Task,
+  allRoutes,
+  overridesOf,
+  tasks,
+} from "./settings";
 
-/** A model named by provider and size, so the ids stay in providers.ts. */
-export type Route = `${ProviderName}/${Size}`;
-export const allRoutes = providerNames.flatMap((provider) =>
-  sizes.map((size): Route => `${provider}/${size}`),
-);
+/** The production routing: content/defaults.json, with the customer's and the environment's overrides applied. */
+export const routes = settings.routes;
 
-/**
- * The production routing, from the table in docs/routing.md: the model each
- * task runs on, then the ones that answer when it cannot, in order. The judge
- * is the large model, never the one under test, and has no fallback: a score
- * from another model is not the same score.
- */
-export const routes: Record<Task, Route[]> = {
-  chat: ["anthropic/small", "anthropic/large"],
-  generate: ["anthropic/large", "anthropic/small"],
-  research: ["anthropic/small", "anthropic/large"],
-  summarize: ["anthropic/small", "anthropic/large"],
-  extract: ["anthropic/small", "anthropic/large"],
-  triage: ["anthropic/small", "anthropic/large"],
-  read: ["anthropic/small", "anthropic/large"],
-  judge: ["anthropic/large"],
-};
-
-const isTask = (value: string): value is Task =>
-  (tasks as readonly string[]).includes(value);
-const isRoute = (value: string | undefined): value is Route =>
-  (allRoutes as string[]).includes(value ?? "");
-
-/** The `ROUTES` pairs, checked: one naming no task or no route is a misconfiguration, and the app does not start on it. */
-export function overridesOf(
-  pairs: Record<string, string | undefined>,
-): Partial<Record<Task, Route>> {
-  for (const [task, route] of Object.entries(pairs))
-    if (!isTask(task) || !isRoute(route))
-      throw new Error(
-        `ROUTES: "${task}=${route}" is not a task and a route. Tasks: ${tasks.join(", ")}. Routes: ${allRoutes.join(", ")}.`,
-      );
-  return pairs as Partial<Record<Task, Route>>;
-}
-const overrides = overridesOf(config.routes);
-
-// Fails before the network, as a provider's 503 would, so the chain moves on
-// and the trace shows the failure.
 const outage: LanguageModelV4Middleware = {
   specificationVersion: "v4",
   wrapGenerate: async ({ model }) => {
@@ -143,8 +93,7 @@ export const chain = (models: LanguageModelV4[]): LanguageModelV4 =>
     wrapLanguageModel({ model, middleware: fallingBackTo(next) }),
   );
 
-/** The model for a task: its route in a chain, the first model replaced by the `ROUTES` override when there is one. */
+/** The model for a task: its routes in a chain, as the settings resolved them. */
 export function modelFor(task: Task): LanguageModelV4 {
-  const [first, ...rest] = routes[task];
-  return chain([...new Set([overrides[task] ?? first, ...rest])].map(modelOf));
+  return chain(routes[task].map(modelOf));
 }

@@ -2,7 +2,7 @@ import { type LanguageModel, Output, generateText, isStepCount } from "ai";
 import { z } from "zod";
 import { chatTools } from "./chat";
 import type { Triage } from "./intake";
-import { priorities, teams } from "./request-model";
+import { priorities, teams } from "./requests";
 
 /** Where a case came from: written by hand, sampled from what people sent, or generated from a document and reviewed. */
 export const sources = ["golden", "trace", "synthetic"] as const;

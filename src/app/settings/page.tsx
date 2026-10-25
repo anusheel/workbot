@@ -4,6 +4,7 @@ import { MemoryList } from "@/components/memory-list";
 import { listMemories } from "@/lib/memory";
 import { visitorId } from "@/lib/visitor";
 import { forgetEverything, forgetMemory } from "./actions";
+import { customer } from "@/lib/customer";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -16,8 +17,9 @@ export default function SettingsPage() {
           Memory
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          What WorkBot has learned about you from your conversations. It uses
-          this to answer better, and forgets anything you ask it to.
+          What {customer.assistant} has learned about you from your
+          conversations. It uses this to answer better, and forgets anything you
+          ask it to.
         </p>
         <div className="mt-6">
           <Suspense

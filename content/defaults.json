@@ -1,0 +1,13 @@
+{
+  "routes": {
+    "chat": ["anthropic/small", "anthropic/large"],
+    "generate": ["anthropic/large", "anthropic/small"],
+    "research": ["anthropic/small", "anthropic/large"],
+    "summarize": ["anthropic/small", "anthropic/large"],
+    "extract": ["anthropic/small", "anthropic/large"],
+    "triage": ["anthropic/small", "anthropic/large"],
+    "read": ["anthropic/small", "anthropic/large"],
+    "judge": ["anthropic/large"]
+  },
+  "pages": { "maxAgeMinutes": 60 }
+}

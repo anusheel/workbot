@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { customer } from "@/lib/customer";
 
 const teams = [
   {
@@ -31,14 +32,14 @@ export default function Home() {
           An assistant for the teams that keep a company running
         </h1>
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-          WorkBot answers questions, files requests and runs workflows for
-          operations, finance and support teams, and for the customers they
-          serve.
+          {customer.assistant} answers questions, files requests and runs
+          workflows for operations, finance and support teams, and for the
+          customers they serve.
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
             <Link href="/chat">
-              Ask WorkBot <ArrowRight />
+              Ask {customer.assistant} <ArrowRight />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">

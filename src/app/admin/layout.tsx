@@ -1,3 +1,4 @@
+import { entityPages } from "@/lib/entities";
 import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +11,8 @@ const nav = [
   { href: "/admin/tickets", label: "Tickets" },
   { href: "/admin/assistant", label: "Assistant" },
   { href: "/admin/settings", label: "Settings" },
-] as const;
+  ...entityPages.filter((page) => page.access === "employee"),
+];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (

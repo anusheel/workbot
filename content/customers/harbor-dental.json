@@ -1,0 +1,18 @@
+{
+  "name": "Harbor Dental",
+  "assistant": "DeskBot",
+  "about": "a dental practice with 3 clinics, a front desk at each, and one billing office",
+  "teams": [
+    { "id": "front", "files": "patients, appointments and the clinics" },
+    { "id": "billing", "files": "money" }
+  ],
+  "filing": {
+    "invoice": "billing",
+    "complaint": "front",
+    "other": "front"
+  },
+  "customerSections": ["faq"],
+  "settings": {
+    "routes": { "chat": ["anthropic/large", "anthropic/small"] }
+  }
+}

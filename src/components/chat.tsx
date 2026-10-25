@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Message } from "./message";
 
 type Props = {
+  /** The assistant's name, from the customer; a client component cannot read the file. */
+  assistant: string;
   id: string;
   initialMessages?: UIMessage[];
   /** Called with the whole conversation whenever a reply completes. */
@@ -26,7 +28,7 @@ export function errorText(error: Error): string {
   return error.message;
 }
 
-export function Chat({ id, initialMessages, onMessages }: Props) {
+export function Chat({ id, assistant, initialMessages, onMessages }: Props) {
   const { messages, sendMessage, regenerate, status, error, stop } = useChat({
     id,
     messages: initialMessages,
@@ -119,7 +121,7 @@ export function Chat({ id, initialMessages, onMessages }: Props) {
               }
             }}
             rows={1}
-            placeholder="Message WorkBot"
+            placeholder={`Message ${assistant}`}
             aria-label="Message"
             className="max-h-40 min-h-0 flex-1 resize-none field-sizing-content"
           />

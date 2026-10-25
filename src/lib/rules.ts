@@ -1,11 +1,15 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { z } from "zod";
-import data from "../../content/rules.json";
-import { teams } from "./request-model";
+import { config } from "./config";
+import { teams } from "./requests";
+import { parseRules } from "./rule-language";
 
 /**
- * Rules are data: an ordered table of conditions and actions, applied to a
- * record before the model sees it. Anything with a right answer is a rule,
- * not a prompt, and every rule that fires is written on the record.
+ * Rules are data: an ordered table of conditions and actions, written in
+ * the rule language in content/rules.rules and applied to a record before
+ * the model sees it. Anything with a right answer is a rule, not a prompt,
+ * and every rule that fires is written on the record.
  */
 const Condition = z
   .object({ field: z.string().min(1) })
@@ -30,7 +34,7 @@ export const Rule = z.object({
 });
 export type Rule = z.infer<typeof Rule>;
 
-const Rules = z
+export const Rules = z
   .array(Rule)
   .refine((rules) => new Set(rules.map((r) => r.id)).size === rules.length, {
     message: "rule ids are unique",
@@ -46,7 +50,22 @@ const Rules = z
     { message: "a rule routes to a team the customer has" },
   );
 
-export const rules: Rule[] = Rules.parse(data);
+/** The product's rules, for every customer, and the customer's own, read after them; both once at startup. */
+export const rulesFile = path.join(process.cwd(), "content/rules.rules");
+export const customerRulesFile = path.join(
+  process.cwd(),
+  "content/customers",
+  `${config.customer}.rules`,
+);
+
+const read = (file: string) =>
+  existsSync(file) ? readFileSync(file, "utf8") : "";
+
+/** Both files' text, as a proposal sees what it would join. */
+export const rulesText = () =>
+  [read(rulesFile), read(customerRulesFile)].filter(Boolean).join("\n");
+
+export const rules: Rule[] = Rules.parse(parseRules(rulesText()));
 
 export type Fields = Record<string, unknown>;
 /** One rule's effect on one record: the field it changed, from what, to what. */
@@ -103,14 +122,15 @@ function changes(action: Rule["then"], record: Fields): [string, unknown][] {
   return [["flags", [...flags, action.flag]]];
 }
 
-/** The rules for a kind of record, in order, each seeing the record as the ones before it left it. */
+/** The rules for a kind of record, in order, each seeing the record as the ones before it left it; a table of one tries one. */
 export function applyRules(
   on: Rule["on"],
   record: Fields,
+  table: Rule[] = rules,
 ): { record: Fields; applied: Applied[] } {
   const out = { ...record };
   const applied: Applied[] = [];
-  for (const rule of rules.filter((r) => r.on === on)) {
+  for (const rule of table.filter((r) => r.on === on)) {
     if (!rule.when.every((condition) => holds(condition, out))) continue;
     for (const [field, to] of changes(rule.then, out)) {
       if (JSON.stringify(out[field]) === JSON.stringify(to)) continue;

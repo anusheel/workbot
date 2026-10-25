@@ -1,7 +1,7 @@
 import { type LanguageModel, Output, generateText } from "ai";
 import { z } from "zod";
 import { customer, teamList } from "./customer";
-import { NewRequest, priorities, teams } from "./request-model";
+import { NewRequest, priorities, teams } from "./requests";
 import { createRequest } from "./requests";
 
 const Triage = z.object({

@@ -16,6 +16,9 @@
     "eval:generate": "node --env-file-if-exists=.env.local --import tsx cli/eval-generate.ts",
     "eval:calibrate": "node --env-file-if-exists=.env.local --import tsx cli/eval-calibrate.ts",
     "routes": "node --env-file-if-exists=.env.local --import tsx cli/routes.ts",
+    "rule": "node --env-file-if-exists=.env.local --import tsx cli/rule.ts",
+    "generate": "node --import tsx cli/generate.ts",
+    "generate:check": "node --import tsx cli/generate.ts --check",
     "frameworks": "node --env-file-if-exists=.env.local --import tsx cli/frameworks.ts",
     "sync:commands": "node scripts/sync-commands.mjs",
     "knowledge:index": "node --env-file-if-exists=.env.local --import tsx cli/index-knowledge.ts",
@@ -27,7 +30,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:live": "vitest run --config vitest.live.config.ts",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter workbot-site check"
+    "check": "turbo run generate:check lint typecheck test build"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.88",
@@ -53,6 +56,7 @@
     "inngest": "^4.26.0",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
+    "ohm-js": "^17.5.0",
     "openai": "^7.43.0",
     "playwright-core": "^1.64.1",
     "postgres": "^3.4.9",
@@ -77,6 +81,7 @@
     "shadcn": "^4.22.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
+    "turbo": "^2.11.10",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5",
     "vitest": "^5.0.5"

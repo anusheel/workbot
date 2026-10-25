@@ -2,6 +2,7 @@ import { createTextStreamResponse, streamText, toTextStream } from "ai";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { catalog } from "@/lib/catalog";
+import { teams } from "@/lib/requests";
 import { modelFor } from "@/lib/routing";
 import { requestSummary } from "@/lib/requests";
 import { GenerateBody } from "./types";
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
   const result = streamText({
     model: modelFor("generate"),
     instructions: [
-      catalog.prompt(),
+      catalog(teams).prompt(),
       "DATA: the company's live work requests, as JSON. Use these numbers as they are and never invent figures. Dates are ISO timestamps; show them as dates.",
       JSON.stringify(data),
       currentSpec?.root &&

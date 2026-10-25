@@ -35,7 +35,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { catalog } from "@/lib/catalog";
-import { NewRequest } from "@/lib/request-model";
+import { RequestDraft } from "@/lib/request-model";
 
 const badgeTone = {
   neutral: "secondary",
@@ -111,7 +111,7 @@ const submitRequest = async (
   params: Record<string, unknown> | undefined,
   setState: SetState,
 ) => {
-  const parsed = NewRequest.safeParse({
+  const parsed = RequestDraft.safeParse({
     ...params,
     body: params?.body ?? "",
     priority: params?.priority ?? "normal",
@@ -135,7 +135,7 @@ const submitRequest = async (
  * to state can arrive a moment after the element that shows it, so each list
  * renders as empty until it does.
  */
-const { registry, handlers } = defineRegistry(catalog, {
+const { registry, handlers } = defineRegistry(catalog(), {
   components: {
     Page: ({ props, children }) => (
       <section className="flex flex-col gap-6">
