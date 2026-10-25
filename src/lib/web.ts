@@ -45,7 +45,13 @@ const maxBytes = 512_000;
 /** Whether an address is on the public web: http or https, and not this machine, a private network or link-local. */
 export function isPublic(url: URL): boolean {
   if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-  const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  const bracketless = url.hostname.replace(/^\[|\]$/g, "");
+  // A trailing dot is the same name in DNS (localhost. is localhost) but the
+  // parser keeps it. A loop, not /\.+$/: that regex retries at every dot of a
+  // long run, which is quadratic on a host an attacker chooses.
+  let end = bracketless.length;
+  while (end > 0 && bracketless.charCodeAt(end - 1) === 46) end--;
+  const host = bracketless.slice(0, end).toLowerCase();
   // The URL parser writes an IPv4-mapped address as ::ffff:7f00:1; check it as the IPv4 it is.
   const mapped = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
   const address = mapped
