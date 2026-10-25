@@ -109,4 +109,32 @@ export const schema = [
   )`,
   // The request a call belongs to, so a fallback is the next call of the same request.
   `alter table traces add column if not exists request text`,
+  // Tickets synced from the ticketing system into one shape, and the writes made through it, by key.
+  `create table if not exists tickets (
+    id text primary key,
+    source text not null,
+    number integer not null,
+    title text not null,
+    body text not null default '',
+    state text not null,
+    assignee text,
+    labels jsonb not null default '[]',
+    url text not null,
+    updated_at timestamptz not null
+  )`,
+  `create index if not exists tickets_updated on tickets (source, updated_at)`,
+  `create table if not exists syncs (
+    source text primary key,
+    pulled_at timestamptz not null,
+    pulled integer not null
+  )`,
+  `create table if not exists filings (
+    kind text not null,
+    key text not null,
+    number integer,
+    url text,
+    created_at timestamptz not null default now(),
+    claimed_at timestamptz not null default now(),
+    primary key (kind, key)
+  )`,
 ];

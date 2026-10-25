@@ -29,6 +29,7 @@ on:
       - src/lib/web.ts
       - src/lib/prompts.ts
       - src/lib/customer.ts
+      - src/lib/github.ts
       - content/customer.json
       - package.json
       - pnpm-lock.yaml
