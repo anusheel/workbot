@@ -10,8 +10,14 @@ export type Scene = { at: number; text: string };
 export const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
-/** The length of a recording in seconds, from ffprobe. */
-export async function duration(file: string): Promise<number> {
+/** ffprobe prints N/A for a file with no duration header; the fallback stands in for it. */
+export function parseDuration(stdout: string, fallback = 0): number {
+  const seconds = Number(stdout);
+  return stdout.trim() && Number.isFinite(seconds) ? seconds : fallback;
+}
+
+/** The length of a recording in seconds, from ffprobe or, without a header, from its frames. */
+export async function duration(file: string, every = 2): Promise<number> {
   const { stdout } = await promisify(execFile)("ffprobe", [
     "-v",
     "error",
@@ -21,7 +27,10 @@ export async function duration(file: string): Promise<number> {
     "csv=p=0",
     file,
   ]);
-  return Number(stdout);
+  const seconds = parseDuration(stdout, NaN);
+  if (!Number.isNaN(seconds)) return seconds;
+  const frames = await extractFrames(file, { every });
+  return frames.length * every;
 }
 
 const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

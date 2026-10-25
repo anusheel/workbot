@@ -11,6 +11,7 @@ import {
   describeFrames,
   duration,
   extractFrames,
+  parseDuration,
   summarize,
 } from "./video";
 
@@ -58,6 +59,12 @@ function scripted(replies: string[]) {
   });
   return { model, prompts };
 }
+
+test("a missing duration header does not become NaN", () => {
+  expect(parseDuration("12.48\n")).toBe(12.48);
+  expect(parseDuration("N/A\n")).not.toBeNaN();
+  expect(parseDuration("N/A\n", 8)).toBe(8);
+});
 
 test("clock writes seconds as m:ss", () => {
   expect(clock(0)).toBe("0:00");
