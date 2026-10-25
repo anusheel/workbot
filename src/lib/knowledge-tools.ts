@@ -108,7 +108,11 @@ export function knowledgeTools(sections?: string[]) {
       path: z.string().default(""),
     }),
     run: async ({ pattern, path }) => {
-      const matches = await grep(pattern, path.replace(/^\//, ""), sections);
+      const matches = await grep(
+        safePattern(pattern),
+        path.replace(/^\//, ""),
+        sections,
+      );
       return matches.length
         ? matches.join("\n")
         : `No line matches ${pattern}.`;
@@ -116,6 +120,58 @@ export function knowledgeTools(sections?: string[]) {
   });
 
   return [findTool, lsTool, catTool, grepTool];
+}
+
+const maxPatternLength = 100;
+
+/**
+ * The web chat hands the model's pattern straight to the regex engine, and a
+ * repeat inside a repeated group backtracks exponentially, so the thread that
+ * serves every visitor would stall on one line. Such patterns are refused with
+ * the reason, since the model can rewrite them; a pattern that does not compile
+ * is searched as the text it was probably meant to be.
+ */
+function safePattern(pattern: string) {
+  if (pattern.length > maxPatternLength)
+    throw new Error(
+      `The pattern is ${pattern.length} characters; the limit is ${maxPatternLength}. Search for a shorter phrase.`,
+    );
+  try {
+    new RegExp(pattern, "i");
+  } catch {
+    return pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  if (repeatsARepeat(pattern))
+    throw new Error(
+      "The pattern repeats a group that already repeats, such as (a+)*, which can take too long to match. Search for a plain phrase, or repeat only single characters.",
+    );
+  return pattern;
+}
+
+/** Whether a quantifier follows a group that contains a quantifier; the pattern must be valid. */
+function repeatsARepeat(pattern: string) {
+  const quantifier = /^(?:[*+?]|\{\d+(?:,\d*)?\})/;
+  const groups: boolean[] = [];
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+    if (char === "\\") i++;
+    else if (char === "[") {
+      while (i < pattern.length - 1 && pattern[++i] !== "]")
+        if (pattern[i] === "\\") i++;
+    } else if (char === "(") {
+      groups.push(false);
+      if (pattern[i + 1] === "?") i++;
+    } else if (char === ")") {
+      const hasRepeat = groups.pop() ?? false;
+      const repeats = quantifier.test(pattern.slice(i + 1));
+      if (hasRepeat && repeats) return true;
+      if ((hasRepeat || repeats) && groups.length)
+        groups[groups.length - 1] = true;
+    } else if (groups.length && quantifier.test(pattern.slice(i))) {
+      groups[groups.length - 1] = true;
+    }
+  }
+  return false;
 }
 
 /** What a customer may read: the policies and the questions customers ask. */
