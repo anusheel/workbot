@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { io } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 import { RequestList } from "@/components/request-list";
@@ -24,6 +25,9 @@ export default function AdminPage() {
 }
 
 async function Overview() {
+  // requestSummary queries before it reaches listRequests' io(), so without
+  // this the build prerenders the page and needs a database.
+  await io();
   const summary = await requestSummary();
   return (
     <>
