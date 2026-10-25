@@ -1,6 +1,6 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test } from "vitest";
-import { type Golden, judge, stats } from "./eval";
+import { Golden, judge, stats } from "./eval";
 
 const golden: Golden = {
   id: "refund-limit",
@@ -54,7 +54,22 @@ test("a forbidden phrase scores 0 before the judge is asked; otherwise the judge
 });
 
 test("stats give the mean and the spread", () => {
-  expect(stats([1, 1, 1])).toEqual({ mean: 1, sd: 0 });
+  expect(stats([1, 1, 1])).toEqual({ mean: 1, sd: 0, count: 3 });
   expect(stats([1, 0]).mean).toBe(0.5);
   expect(stats([1, 0]).sd).toBe(0.5);
+});
+
+test("stats of nothing is zeros and a count of 0, not NaN", () => {
+  expect(stats([])).toEqual({ mean: 0, sd: 0, count: 0 });
+});
+
+test("an empty forbidden phrase cannot enter the golden file and is ignored by the judge", async () => {
+  expect(() => Golden.parse({ ...golden, mustNotContain: [""] })).toThrow();
+  expect(
+    await judge(
+      { ...golden, mustNotContain: [""] },
+      "Up to $200 per order.",
+      judgeModel(1),
+    ),
+  ).toMatchObject({ score: 1, violations: [] });
 });
