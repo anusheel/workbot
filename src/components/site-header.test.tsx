@@ -1,0 +1,10 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { expect, test } from "vitest";
+import { SiteHeader } from "./site-header";
+
+test("renders the product name and a link to each page", () => {
+  const html = renderToStaticMarkup(<SiteHeader />);
+  expect(html).toContain('href="/"');
+  expect(html).toContain("WorkBot");
+  expect(html).toContain('href="/settings"');
+});
