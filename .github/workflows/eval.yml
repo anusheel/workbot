@@ -32,7 +32,7 @@ on:
       - src/lib/github.ts
       - src/lib/unified.ts
       - src/lib/rules.ts
-      - content/rules.json
+      - content/rules.rules
       - content/customers/**
       - content/defaults.json
       - src/lib/settings.ts

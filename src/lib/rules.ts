@@ -1,11 +1,14 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { z } from "zod";
-import data from "../../content/rules.json";
 import { teams } from "./requests";
+import { parseRules } from "./rule-language";
 
 /**
- * Rules are data: an ordered table of conditions and actions, applied to a
- * record before the model sees it. Anything with a right answer is a rule,
- * not a prompt, and every rule that fires is written on the record.
+ * Rules are data: an ordered table of conditions and actions, written in
+ * the rule language in content/rules.rules and applied to a record before
+ * the model sees it. Anything with a right answer is a rule, not a prompt,
+ * and every rule that fires is written on the record.
  */
 const Condition = z
   .object({ field: z.string().min(1) })
@@ -46,7 +49,12 @@ const Rules = z
     { message: "a rule routes to a team the customer has" },
   );
 
-export const rules: Rule[] = Rules.parse(data);
+/** The rules file, read once at startup. */
+export const rulesFile = path.join(process.cwd(), "content/rules.rules");
+
+export const rules: Rule[] = Rules.parse(
+  parseRules(readFileSync(rulesFile, "utf8")),
+);
 
 export type Fields = Record<string, unknown>;
 /** One rule's effect on one record: the field it changed, from what, to what. */

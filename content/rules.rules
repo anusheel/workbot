@@ -1,0 +1,11 @@
+# Rules run in order; each sees the record as the ones before it left it.
+# Grammar: docs/config.md. Anything with a right answer belongs here, not in a prompt.
+
+rule phone-e164 on contact when phone matches "\d" then normalize phone
+rule company-from-domain on contact when company is missing and email matches "@" then company from email
+
+rule route-finance on ticket when team is missing and text matches "invoice|payment|refund|credit|statement" then set team = "finance"
+rule route-support on ticket when team is missing and text matches "customer|complaint|delivery|order" then set team = "support"
+rule route-operations on ticket when team is missing and text matches "van|truck|dock|warehouse|printer|light|facilit|vendor" then set team = "operations"
+
+rule large-invoice on invoice when total over 5000 then flag "Total over $5,000: the finance lead approves"
