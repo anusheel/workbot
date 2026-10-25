@@ -7,7 +7,7 @@
 //   node scripts/fleet.mjs file <tasks.md>                  one issue per `## ` section
 //   node scripts/fleet.mjs dispatch [--local 5] [--cloud 10]  agents for queued issues
 //   node scripts/fleet.mjs status                           the dashboard
-//   node scripts/fleet.mjs merge [--batch 5]                review, merge, check, revert
+//   node scripts/fleet.mjs merge [--batch 6]                review, merge, check, revert
 //   node scripts/fleet.mjs report                           merged an hour, reverts, brief to merge
 //   node scripts/fleet.mjs reset <issue>                    forget a run so dispatch retries it
 //   node scripts/fleet.mjs run [the same flags]             dispatch, merge and report every 2 minutes until done
@@ -60,7 +60,7 @@ const { positionals, values } = parseArgs({
   options: {
     local: { type: "string", default: "5" },
     cloud: { type: "string", default: "10" },
-    batch: { type: "string", default: "5" },
+    batch: { type: "string", default: "6" },
     base: { type: "string", default: sh("git", ["branch", "--show-current"]) },
   },
 });
@@ -140,7 +140,8 @@ function tasks() {
       pr: prs
         .filter(
           (pr) =>
-            ours(pr) && new RegExp(`Closes #${issue.number}\\b`).test(pr.body),
+            ours(pr) &&
+            new RegExp(`closes #${issue.number}\b`, "i").test(pr.body),
         )
         .sort((a, b) => rank[a.state] - rank[b.state])[0],
     }));
@@ -154,7 +155,14 @@ function ci(pr) {
     )
   )
     return "fail";
-  if (checks.length && checks.every((c) => c.status === "COMPLETED"))
+  if (
+    checks.length &&
+    checks.every(
+      (c) =>
+        c.status === "COMPLETED" &&
+        ["SUCCESS", "SKIPPED"].includes(c.conclusion),
+    )
+  )
     return "pass";
   return "pending";
 }
@@ -226,17 +234,16 @@ function startLocal(issue) {
 }
 
 // A cloud session clones the branch this checkout is on; the CLI wants a
-// terminal, so it gets a pseudo one.
+// terminal, so it gets a pseudo one, in the form `script` takes on each platform.
 function startCloud(issue) {
-  const out = sh("script", [
-    "-q",
-    "/dev/null",
-    "claude",
-    "--cloud",
-    cloudBrief(issue),
-    "--model",
-    "sonnet",
-  ]);
+  const command = ["claude", "--cloud", cloudBrief(issue), "--model", "sonnet"];
+  const quoted = command
+    .map((arg) => `'${arg.replaceAll("'", "'\''")}'`)
+    .join(" ");
+  const out =
+    process.platform === "darwin"
+      ? sh("script", ["-q", "/dev/null", ...command])
+      : sh("script", ["-q", "-c", quoted, "/dev/null"]);
   const cloud = out.match(/session_[A-Za-z0-9]+/)?.[0];
   if (!cloud) throw new Error(`no cloud session for #${issue.number}: ${out}`);
   console.log(`#${issue.number} ${issue.title}: cloud, ${cloud}`);
@@ -434,7 +441,7 @@ function green() {
 
 // Review the ready pull requests together, merge the approved ones one at a
 // time with the agent's commit message, then check the branch; what broke it
-// is reverted, last in first out, and its issue reopened.
+// is reverted, last in first out by its merge commit, and its issue reopened.
 async function merge(batch) {
   const state = runs();
   const ready = tasks()
@@ -453,12 +460,13 @@ async function merge(batch) {
       ["pr", "comment", String(pr.number), "--body-file", "-"],
       { cwd: home, input: reviews[i] },
     );
-    if (!/^Verdict:/m.test(reviews[i])) {
+    const verdict = reviews[i].trim().split("\n").at(-1) ?? "";
+    if (!verdict.startsWith("Verdict:")) {
       console.log(`#${pr.number}: no verdict in the review, again next round`);
       continue;
     }
     state[issue.number] = { ...run, reviewed: pr.headRefOid };
-    if (!/^Verdict: approve/im.test(reviews[i])) {
+    if (verdict !== "Verdict: approve") {
       console.log(`#${pr.number}: changes requested`);
       if (!run?.fixing)
         state[issue.number] = {
@@ -467,13 +475,18 @@ async function merge(batch) {
         };
       continue;
     }
-    const [commit] = ghJson(
+    const now = ghJson(
       "pr",
       "view",
       String(pr.number),
       "--json",
-      "commits",
-    ).commits;
+      "commits,headRefOid,statusCheckRollup",
+    );
+    if (now.headRefOid !== pr.headRefOid || ci(now) !== "pass") {
+      console.log(`#${pr.number}: changed since the review, again next round`);
+      continue;
+    }
+    const [commit] = now.commits;
     gh(
       "pr",
       "merge",
@@ -484,7 +497,14 @@ async function merge(batch) {
       "--body",
       commit.messageBody,
     );
-    merged.push(issue);
+    const { mergeCommit } = ghJson(
+      "pr",
+      "view",
+      String(pr.number),
+      "--json",
+      "mergeCommit",
+    );
+    merged.push({ issue, sha: mergeCommit.oid });
     console.log(`#${pr.number}: merged`);
   }
   for (const { issue, pr, run } of tasks()) {
@@ -504,13 +524,7 @@ async function merge(batch) {
   save(state);
   if (!merged.length) return;
   sh("git", ["pull", "-q", "--ff-only"]);
-  const shas = sh("git", [
-    "log",
-    "-n",
-    String(merged.length),
-    "--format=%H",
-  ]).split("\n");
-  for (const [i, sha] of shas.entries()) {
+  for (const { issue, sha } of merged.reverse()) {
     const failed = green();
     if (failed === true) break;
     const lines = readFileSync(failed, "utf8")
@@ -518,7 +532,6 @@ async function merge(batch) {
       .filter((line) => /FAIL|error|×|✗/.test(line))
       .slice(-8)
       .join("\n");
-    const issue = merged[merged.length - 1 - i];
     sh("git", ["revert", "--no-edit", sha]);
     gh(
       "issue",

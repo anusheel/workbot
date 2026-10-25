@@ -14,10 +14,10 @@ Fifty tasks from the backlog, shipped by a fleet of coding agents in one afterno
 | Reviews written                                                                   | 52, by 4 reviewers each                                                          |
 | Sent back with changes requested or a failed check, and fixed by a second session | 17 sessions, 11 of them then merged by the queue                                 |
 | CI runs on fleet branches                                                         | 63: 59 passed, 4 failed                                                          |
-| Reverted by a batch check, then reinstated                                        | 1                                                                                |
+| Reverted by a batch check, then reinstated by hand                                | 1                                                                                |
 | Brief to merge                                                                    | median 101 minutes, 90th percentile 160                                          |
 | Rounds of the loop                                                                | 15, each a dispatch, a batch of up to 6 reviews, the merges and a 3-minute check |
-| Eval smoke subset per batch                                                       | 12 runs between 0.60 and 0.80 on a 0.5 bar                                       |
+| Eval smoke subset, once per batch                                                 | 12 runs, between 0.60 and 0.80 on a 0.5 bar                                      |
 | Tests on the branch                                                               | 166 before, 276 after                                                            |
 
 The count a fleet should not report is the first one: 50 merged says nothing about whether 50 was the right number. The brief-to-merge median says more: at 6 reviews a round and a 3-minute check, the queue, not the agents, set the pace.
