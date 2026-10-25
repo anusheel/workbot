@@ -9,6 +9,7 @@
     "explain": "node --import tsx cli/explain.ts",
     "scrape": "node --env-file-if-exists=.env.local --import tsx cli/scrape.ts",
     "browse": "node --env-file-if-exists=.env.local --import tsx cli/browse.ts",
+    "video": "node --env-file-if-exists=.env.local --import tsx cli/video.ts",
     "knowledge:index": "node --env-file-if-exists=.env.local --import tsx cli/index-knowledge.ts",
     "compare:retrieval": "node --env-file-if-exists=.env.local --import tsx cli/compare-retrieval.ts",
     "build": "next build",

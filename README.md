@@ -48,3 +48,9 @@ sign-in. `POST /api/intake` turns a message into a triaged request.
 prices, contact) out of a public page, following its next links; `pnpm browse
 --start <url> "<task>"` lets the agent work a site with no API through the
 machine's Chrome, one screenshot and one action at a time.
+
+`/voice` is the support line in the browser: say what happened, WorkBot asks
+what it needs, files the request and says where it went; talk over it and it
+listens. On a request's page, Investigate runs the research analyst and
+Attach a recording reads a video frame by frame into a timeline you can ask
+about (`pnpm video <file>` does the same from the terminal; it needs ffmpeg).

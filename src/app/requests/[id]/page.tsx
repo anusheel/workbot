@@ -1,15 +1,24 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { InvestigateButton } from "@/components/investigate-button";
 import { Markdown } from "@/components/markdown";
+import { PendingButton } from "@/components/pending-button";
+import { RecordingQuestion } from "@/components/recording-question";
+import { RecordingUpload } from "@/components/recording-upload";
 import { Badge } from "@/components/ui/badge";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { listRecordings } from "@/lib/recordings";
 import { latestReport } from "@/lib/reports";
 import { getRequest, statusLabels, statuses } from "@/lib/requests";
-import { investigateRequest, setStatus } from "../actions";
+import { clock } from "@/lib/video";
+import {
+  askAboutRecording,
+  attachRecording,
+  investigateRequest,
+  setStatus,
+} from "../actions";
 
 // An investigation is a few model calls per agent; the action waits for all of them.
 export const maxDuration = 300;
@@ -74,6 +83,7 @@ async function RequestDetail({
           ))}
       </form>
       <Research requestId={request.id} />
+      <Recordings requestId={request.id} />
     </article>
   );
 }
@@ -92,10 +102,13 @@ async function Research({ requestId }: { requestId: string }) {
           </p>
         </div>
         <form>
-          <InvestigateButton
-            action={investigateRequest.bind(null, requestId)}
-            again={Boolean(report)}
-          />
+          <PendingButton
+            formAction={investigateRequest.bind(null, requestId)}
+            busy="Investigating…"
+            icon={<Search />}
+          >
+            {report ? "Investigate again" : "Investigate"}
+          </PendingButton>
         </form>
       </div>
       {report && (
@@ -103,6 +116,45 @@ async function Research({ requestId }: { requestId: string }) {
           <Markdown>{report.report}</Markdown>
         </div>
       )}
+    </section>
+  );
+}
+
+async function Recordings({ requestId }: { requestId: string }) {
+  const recordings = await listRecordings(requestId);
+  return (
+    <section className="mt-12 border-t pt-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold">Recordings</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {recordings.length
+              ? `${recordings.length} on this request`
+              : "A meeting recording or a video of the problem, read frame by frame and filed here as a timeline."}
+          </p>
+        </div>
+        <RecordingUpload action={attachRecording.bind(null, requestId)} />
+      </div>
+      {recordings.map((recording) => (
+        <div key={recording.id} className="mt-5 rounded-xl border bg-card p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-medium">{recording.name}</h3>
+            <span className="text-xs text-muted-foreground">
+              {clock(recording.seconds)} · read{" "}
+              {recording.createdAt.toLocaleString("en-GB", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </span>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">
+            {recording.summary}
+          </p>
+          <RecordingQuestion
+            action={askAboutRecording.bind(null, recording.id)}
+          />
+        </div>
+      ))}
     </section>
   );
 }
