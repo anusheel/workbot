@@ -12,3 +12,9 @@ day is at [joinplank.com/fde/anusheel](https://joinplank.com/fde/anusheel).
 
     pnpm install
     pnpm dev
+
+Without a `DATABASE_URL`, the app runs on an embedded Postgres (PGlite) in
+`.data/pg`, and the tests on an in-memory one. For a server, point
+`DATABASE_URL` in `.env.local` at a Postgres database. `.env.example` lists
+every variable. `pnpm check` runs what CI runs: lint, types, tests and a
+production build of both apps.

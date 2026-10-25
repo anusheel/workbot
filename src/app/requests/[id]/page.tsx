@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
+import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { getRequest, statusLabels, statuses } from "@/lib/requests";
 import { setStatus } from "../actions";
@@ -31,6 +32,7 @@ async function RequestDetail({
 }: Pick<PageProps<"/requests/[id]">, "params">) {
   const request = await getRequest((await params).id);
   if (!request) notFound();
+  await track("request_viewed", { requestId: request.id });
   return (
     <article className="mt-6 max-w-2xl">
       <div className="flex flex-wrap items-center gap-2">

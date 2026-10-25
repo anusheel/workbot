@@ -40,9 +40,15 @@ async function Requests({
   return (
     <>
       <div className="mt-6 flex flex-col gap-2">
-        <FilterRow name="team" options={teams} filter={filter} />
+        <FilterRow
+          name="team"
+          all="All teams"
+          options={teams}
+          filter={filter}
+        />
         <FilterRow
           name="status"
+          all="All statuses"
           options={statuses}
           filter={filter}
           labels={statusLabels}
@@ -59,11 +65,13 @@ async function Requests({
 // not controls, so the filters work without JavaScript and can be shared.
 function FilterRow({
   name,
+  all,
   options,
   filter,
   labels = {},
 }: {
   name: keyof RequestFilter;
+  all: string;
   options: readonly string[];
   filter: RequestFilter;
   labels?: Record<string, string>;
@@ -85,7 +93,7 @@ function FilterRow({
           className="capitalize"
         >
           <Link href={href(value)}>
-            {value ? (labels[value] ?? value) : `All ${name}s`}
+            {value ? (labels[value] ?? value) : all}
           </Link>
         </Button>
       ))}
