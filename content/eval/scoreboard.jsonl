@@ -7,3 +7,5 @@
 {"at":"2026-10-25T17:35:32.092Z","commit":"fdb177c","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.807,"sd":0.217,"hard":0,"dollars":0.0581,"p95":2977}
 {"at":"2026-10-25T17:44:26.846Z","commit":"fdb177c","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.87,"sd":0.243,"hard":1,"dollars":0.058,"p95":2963}
 {"at":"2026-10-25T19:11:14.120Z","commit":"c852bb6","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.915,"sd":0.179,"hard":0,"dollars":0.0579,"p95":3107}
+{"at":"2026-10-25T23:28:02.083Z","commit":"471cb70","task":"security","subset":"full","route":"anthropic/small","prompt":"code","cases":20,"runs":2,"mean":1,"sd":0,"hard":0,"dollars":0.028,"p95":2990}
+{"at":"2026-10-25T23:30:40.657Z","commit":"471cb70","task":"security","subset":"smoke","route":"anthropic/small","prompt":"code","cases":5,"runs":2,"mean":1,"sd":0,"hard":0,"dollars":0.0074,"p95":3350}

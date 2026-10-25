@@ -2,6 +2,7 @@ import { simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
 import { POST } from "./route";
+import { as } from "@/test/auth";
 
 const lines = [
   '{"op":"add","path":"/root","value":"page"}',
@@ -49,10 +50,12 @@ vi.mock("@/lib/routing", () => ({
     }),
 }));
 
+const agent = await as("agent");
 const post = (body: unknown) =>
   POST(
     new Request("http://workbot/api/generate", {
       method: "POST",
+      headers: agent,
       body: JSON.stringify(body),
     }),
   );

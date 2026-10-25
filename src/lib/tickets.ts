@@ -92,7 +92,7 @@ export async function pullTickets(
   for (const key of gone) await logSync("github", key, "gone");
   await query(
     `insert into syncs (source, pulled_at, pulled) values ($1, now(), $2)
-     on conflict (source) do update set pulled_at = now(), pulled = excluded.pulled`,
+     on conflict (tenant, source) do update set pulled_at = now(), pulled = excluded.pulled`,
     [slug, pulled],
   );
   return { pulled, since, missed, gone: gone.length };
@@ -141,7 +141,7 @@ export async function once(
 ): Promise<{ filing: Filing; made: boolean }> {
   type Claim = { since: Date };
   const [fresh] = await query<Claim>(
-    `insert into filings (kind, key) values ($1, $2) on conflict (kind, key) do nothing returning created_at as since`,
+    `insert into filings (kind, key) values ($1, $2) on conflict (tenant, kind, key) do nothing returning created_at as since`,
     [kind, key],
   );
   let { since } = fresh ?? {};

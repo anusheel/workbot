@@ -60,29 +60,29 @@ export async function setShares(
     );
 }
 
-// FNV-1a: a stable bucket per tenant, so the same person keeps the same version.
-const bucket = (tenant: string) => {
+// FNV-1a: a stable bucket per caller, so the same person keeps the same version.
+const bucket = (caller: string) => {
   let hash = 0x811c9dc5;
-  for (const char of tenant)
+  for (const char of caller)
     hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193);
   return (hash >>> 0) % 100;
 };
 
 /**
  * The prompt a call uses: the live versions, split by their shares and
- * chosen by the tenant's bucket. A prompt not yet in the database is
+ * chosen by the caller's bucket. A prompt not yet in the database is
  * seeded from the code's text as version 1, on all of the traffic.
  */
 export async function promptOf(
   name: string,
-  tenant: string,
+  caller: string,
   seed: string,
 ): Promise<Pick<Prompt, "version" | "text">> {
   let rows = await versions(name);
   if (rows.length === 0) {
     // Two first requests at once both seed version 1; the primary key keeps one, and both read it back.
     await query(
-      `insert into prompts (name, version, text, note, share) values ($1, 1, $2, 'the prompt as written in code', 100) on conflict (name, version) do nothing`,
+      `insert into prompts (name, version, text, note, share) values ($1, 1, $2, 'the prompt as written in code', 100) on conflict (tenant, name, version) do nothing`,
       [name, seed],
     );
     rows = await versions(name);
@@ -92,7 +92,7 @@ export async function promptOf(
     .sort((a, b) => a.version - b.version);
   if (live.length === 0) return rows[0];
   let edge = 0;
-  const point = bucket(tenant);
+  const point = bucket(caller);
   for (const row of live) {
     edge += row.share;
     if (point < edge) return row;

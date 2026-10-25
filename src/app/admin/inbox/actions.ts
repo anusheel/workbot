@@ -10,11 +10,13 @@ import {
 } from "@/inngest/events";
 import { type MediaType, fileSizeError, mediaTypes } from "@/lib/extract";
 import { discard, receive } from "@/lib/inbox";
+import { requireUser } from "@/lib/auth";
 
 const media = new Set<string>(Object.values(mediaTypes));
 
 /** Each file lands in the inbox and starts its own run of the approval workflow. */
 export async function uploadDocuments(formData: FormData) {
+  await requireUser("agent");
   const files = formData
     .getAll("documents")
     .filter((f): f is File => f instanceof File && media.has(f.type))
@@ -45,6 +47,7 @@ export async function uploadDocuments(formData: FormData) {
 
 /** The reviewer's answer, as the event the waiting run is listening for. */
 export async function review(id: string, decision: string) {
+  await requireUser("agent");
   await inngest.send(
     documentReviewed.create({
       id: z.uuid().parse(id),
@@ -55,6 +58,7 @@ export async function review(id: string, decision: string) {
 }
 
 export async function runReminders() {
+  await requireUser("admin");
   await inngest.send(remindersRequested.create({}));
   refresh();
 }

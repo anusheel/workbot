@@ -47,9 +47,9 @@ const model = () =>
     }),
   });
 
-test("a call and a stream are recorded with their tenant, tokens, cached tokens, dollars and latency", async () => {
+test("a call and a stream are recorded with their caller, tokens, cached tokens, dollars and latency", async () => {
   await withTrace(
-    { tenant: "visitor-1", name: "chat", prompt: "workbot/system@1" },
+    { caller: "visitor-1", name: "chat", prompt: "workbot/system@1" },
     async () => {
       await generateText({ model: traced(model()), prompt: "Hi" });
       const { text } = await streamText({
@@ -60,7 +60,7 @@ test("a call and a stream are recorded with their tenant, tokens, cached tokens,
     },
   );
   const rows = await query<{
-    tenant: string;
+    caller: string;
     name: string;
     prompt: string;
     input: number;
@@ -68,11 +68,11 @@ test("a call and a stream are recorded with their tenant, tokens, cached tokens,
     dollars: number;
     ok: boolean;
   }>(
-    `select tenant, name, prompt, input, cached, dollars, ok from traces where tenant = 'visitor-1' order by at`,
+    `select caller, name, prompt, input, cached, dollars, ok from traces where caller = 'visitor-1' order by at`,
   );
   expect(rows).toHaveLength(2);
   expect(rows[0]).toMatchObject({
-    tenant: "visitor-1",
+    caller: "visitor-1",
     name: "chat",
     prompt: "workbot/system@1",
     input: 1000,
@@ -92,24 +92,24 @@ test("a failed call is recorded as one, with its reason, and the error still rea
     },
   });
   await expect(
-    withTrace({ tenant: "api", name: "intake" }, () =>
+    withTrace({ caller: "api", name: "intake" }, () =>
       generateText({ model: traced(failing), prompt: "Hi" }),
     ),
   ).rejects.toThrow("overloaded");
   const [row] = await query<{ ok: boolean; error: string; name: string }>(
-    `select ok, error, name from traces where tenant = 'api' order by at desc limit 1`,
+    `select ok, error, name from traces where caller = 'api' order by at desc limit 1`,
   );
   expect(row).toMatchObject({ ok: false, error: "overloaded", name: "intake" });
 });
 
-test("the summary adds up the window by tenant and prompt, with latency percentiles", async () => {
-  for (const [tenant, ms, ok] of [
+test("the summary adds up the window by caller and prompt, with latency percentiles", async () => {
+  for (const [caller, ms, ok] of [
     ["t1", 100, true],
     ["t1", 300, true],
     ["t2", 500, false],
   ] as const)
     await recordTrace({
-      tenant,
+      caller,
       name: "chat",
       prompt: "p@1",
       model: "claude-haiku-5-5",
@@ -125,7 +125,7 @@ test("the summary adds up the window by tenant and prompt, with latency percenti
   expect(summary.calls).toBeGreaterThanOrEqual(3);
   expect(summary.errors).toBeGreaterThanOrEqual(1);
   expect(summary.p95).toBeGreaterThanOrEqual(summary.p50);
-  expect(summary.byTenant.find((t) => t.tenant === "t1")).toMatchObject({
+  expect(summary.byCaller.find((t) => t.caller === "t1")).toMatchObject({
     calls: 2,
   });
   expect(
@@ -148,15 +148,15 @@ const streamOf = (parts: LanguageModelV4StreamPart[], fail?: Error) =>
     }),
   });
 
-const rowsFor = (tenant: string) =>
+const rowsFor = (caller: string) =>
   query<{ ok: boolean; error: string | null }>(
-    `select ok, error from traces where tenant = $1`,
-    [tenant],
+    `select ok, error from traces where caller = $1`,
+    [caller],
   );
 
 test("a stream cancelled after its first chunk writes one failed trace", async () => {
   const { stream } = await withTrace(
-    { tenant: "cancelled", name: "chat" },
+    { caller: "cancelled", name: "chat" },
     async () =>
       traced(
         streamOf([
@@ -175,7 +175,7 @@ test("a stream cancelled after its first chunk writes one failed trace", async (
 
 test("a stream that errors writes one trace with the message", async () => {
   const { stream } = await withTrace(
-    { tenant: "errored", name: "chat" },
+    { caller: "errored", name: "chat" },
     async () =>
       traced(
         streamOf(
@@ -191,7 +191,7 @@ test("a stream that errors writes one trace with the message", async () => {
 });
 
 test("a stream that ends normally writes one trace", async () => {
-  await withTrace({ tenant: "normal", name: "chat" }, async () => {
+  await withTrace({ caller: "normal", name: "chat" }, async () => {
     const { stream } = await traced(model()).doStream({ prompt: [] });
     await stream.pipeTo(new WritableStream());
   });
@@ -201,7 +201,7 @@ test("a stream that ends normally writes one trace", async () => {
 });
 
 test("the spend under a context since a moment: its calls, dollars and p95, nothing else's", async () => {
-  const ctx = { tenant: "routes", name: "chat", prompt: "anthropic/small" };
+  const ctx = { caller: "routes", name: "chat", prompt: "anthropic/small" };
   const call = {
     model: "claude-haiku-5-5",
     input: 10,
@@ -223,7 +223,7 @@ test("the spend under a context since a moment: its calls, dollars and p95, noth
 test("a failed call answered by another model within 5 s in the same request is a fallback; one left alone, or answered in another request, is not", async () => {
   const before = await failovers(1);
   const call = {
-    tenant: "fallback-test",
+    caller: "fallback-test",
     name: "chat",
     input: 10,
     output: 5,

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { when } from "@/lib/format";
 import { traceSummary } from "@/lib/tracing";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Traces" };
 
@@ -52,6 +53,7 @@ export default function TracesPage() {
 }
 
 async function Dashboard() {
+  await requireUser();
   const day = await traceSummary(24);
   const errorRate = day.calls ? (100 * day.errors) / day.calls : 0;
   const now = new Date();
@@ -76,23 +78,23 @@ async function Dashboard() {
       <div className="mt-10 grid gap-10 md:grid-cols-2">
         <section>
           <h2 className="text-sm font-medium text-muted-foreground">
-            Spend by tenant
+            Spend by caller
           </h2>
           <div className="mt-3 rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tenant</TableHead>
+                  <TableHead>Caller</TableHead>
                   <TableHead className="text-right">Calls</TableHead>
                   <TableHead className="text-right">Spend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {day.byTenant.length === 0 && <Empty cols={3} />}
-                {day.byTenant.map((row) => (
-                  <TableRow key={row.tenant}>
-                    <TableCell className="font-mono text-xs" title={row.tenant}>
-                      {row.tenant.slice(0, 8)}
+                {day.byCaller.length === 0 && <Empty cols={3} />}
+                {day.byCaller.map((row) => (
+                  <TableRow key={row.caller}>
+                    <TableCell className="font-mono text-xs" title={row.caller}>
+                      {row.caller.slice(0, 8)}
                     </TableCell>
                     <TableCell className="text-right">{row.calls}</TableCell>
                     <TableCell className="text-right">
@@ -146,7 +148,7 @@ async function Dashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>When</TableHead>
-                <TableHead>Tenant</TableHead>
+                <TableHead>Caller</TableHead>
                 <TableHead>Call</TableHead>
                 <TableHead>Model</TableHead>
                 <TableHead className="text-right">In / cached / out</TableHead>
@@ -163,7 +165,7 @@ async function Dashboard() {
                     {when(trace.at, now)}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {trace.tenant.slice(0, 8)}
+                    {trace.caller.slice(0, 8)}
                   </TableCell>
                   <TableCell>{trace.name}</TableCell>
                   <TableCell className="text-muted-foreground">

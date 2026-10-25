@@ -10,7 +10,7 @@ export type Cached<T> = {
 };
 
 /**
- * A read cached per tenant. Within its age it is a hit; past it, the stale
+ * A read cached per caller. Within its age it is a hit; past it, the stale
  * value is served while a fetch replaces it; absent, it is fetched first.
  * Every read's outcome and age are logged, so hit rate and staleness are
  * measured rather than assumed.
@@ -20,22 +20,22 @@ export async function cached<T>(
   maxAgeMs: number,
   fetch: () => Promise<T>,
 ): Promise<Cached<T>> {
-  const { tenant } = currentContext();
+  const { caller } = currentContext();
   const [row] = await query<{ value: T; fetchedAt: Date }>(
-    `select value, fetched_at as "fetchedAt" from cache where tenant = $1 and key = $2`,
-    [tenant, key],
+    `select value, fetched_at as "fetchedAt" from cache where caller = $1 and key = $2`,
+    [caller, key],
   );
   const log = (outcome: Cached<T>["outcome"], ageMs: number) =>
     query(
-      `insert into cache_reads (tenant, key, outcome, age_s) values ($1, $2, $3, $4)`,
-      [tenant, key, outcome, Math.round(ageMs / 1000)],
+      `insert into cache_reads (caller, key, outcome, age_s) values ($1, $2, $3, $4)`,
+      [caller, key, outcome, Math.round(ageMs / 1000)],
     );
   const store = async () => {
     const value = await fetch();
     await query(
-      `insert into cache (tenant, key, value) values ($1, $2, $3::jsonb)
-       on conflict (tenant, key) do update set value = excluded.value, fetched_at = now()`,
-      [tenant, key, JSON.stringify(value)],
+      `insert into cache (caller, key, value) values ($1, $2, $3::jsonb)
+       on conflict (tenant, caller, key) do update set value = excluded.value, fetched_at = now()`,
+      [caller, key, JSON.stringify(value)],
     );
     return value;
   };

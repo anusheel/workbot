@@ -21,6 +21,7 @@ export function researchTools(notebook: Notebook): Tool[] {
   return [
     tool({
       name: "web_search",
+      access: "viewer",
       description:
         "Searches for pages on a topic and gives up to 5 results, each with an address for read_url: the web when a search key is configured, the company's knowledge base otherwise.",
       input: z.object({
@@ -33,6 +34,7 @@ export function researchTools(notebook: Notebook): Tool[] {
     }),
     tool({
       name: "read_url",
+      access: "viewer",
       description:
         "Reads a page's text by its address: a web page, or a knowledge:// address from web_search.",
       input: z.object({
@@ -42,6 +44,7 @@ export function researchTools(notebook: Notebook): Tool[] {
     }),
     tool({
       name: "save_finding",
+      access: "public",
       description:
         "Saves one fact that answers part of the question, with its source: a page's address or a document's title. Call it for each fact worth keeping.",
       input: z.object({ text: z.string().min(5), source: z.string().min(2) }),
@@ -52,6 +55,7 @@ export function researchTools(notebook: Notebook): Tool[] {
     }),
     tool({
       name: "write_report",
+      access: "public",
       description:
         "Ends the research with the report: the answer in plain sentences, each fact followed by its source in brackets, then a line per source. Call it once, when the findings answer the question or nothing more can be found.",
       input: z.object({ report: z.string().min(20) }),

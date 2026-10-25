@@ -34,7 +34,7 @@ export const documentApproval = inngest.createFunction(
       return { kind: "file", ...file };
     };
 
-    const ctx = { tenant: "workflow", name: "document" };
+    const ctx = { caller: "workflow", name: "document" };
     const type = await step.run("classify", () =>
       withTrace(ctx, async () => {
         const type = await classify(await source(), model);

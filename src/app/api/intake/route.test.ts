@@ -1,6 +1,7 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
 import { POST } from "./route";
+import { as } from "@/test/auth";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/routing", () => ({
@@ -33,10 +34,12 @@ vi.mock("@/lib/routing", () => ({
     }),
 }));
 
+const agent = await as("agent");
 const post = (body: unknown) =>
   POST(
     new Request("http://workbot/api/intake", {
       method: "POST",
+      headers: agent,
       body: JSON.stringify(body),
     }),
   );

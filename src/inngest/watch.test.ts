@@ -6,7 +6,7 @@ import { watch } from "./watch";
 
 const trace = (ok: boolean, dollars = 0) =>
   recordTrace({
-    tenant: "t",
+    caller: "t",
     name: "chat",
     model: "claude-haiku-5-5",
     input: 1,

@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { config } from "./config";
+import { credentialFor } from "./credentials";
 import { type Mcp, connectMcp, remote, withMcp } from "./mcp";
 import {
   type Filing,
@@ -12,6 +13,7 @@ import {
 } from "./tickets";
 import { type Ticket, findTickets, issueUrl } from "./unified";
 import { type Tool, tool } from "./tool";
+import { currentContext } from "./tracing";
 
 /** GitHub's own MCP server, which keeps the tool surface; the token and the issues toolset are ours. */
 export const githubMcp = "https://api.githubcopilot.com/mcp/";
@@ -19,9 +21,15 @@ export const githubMcp = "https://api.githubcopilot.com/mcp/";
 export const githubEnabled = () =>
   Boolean(config.github.token && config.github.repo);
 
-export const githubConnect = () =>
+/** The token a call runs with: the signed-in user's own when they connected one, so the work is theirs on GitHub; the app's otherwise. */
+export async function githubToken(): Promise<string | undefined> {
+  const { user } = currentContext();
+  return (user && (await credentialFor(user, "github"))) ?? config.github.token;
+}
+
+export const githubConnect = async () =>
   connectMcp(
-    remote(githubMcp, config.github.token ?? "", {
+    remote(githubMcp, (await githubToken()) ?? "", {
       "X-MCP-Toolsets": "issues",
     }),
   );
@@ -70,8 +78,8 @@ const skew = 3_600_000;
  */
 export function githubTools(
   connect: () => Promise<Mcp> = githubConnect,
+  { owner, repo, slug } = repository(),
 ): Tool[] {
-  const { owner, repo, slug } = repository();
   const key = z
     .string()
     .min(1)
@@ -122,6 +130,7 @@ export function githubTools(
   return [
     tool({
       name: "find_ticket",
+      access: "viewer",
       description:
         "Finds tickets, the ticketing repository's issues and WorkBot's own requests as synced every 15 minutes, by words in their title or body: up to 5, newest change first, each with its number, state, assignee, team, title and link. Call it before filing a ticket, to find one that exists. Reads nothing from the network.",
       input: z.object({ query: z.string().min(2).max(200) }),
@@ -134,6 +143,7 @@ export function githubTools(
     }),
     tool({
       name: "file_ticket",
+      access: "agent",
       description:
         "Files a ticket: an issue in the ticketing repository, visible to everyone with access to it. The key names what the ticket is about, and a second call with the same key returns the ticket filed the first time rather than filing another. With dry_run, describes the ticket it would file and files nothing. Not for a question, which you answer; call find_ticket first.",
       input: z.object({
@@ -173,6 +183,7 @@ export function githubTools(
     }),
     tool({
       name: "comment_on_ticket",
+      access: "agent",
       description:
         "Adds a comment to a ticket by its number, visible to everyone with access to the repository, once per key: a second call with the same key returns the comment made the first time. With dry_run, shows the comment it would add and adds nothing. Nothing personal about anyone goes in a comment.",
       input: z.object({

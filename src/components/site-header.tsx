@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { Account } from "@/components/account";
 import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
 import { customer } from "@/lib/customer";
@@ -26,6 +28,11 @@ export function SiteHeader() {
               <NavLink href={href}>{label}</NavLink>
             </Button>
           ))}
+          <span className="ml-3">
+            <Suspense>
+              <Account />
+            </Suspense>
+          </span>
         </nav>
       </div>
     </header>

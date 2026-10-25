@@ -2,7 +2,7 @@
 // to change it; never edit an earlier statement.
 import { entityTables } from "./entities/tables";
 
-export const schema = [
+const tables = [
   `create extension if not exists vector`,
   `create table if not exists requests (
     id uuid primary key default gen_random_uuid(),
@@ -161,7 +161,7 @@ export const schema = [
     lag_s integer not null,
     at timestamptz not null default now()
   )`,
-  // Cached reads per tenant, and every read's outcome, so hit rate and staleness can be measured.
+  // Cached reads per caller, and every read's outcome, so hit rate and staleness can be measured.
   `create table if not exists cache (
     tenant text not null,
     key text not null,
@@ -190,6 +190,98 @@ export const schema = [
     claimed_at timestamptz not null default now(),
     primary key (kind, key)
   )`,
+  // A trace and a cached read name their caller: a visitor, a user, the terminal, the system. Tenant now means the customer.
+  ...["traces", "cache", "cache_reads"].map(
+    (table) => `do $$ begin
+      if not exists (select 1 from information_schema.columns where table_name = '${table}' and column_name = 'caller') then
+        alter table ${table} rename column tenant to caller;
+      end if;
+    end $$`,
+  ),
+
+  // People and services, the keys they sign in with, and the sessions a key opens in a browser; a key is stored only as its hash.
+  `create table if not exists users (
+    id uuid primary key default gen_random_uuid(),
+    name text not null,
+    role text not null check (role in ('viewer', 'agent', 'admin')),
+    created_at timestamptz not null default now()
+  )`,
+  `create table if not exists keys (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references users(id) on delete cascade,
+    hash text not null unique,
+    hint text not null,
+    created_at timestamptz not null default now(),
+    last_used_at timestamptz,
+    revoked_at timestamptz
+  )`,
+  `create table if not exists sessions (
+    hash text primary key,
+    key_id uuid not null references keys(id) on delete cascade,
+    created_at timestamptz not null default now(),
+    expires_at timestamptz not null
+  )`,
+  // The tokens a user connects for an integration, sealed: the plaintext never reaches the database.
+  `create table if not exists credentials (
+    user_id uuid not null references users(id) on delete cascade,
+    provider text not null,
+    ciphertext bytea not null,
+    iv bytea not null,
+    tag bytea not null,
+    key_id text not null,
+    created_at timestamptz not null default now(),
+    sealed_at timestamptz not null default now(),
+    primary key (user_id, provider)
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];
+
+/**
+ * Tenancy, applied after every table, generated ones included. Every row
+ * belongs to the customer whose deployment wrote it (app.tenant, set on each
+ * connection), and every query sees only those rows. The app runs as a role
+ * that owns nothing and bypasses nothing, so the policies bind it.
+ */
+const tenancy = [
+  `do $$ begin
+    if not exists (select 1 from pg_roles where rolname = 'workbot_app') then
+      create role workbot_app nologin;
+    end if;
+  end $$`,
+  `grant workbot_app to current_user`,
+  `do $$
+  declare t text;
+  begin
+    for t in select tablename from pg_tables where schemaname = 'public' loop
+      execute format('alter table %I add column if not exists tenant text not null default nullif(current_setting(''app.tenant'', true), '''')', t);
+      execute format('alter table %I enable row level security', t);
+      execute format('alter table %I force row level security', t);
+      if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = t and policyname = 'tenant_isolation') then
+        execute format('create policy tenant_isolation on %I using (tenant = nullif(current_setting(''app.tenant'', true), '''')) with check (tenant = nullif(current_setting(''app.tenant'', true), ''''))', t);
+      end if;
+    end loop;
+  end $$`,
+  // A natural key is unique within a tenant, not across them.
+  ...Object.entries({
+    chunks: "path",
+    prompts: "name, version",
+    tickets: "id",
+    contacts: "id",
+    cache: "caller, key",
+    syncs: "source",
+    filings: "kind, key",
+  }).map(
+    ([table, key]) => `do $$ begin
+      if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then
+        alter table ${table} drop constraint ${table}_pkey;
+        alter table ${table} add primary key (tenant, ${key});
+      end if;
+    end $$`,
+  ),
+  `grant usage on schema public to workbot_app`,
+  `grant select, insert, update, delete on all tables in schema public to workbot_app`,
+  `grant usage, select on all sequences in schema public to workbot_app`,
+];
+
+export const schema = [...tables, ...tenancy];

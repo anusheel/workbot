@@ -1,6 +1,5 @@
 import { RefreshCw, ScanSearch } from "lucide-react";
 import type { Metadata } from "next";
-import { io } from "next/cache";
 import { Suspense } from "react";
 import { PendingButton } from "@/components/pending-button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +24,7 @@ import {
   syncSummary,
 } from "@/lib/unified";
 import { reconcileNow, syncNow } from "./actions";
+import { permits, requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Tickets" };
 
@@ -73,7 +73,7 @@ function Stat({
 }
 
 async function Synced() {
-  await io();
+  const user = await requireUser();
   const [tickets, contacts, synced, total, sync, cache] = await Promise.all([
     listTickets(),
     listContacts(20),
@@ -88,16 +88,23 @@ async function Synced() {
       <div className="mt-8 flex flex-wrap items-center gap-4">
         {githubEnabled() ? (
           <>
-            <form action={syncNow}>
-              <PendingButton busy="Syncing…" icon={<RefreshCw />}>
-                Sync now
-              </PendingButton>
-            </form>
-            <form action={reconcileNow}>
-              <PendingButton busy="Reading every issue…" icon={<ScanSearch />}>
-                Reconcile now
-              </PendingButton>
-            </form>
+            {permits(user.role, "agent") && (
+              <form action={syncNow}>
+                <PendingButton busy="Syncing…" icon={<RefreshCw />}>
+                  Sync now
+                </PendingButton>
+              </form>
+            )}
+            {permits(user.role, "admin") && (
+              <form action={reconcileNow}>
+                <PendingButton
+                  busy="Reading every issue…"
+                  icon={<ScanSearch />}
+                >
+                  Reconcile now
+                </PendingButton>
+              </form>
+            )}
           </>
         ) : (
           <span className="text-sm text-muted-foreground">

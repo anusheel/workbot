@@ -203,7 +203,7 @@ export async function upsertTicket(input: TicketInput): Promise<Ticket> {
   const [row] = await query<Ticket>(
     `insert into tickets (id, source, key, title, body, state, assignee, labels, team, url, raw, applied, updated_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-     on conflict (id) do update set title = excluded.title, body = excluded.body, state = excluded.state,
+     on conflict (tenant, id) do update set title = excluded.title, body = excluded.body, state = excluded.state,
        assignee = excluded.assignee, labels = excluded.labels, team = excluded.team, url = excluded.url,
        raw = excluded.raw, applied = excluded.applied, updated_at = excluded.updated_at
      where excluded.updated_at >= tickets.updated_at
@@ -238,7 +238,7 @@ export async function upsertContact(input: ContactInput): Promise<Contact> {
   const [row] = await query<Contact>(
     `insert into contacts (id, source, key, name, email, phone, company, url, raw, applied, updated_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-     on conflict (id) do update set name = excluded.name,
+     on conflict (tenant, id) do update set name = excluded.name,
        email = coalesce(excluded.email, contacts.email), phone = coalesce(excluded.phone, contacts.phone),
        company = coalesce(excluded.company, contacts.company), url = coalesce(excluded.url, contacts.url),
        raw = excluded.raw, applied = excluded.applied, updated_at = greatest(excluded.updated_at, contacts.updated_at)

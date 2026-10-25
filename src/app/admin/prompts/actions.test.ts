@@ -1,6 +1,13 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { addVersion, promptOf, versions } from "@/lib/prompts";
+import { signIn } from "@/test/auth";
 import { createVersion, splitTraffic } from "./actions";
+
+vi.mock("next/headers", async () => ({
+  headers: async () => (await import("@/test/caller")).caller.headers,
+}));
+
+await signIn("admin");
 
 test("a split that does not total 100 returns a message with the entered shares and stores nothing", async () => {
   await promptOf("test/actions-split", "x", "A prompt of enough length.");

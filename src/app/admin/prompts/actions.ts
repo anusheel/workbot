@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { addVersion, setShares } from "@/lib/prompts";
+import { requireUser } from "@/lib/auth";
 
 const Version = z.object({
   name: z.string().min(1),
@@ -26,6 +27,7 @@ export async function createVersion(
   _: VersionState,
   formData: FormData,
 ): Promise<VersionState> {
+  await requireUser("admin");
   const parsed = Version.safeParse(Object.fromEntries(formData));
   if (!parsed.success)
     return {
@@ -44,6 +46,7 @@ export async function splitTraffic(
   _: SplitState,
   formData: FormData,
 ): Promise<SplitState> {
+  await requireUser("admin");
   const entered: Record<number, string> = {};
   const shares: Record<number, number> = {};
   for (const [key, value] of formData.entries()) {

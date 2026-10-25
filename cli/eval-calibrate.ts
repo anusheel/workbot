@@ -41,7 +41,7 @@ if (values.collect) {
   const labels: Label[] = [];
   for (const c of picked) {
     const reply: Reply = await withTrace(
-      { tenant: "eval", name: "calibrate" },
+      { caller: "eval", name: "calibrate" },
       () => answer(c, systemPrompt, modelFor("chat")),
     );
     labels.push({
@@ -68,7 +68,7 @@ if (values.collect) {
   for (const label of labels) {
     const c = golden.find((g) => g.id === label.id);
     if (!c) throw new Error(`No case ${label.id}`);
-    const verdict = await withTrace({ tenant: "eval", name: "judge" }, () =>
+    const verdict = await withTrace({ caller: "eval", name: "judge" }, () =>
       judge(c, label.reply, modelFor("judge")),
     );
     const agree = Math.abs(verdict.score - label.human) <= 0.25;

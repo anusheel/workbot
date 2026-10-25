@@ -24,6 +24,7 @@ import {
   setStatus,
 } from "../actions";
 import { customer } from "@/lib/customer";
+import { permits, requireUser } from "@/lib/auth";
 
 // An investigation is a few model calls per agent; the action waits for all of them.
 export const maxDuration = 300;
@@ -50,6 +51,9 @@ export default function RequestPage(props: PageProps<"/requests/[id]">) {
 async function RequestDetail({
   params,
 }: Pick<PageProps<"/requests/[id]">, "params">) {
+  const user = await requireUser();
+  // What a viewer reads, an agent can also change.
+  const acts = permits(user.role, "agent");
   const request = await getRequest((await params).id);
   if (!request) notFound();
   await track("request_viewed", { requestId: request.id });
@@ -74,19 +78,27 @@ async function RequestDetail({
       <p className="mt-6 text-sm leading-relaxed whitespace-pre-wrap">
         {request.body || "No details."}
       </p>
-      <StatusActions
-        id={request.id}
-        status={request.status}
-        action={setStatus}
-      />
+      {acts && (
+        <StatusActions
+          id={request.id}
+          status={request.status}
+          action={setStatus}
+        />
+      )}
       <Documents requestId={request.id} />
-      <Research requestId={request.id} />
-      <Recordings requestId={request.id} />
+      <Research requestId={request.id} acts={acts} />
+      <Recordings requestId={request.id} acts={acts} />
     </article>
   );
 }
 
-async function Research({ requestId }: { requestId: string }) {
+async function Research({
+  requestId,
+  acts,
+}: {
+  requestId: string;
+  acts: boolean;
+}) {
   const report = await latestReport(requestId);
   return (
     <section className="mt-12 border-t pt-8">
@@ -99,15 +111,17 @@ async function Research({ requestId }: { requestId: string }) {
               : "The analyst reads the knowledge base and the web and files a sourced report here."}
           </p>
         </div>
-        <form>
-          <PendingButton
-            formAction={investigateRequest.bind(null, requestId)}
-            busy="Investigating…"
-            icon={<Search />}
-          >
-            {report ? "Investigate again" : "Investigate"}
-          </PendingButton>
-        </form>
+        {acts && (
+          <form>
+            <PendingButton
+              formAction={investigateRequest.bind(null, requestId)}
+              busy="Investigating…"
+              icon={<Search />}
+            >
+              {report ? "Investigate again" : "Investigate"}
+            </PendingButton>
+          </form>
+        )}
       </div>
       {report && (
         <div className="mt-5 rounded-xl border bg-card p-6">
@@ -118,7 +132,13 @@ async function Research({ requestId }: { requestId: string }) {
   );
 }
 
-async function Recordings({ requestId }: { requestId: string }) {
+async function Recordings({
+  requestId,
+  acts,
+}: {
+  requestId: string;
+  acts: boolean;
+}) {
   const recordings = await listRecordings(requestId);
   return (
     <section className="mt-12 border-t pt-8">
@@ -131,14 +151,16 @@ async function Recordings({ requestId }: { requestId: string }) {
               : "A meeting recording or a video of the problem, read frame by frame and filed here as a timeline."}
           </p>
         </div>
-        <FileUpload
-          action={attachRecording.bind(null, requestId)}
-          name="recording"
-          accept="video/*"
-          label="Attach a recording"
-          busy="Reading the recording…"
-          icon={<Film />}
-        />
+        {acts && (
+          <FileUpload
+            action={attachRecording.bind(null, requestId)}
+            name="recording"
+            accept="video/*"
+            label="Attach a recording"
+            busy="Reading the recording…"
+            icon={<Film />}
+          />
+        )}
       </div>
       {recordings.map((recording) => (
         <div key={recording.id} className="mt-5 rounded-xl border bg-card p-6">

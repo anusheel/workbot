@@ -8,6 +8,7 @@ import { type Entry, investigate } from "@/lib/investigate";
 import { providerNames, providers } from "@/lib/providers";
 import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
+import { asOperator } from "@/lib/tracing";
 import { employeeTools } from "@/lib/tools";
 
 const help = `/research <question>       answer from the company's sources, with citations
@@ -167,28 +168,31 @@ console.log(
 );
 prompt();
 
-for await (const raw of rl) {
-  const line = raw.trim();
-  try {
-    if (line.startsWith("/")) {
-      const output = await command(line);
-      if (output === null) break;
-      console.log(output);
-    } else if (line) {
-      stdout.write("\nworkbot> ");
-      await session.send(line, {
-        text: (text) => stdout.write(text),
-        tool: ({ name, input, failed }) =>
-          stdout.write(
-            dim(`\n⚙ ${name} ${brief(input)}${failed ? " failed" : ""}\n`),
-          ),
-      });
-      stdout.write("\n\n");
+// The terminal is the operator's: its tools run with an admin's role.
+await asOperator("chat", async () => {
+  for await (const raw of rl) {
+    const line = raw.trim();
+    try {
+      if (line.startsWith("/")) {
+        const output = await command(line);
+        if (output === null) break;
+        console.log(output);
+      } else if (line) {
+        stdout.write("\nworkbot> ");
+        await session.send(line, {
+          text: (text) => stdout.write(text),
+          tool: ({ name, input, failed }) =>
+            stdout.write(
+              dim(`\n⚙ ${name} ${brief(input)}${failed ? " failed" : ""}\n`),
+            ),
+        });
+        stdout.write("\n\n");
+      }
+    } catch (err) {
+      stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
     }
-  } catch (err) {
-    stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
+    prompt();
   }
-  prompt();
-}
+});
 rl.close();
 await close();

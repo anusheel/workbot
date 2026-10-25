@@ -7,7 +7,6 @@ import {
   type Case,
   type EvalTask,
   chatSuite,
-  evalTasks,
   extractSuite,
   triageSuite,
 } from "@/lib/eval-suite";
@@ -30,7 +29,9 @@ const runs = Number(values.runs);
 
 const wanted = (task: EvalTask) => !values.task || task === values.task;
 // The documents are rendered by Chrome, so the browser is opened only when extraction is measured.
-const suites: Record<EvalTask, Case[]> = {
+// The routing table compares the tasks a route serves; the security cases measure the assistant, not a route.
+const measured = ["chat", "extract", "triage"] as const;
+const suites: Record<(typeof measured)[number], Case[]> = {
   chat: await chatSuite(systemPrompt, modelFor("judge")),
   extract: wanted("extract") ? await withBrowser(extractSuite) : [],
   triage: await triageSuite(),
@@ -38,14 +39,14 @@ const suites: Record<EvalTask, Case[]> = {
 
 console.log("| Task | Route | Score | SD | $/case | p95 ms | Calls |");
 console.log("| --- | --- | --- | --- | --- | --- | --- |");
-for (const task of evalTasks) {
+for (const task of measured) {
   if (!wanted(task)) continue;
   const cases = suites[task];
   for (const provider of providerNames) {
     if (values.provider && provider !== values.provider) continue;
     for (const size of sizes) {
       const route: Route = `${provider}/${size}`;
-      const ctx: Context = { tenant: "routes", name: task, prompt: route };
+      const ctx: Context = { caller: "routes", name: task, prompt: route };
       const since = new Date();
       const scores: number[] = [];
       try {

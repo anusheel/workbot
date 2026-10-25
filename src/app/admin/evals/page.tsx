@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import type { Metadata } from "next";
-import { io } from "next/cache";
 import { Suspense } from "react";
 import { Sparkline } from "@/components/sparkline";
 import {
@@ -21,6 +20,7 @@ import { evalTasks } from "@/lib/eval-suite";
 import { when } from "@/lib/format";
 import { fleet, frameworkSummary, margin, runs } from "@/lib/scoreboard";
 import { failovers } from "@/lib/tracing";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Evals" };
 
@@ -59,7 +59,7 @@ function Tiles({ tiles }: { tiles: [string, string][] }) {
 }
 
 async function Board() {
-  await io();
+  await requireUser();
   const [all, fallbacks, frameworks, fleetRun] = await Promise.all([
     runs(),
     failovers(24),

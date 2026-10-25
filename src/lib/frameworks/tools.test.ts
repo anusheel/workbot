@@ -1,8 +1,11 @@
 import { expect, test } from "vitest";
 import { type Notebook, researchTools } from "./tools";
+import { actingAs } from "@/test/auth";
 
 const toolsOf = (notebook: Notebook) =>
-  Object.fromEntries(researchTools(notebook).map((t) => [t.name, t]));
+  Object.fromEntries(
+    actingAs("viewer", researchTools(notebook)).map((t) => [t.name, t]),
+  );
 
 test("without a search key, web_search searches the knowledge base and gives addresses read_url can read", async () => {
   const notebook: Notebook = { findings: [] };

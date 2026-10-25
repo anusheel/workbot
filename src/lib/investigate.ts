@@ -66,6 +66,7 @@ export async function investigate(
 
   const saveFinding = tool({
     name: "save_finding",
+    access: "public",
     description:
       "Saves one fact that answers part of the question, with its source: a document's title or a page's address. Call it for each fact worth keeping.",
     input: z.object({ text: z.string().min(5), source: z.string().min(2) }),
@@ -77,6 +78,7 @@ export async function investigate(
 
   const browseSite = tool({
     name: "browse_site",
+    access: "public",
     description:
       "A browser agent works a page by looking at it, clicking, typing and scrolling to carry out a task, and reports what it saw. For a page that needs interaction, or whose text came back empty.",
     input: z.object({
@@ -115,6 +117,7 @@ export async function investigate(
 
   const writeReport = tool({
     name: "write_report",
+    access: "public",
     description:
       "Ends the investigation with the report for the ticket. Call it once, when the findings answer the question or nothing more can be found.",
     input: z.object({ report: z.string().min(20) }),

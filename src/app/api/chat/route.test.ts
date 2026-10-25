@@ -25,7 +25,7 @@ vi.mock("@/lib/rate-limit", () => ({ allow: vi.fn(() => true) }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
-vi.mock("@/lib/chat", () => ({ chatTools: {} }));
+vi.mock("@/lib/chat", () => ({ chatToolsFor: () => ({}) }));
 vi.mock("@/lib/routing", () => ({
   modelFor: (task: string) => {
     modelCalls.count++;

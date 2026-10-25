@@ -2,10 +2,11 @@ import { z } from "zod";
 import { type Tool } from "./tool";
 import { calculate } from "./calculator";
 import { customerSections, knowledgeTools } from "./knowledge-tools";
+import { type Access, permits } from "./auth-model";
 import { cached } from "./cache";
 import { config } from "./config";
 import { when } from "./format";
-import { githubEnabled, githubTools } from "./github";
+import { githubTools } from "./github";
 import { type Contact, findContacts } from "./unified";
 import { saveNote } from "./notes";
 import { tool } from "./tool";
@@ -14,6 +15,7 @@ import { readPage, searchWeb } from "./web";
 
 export const calculator = tool({
   name: "calculator",
+  access: "public",
   description:
     "Evaluates an arithmetic expression: + - * / % ^ and parentheses. Call it for any calculation, however small, instead of working it out yourself.",
   input: z.object({
@@ -24,6 +26,7 @@ export const calculator = tool({
 
 export const readUrl = tool({
   name: "read_url",
+  access: "public",
   description:
     "Fetches a web page and returns its text, with when it was fetched: a page read in the last hour comes from a copy. Call it to read a page a search returned or a URL the user gave.",
   input: z.object({ url: z.url() }),
@@ -42,6 +45,7 @@ const contactLine = (c: Contact) =>
 
 export const findContact = tool({
   name: "find_contact",
+  access: "viewer",
   description:
     "Finds contacts WorkBot has seen, the senders of documents and the people on tickets, by words in their name, email or company, or by a phone number in any written form: up to 5, each with name, company, email, phone and where it was seen. Call it for who someone is or how to reach them.",
   input: z.object({ query: z.string().min(2).max(200) }),
@@ -55,6 +59,7 @@ export const findContact = tool({
 
 export const noteTaker = tool({
   name: "save_note",
+  access: "agent",
   description:
     "Saves a note for later. Call it when the user asks you to remember, note or save something.",
   input: z.object({ text: z.string().min(1).max(2_000) }),
@@ -63,6 +68,7 @@ export const noteTaker = tool({
 
 export const webSearch = tool({
   name: "web_search",
+  access: "public",
   description:
     "Searches the web and returns up to 5 results with title, URL and snippet. Call it for anything outside the company's own documents, or when the user asks you to look something up.",
   input: z.object({ query: z.string().min(1) }),
@@ -78,7 +84,7 @@ export const webSearch = tool({
 
 const web = config.brave.key ? [webSearch] : [];
 
-/** What the assistant can call for an employee: the whole knowledge base, notes, the web, and the tickets when a ticketing system is configured. */
+/** What the assistant can call for an employee, by role: the whole knowledge base, notes, the web, and the tickets when a ticketing repository is configured. */
 export const employeeTools: Tool[] = [
   ...knowledgeTools(),
   calculator,
@@ -86,7 +92,8 @@ export const employeeTools: Tool[] = [
   noteTaker,
   findContact,
   ...web,
-  ...(githubEnabled() ? githubTools() : []),
+  // Offered wherever a ticketing repository is configured: a call runs with the user's own token, or the app's.
+  ...(config.github.repo ? githubTools() : []),
 ];
 
 /** What it can call for anyone else: the customer-facing documents, no notes. */
@@ -96,5 +103,11 @@ export const customerTools: Tool[] = [
   readUrl,
   ...web,
 ];
+
+/** What a caller is offered: the public gets the customer-facing set; an employee, every tool their role reaches. Each tool checks the role again when it runs. */
+export const toolsFor = (role: Access): Tool[] =>
+  role === "public"
+    ? customerTools
+    : employeeTools.filter((t) => permits(role, t.access));
 
 export { type Tool, inputSchema, tool } from "./tool";

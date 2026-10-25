@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { z } from "zod";
 import { close } from "@/lib/db";
 import { frameworkNames, frameworks } from "@/lib/frameworks";
+import { asOperator } from "@/lib/tracing";
 
 // The research agent on each framework, on the 5 topics: wall time, tool
 // calls, tokens and cost per run, the reports under .data/frameworks.
@@ -38,12 +39,14 @@ const totals = Object.fromEntries(
 );
 for (const topic of topics)
   for (const name of names) {
-    const run = await frameworks[name](topic.question, {
-      thread: name === "langgraph" ? values.thread : undefined,
-      on: {
-        tool: (tool) => console.error(dim(`  ${name} ${topic.id}: ${tool}`)),
-      },
-    }).catch((error: Error) => {
+    const run = await asOperator("frameworks", () =>
+      frameworks[name](topic.question, {
+        thread: name === "langgraph" ? values.thread : undefined,
+        on: {
+          tool: (tool) => console.error(dim(`  ${name} ${topic.id}: ${tool}`)),
+        },
+      }),
+    ).catch((error: Error) => {
       console.error(`${name} on ${topic.id}: ${error.message}`);
       return undefined;
     });

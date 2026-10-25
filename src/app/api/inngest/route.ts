@@ -2,6 +2,7 @@ import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
 import { documentApproval } from "@/inngest/document-approval";
 import { reminders } from "@/inngest/reminders";
+import { retention } from "@/inngest/retention";
 import { reconcile, sync } from "@/inngest/sync";
 import { watch } from "@/inngest/watch";
 
@@ -9,5 +10,5 @@ import { watch } from "@/inngest/watch";
 // reads the list of functions from it.
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [documentApproval, reminders, reconcile, sync, watch],
+  functions: [documentApproval, reminders, reconcile, retention, sync, watch],
 });

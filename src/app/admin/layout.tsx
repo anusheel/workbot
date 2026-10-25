@@ -10,6 +10,7 @@ const nav = [
   { href: "/admin/evals", label: "Evals" },
   { href: "/admin/tickets", label: "Tickets" },
   { href: "/admin/assistant", label: "Assistant" },
+  { href: "/admin/users", label: "Users" },
   { href: "/admin/settings", label: "Settings" },
   ...entityPages.filter((page) => page.access === "employee"),
 ];

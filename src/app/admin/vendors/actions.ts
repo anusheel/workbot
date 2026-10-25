@@ -2,10 +2,12 @@
 
 // Generated from content/entities/vendor.json by pnpm generate. Edit the description, not this file.
 import { refresh } from "next/cache";
+import { requireUser } from "@/lib/auth";
 import { NewVendor, createVendor } from "@/lib/entities/vendor";
 
 /** A vendor from the form; an empty field is left to its default. */
 export async function createVendorAction(form: FormData) {
+  await requireUser("agent");
   const parsed = NewVendor.safeParse(
     Object.fromEntries([...form.entries()].filter(([, value]) => value !== "")),
   );

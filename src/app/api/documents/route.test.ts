@@ -3,7 +3,11 @@ import { expect, test, vi } from "vitest";
 import { uploadDocuments } from "@/app/admin/inbox/actions";
 import { maxFileBytes } from "@/lib/extract";
 import { POST } from "./route";
+import { as, signIn } from "@/test/auth";
 
+vi.mock("next/headers", async () => ({
+  headers: async () => (await import("@/test/caller")).caller.headers,
+}));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 vi.mock("@/inngest/client", () => ({ inngest: { send: vi.fn() } }));
@@ -46,11 +50,14 @@ vi.mock("@/lib/routing", () => {
   };
 });
 
+const agent = await as("agent");
+await signIn("agent");
+
 const post = (body: unknown) =>
   POST(
     new Request("http://workbot/api/documents", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...agent },
       body: JSON.stringify(body),
     }),
   );
@@ -84,7 +91,11 @@ test("a short text, a bad or private address, an empty body and a file of the wr
     new File(["plain"], "notes.txt", { type: "text/plain" }),
   );
   const upload = await POST(
-    new Request("http://workbot/api/documents", { method: "POST", body: form }),
+    new Request("http://workbot/api/documents", {
+      method: "POST",
+      headers: agent,
+      body: form,
+    }),
   );
   expect(upload.status).toBe(400);
   expect(JSON.stringify(await upload.json())).toContain("application/pdf");
@@ -94,7 +105,11 @@ const upload = (file: File) => {
   const form = new FormData();
   form.set("document", file);
   return POST(
-    new Request("http://workbot/api/documents", { method: "POST", body: form }),
+    new Request("http://workbot/api/documents", {
+      method: "POST",
+      headers: agent,
+      body: form,
+    }),
   );
 };
 
@@ -114,7 +129,7 @@ test("an empty file, a file over the limit and a malformed multipart body answer
   const garbage = await POST(
     new Request("http://workbot/api/documents", {
       method: "POST",
-      headers: { "content-type": "multipart/form-data; boundary=x" },
+      headers: { "content-type": "multipart/form-data; boundary=x", ...agent },
       body: "garbage",
     }),
   );
