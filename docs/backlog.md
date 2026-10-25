@@ -27,6 +27,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-19  | Validation messages from the API in the UI | S    | open   |
 | WB-20  | Request detail: comments                   | M    | open   |
 | WB-21  | Admin assistant in the terminal            | M    | done   |
+| WB-22  | Tools for the assistant                    | M    | done   |
+| WB-23  | Research with citations                    | M    | done   |
 
 ## Acceptance criteria
 
@@ -108,3 +110,15 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `pnpm chat` streams a conversation with WorkBot's system prompt; `--provider` picks Anthropic or OpenAI, `--model`, `--effort` and `--temperature` tune the call
 - `/model` switches provider or model mid-conversation and the history carries on; `/system` shows or replaces the prompt; `/cost` reports tokens and dollars for the session
 - Rate limits are retried by the SDK; other errors are shown and the failed turn leaves no trace in the history
+
+### WB-22 Tools for the assistant
+
+- 4 tools: a calculator, reading a web page, saving a note, and web search when a Brave key is set; each is one Zod schema and one function in `src/lib/tools.ts`
+- The loop runs on both providers: the model's tool calls are validated, run, and answered in the same turn, up to 8 rounds; invalid input and failures go back to the model as errors
+- The terminal shows each call and its input as it happens
+
+### WB-23 Research with citations
+
+- `/research <question>` answers from the company's policies, and from the web when search is configured, in 4 model calls: plan the sources (small model), read them, extract the relevant facts from each (large model), write the answer (large model)
+- Every fact in the answer carries a numbered citation and the sources are listed at the end; when the sources do not answer, the reply says what is missing and which team to ask
+- The session's `/cost` includes every call the chain made

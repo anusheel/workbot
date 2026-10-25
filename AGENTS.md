@@ -7,7 +7,7 @@ site is a second app in `site/`, with its own AGENTS.md.
 ## Commands
 
 - `pnpm dev`: the dev server on http://localhost:3000; without `DATABASE_URL` it runs on an embedded database in `.data/pg`
-- `pnpm chat`: the admin assistant in the terminal; `--provider`, `--model`, `--effort`, `--temperature`
+- `pnpm chat`: the admin assistant in the terminal, with tools; `--provider`, `--model`, `--effort`, `--temperature`; `/research <question>` for a cited answer from the policies
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
 - `pnpm test:live`: the tests that call the real APIs, on the small models, with the keys in `.env.local`; run it before pushing a change to a prompt or a provider
 - `pnpm check`: lint, types, tests and a production build, for both apps; CI runs the same on every pull request and on `main`
@@ -37,6 +37,7 @@ in `mcp/` only connect them to stdio. Both read `.env.local`.
 - A schema change is one idempotent statement appended to `src/lib/schema.ts`
 - Pure models (schemas, constants, labels) live in `src/lib/<name>-model.ts` so client components can import them; queries stay in `src/lib/<name>.ts`
 - Model calls go through `src/lib/providers.ts`; model ids and prices live there and nowhere else. WorkBot's persona and rules are `src/lib/system-prompt.ts`
+- Tools the model can call are defined once in `src/lib/tools.ts` as a Zod schema plus a function, and say in their description when to call them; each provider turns them into its own format. Steps of a chain are plain functions in `src/lib`, one model call each
 - Product events go through `track` in `src/lib/analytics.tsx`: snake_case names, properties that identify records, never people
 - A folder with its own rules has a `CLAUDE.md` beside the files: `src/app/api/` for routes, `content/policies/` for policies
 - Comments say why, never what; no comment restates the line below it
