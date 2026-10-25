@@ -61,4 +61,25 @@ export const schema = [
     review jsonb not null default '[]',
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists inbox (
+    id uuid primary key default gen_random_uuid(),
+    name text not null,
+    media_type text not null,
+    bytes bytea not null,
+    status text not null default 'received',
+    type text,
+    data jsonb,
+    confidence jsonb,
+    review jsonb not null default '[]',
+    request_id uuid references requests(id) on delete set null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+  )`,
+  `create table if not exists notifications (
+    id uuid primary key default gen_random_uuid(),
+    recipient text not null,
+    message text not null,
+    link text,
+    created_at timestamptz not null default now()
+  )`,
 ];

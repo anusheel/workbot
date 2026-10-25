@@ -4,3 +4,7 @@ packages:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# The Inngest CLI's install script fetches its binary; it is the only build script allowed.
+onlyBuiltDependencies:
+  - inngest-cli
