@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
 
 const links = [
@@ -18,10 +19,10 @@ export function SiteHeader() {
         <Link href="/" className="font-semibold tracking-tight">
           WorkBot
         </Link>
-        <nav className="flex items-center gap-1">
+        <nav aria-label="Main" className="flex items-center gap-1">
           {links.map(({ href, label }) => (
             <Button key={href} asChild variant="ghost" size="sm">
-              <Link href={href}>{label}</Link>
+              <NavLink href={href}>{label}</NavLink>
             </Button>
           ))}
         </nav>
