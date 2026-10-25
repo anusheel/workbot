@@ -1,0 +1,43 @@
+# Integrations: 3 routes to a customer's systems
+
+Every customer runs a different stack, and the first week of an engagement is usually spent connecting to it. There are 3 routes: the vendor's own MCP server, an integration platform (Composio for a catalog of tools with managed auth, Nango for managed auth with syncs), or code of your own against the API. Day 27 connected WorkBot's ticketing system, GitHub issues, through the route that was available here and measured it; what the platforms sell besides, it built in-house where the piece was small. This document is what was built, what was measured, and what was not.
+
+## What was built
+
+**The connection.** `src/lib/mcp.ts` is an MCP client of 40 lines over the official SDK: a Streamable HTTP transport with a bearer token, the server's tools, a call that returns the text a tool produced and throws the server's message on a failure, a close. `src/lib/github.ts` points it at GitHub's remote server with the `issues` toolset header, which narrows the 46 tools the server offers to 10. A per-user authorization is the same transport given an `OAuthClientProvider` instead of a token; the token here is the app's.
+
+**The sync.** `src/inngest/sync-tickets.ts` pulls the issues that changed since the newest `updated_at` already stored, 100 a page, every 15 minutes and on demand, into the `tickets` table (`src/lib/tickets.ts`): one shape with number, title, body, state, assignee, labels, a link and the time of the change, whatever system is behind it. The first pull is the backfill. `/admin/tickets` shows the copy, when it was last pulled, and a button that pulls now.
+
+**The tool surface.** The model never sees the server's tools. It gets 3 of WorkBot's, defined like every other tool in `src/lib/tools.ts`, with descriptions that say when to call them and what not to do:
+
+| Tool                | Does                                                          | Reads from | Writes through | Key | Dry run |
+| ------------------- | ------------------------------------------------------------- | ---------- | -------------- | --- | ------- |
+| `find_ticket`       | up to 5 tickets whose title or body holds the words           | the copy   | nothing        | no  | no      |
+| `file_ticket`       | a new issue, with a line saying WorkBot filed it and for what | nothing    | `issue_write`  | yes | yes     |
+| `comment_on_ticket` | a comment on an issue by number                               | nothing    | `add_comment`  | yes | yes     |
+
+The key names what a write is about (a request id, an invoice number); the `filings` table remembers each key with the issue it produced, so a second call with the same key returns the first result rather than filing again, whether the model repeated itself or a retry replayed it. A dry run describes the write and makes none. Nothing closes, reassigns or deletes a ticket: those stay with a person in GitHub.
+
+## The 3 routes compared
+
+Only the first column was measured. Composio and Nango both need an account, and none was available for this run; their columns are from their documentation and say so.
+
+| Concern                         | GitHub's MCP server, measured                                                                                                                                                                                                                          | Composio, from the documentation                       | Nango, from the documentation                              |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------- |
+| Time to a first working call    | Under an hour from a token to `list_issues` in the terminal, most of it reading the tool schemas; the connection takes 1.0 s, the tool list 0.5 s, a page of 100 issues 0.8 s                                                                          | Not measured                                           | Not measured                                               |
+| Auth per user                   | A bearer token, the app's; a person's own access is the SDK's OAuth provider on the same transport, not built                                                                                                                                          | Connected accounts per entity, managed by the platform | Hosted OAuth per connection, managed by the platform       |
+| Schema control                  | The vendor's: `list_issues` is paged by cursor and filtered by `since`, `issue_write` returns an id and a link; the 3 tools and the ticket shape are ours over it                                                                                      | The catalog's tool definitions, wrapped or not         | A sync's model is yours; the unified models are theirs     |
+| Data as well as actions         | Not offered; the sync is in-house, one function and one table                                                                                                                                                                                          | Triggers from the app into the agent                   | Syncs that keep a cached copy fresh and stream the changes |
+| What breaks on an expired token | The connection fails with `unauthorized: token authentication failed` before any tool runs. `find_ticket` keeps answering from the copy, the page shows how old it is, the sync run fails and Inngest retries, a filing reports the error to the model | Refresh is the platform's                              | Refresh is the platform's                                  |
+| Coverage                        | 46 tools over GitHub; one vendor per server                                                                                                                                                                                                            | Hundreds of apps                                       | Hundreds of APIs, with syncs written per provider          |
+| Cost                            | None beyond the token                                                                                                                                                                                                                                  | Priced per connection and usage                        | Self-hostable, or priced per connection                    |
+
+## The choice
+
+Where the vendor runs an MCP server, take it: the vendor keeps the tool surface and the auth, and the client is small. A platform earns its place at the long tail, when the engagement needs 10 systems and a person's own access to each, or when the data has to be synced and the team would rather not own the sync. For WorkBot's one ticketing system, the vendor's server and a sync of 60 lines were the smaller thing to own, and they are measured.
+
+## What is not here
+
+- A CRM through Composio and the brief's calendar reminders: no account for either, so neither is built or measured. The reminders of Day 13 run on their own schedule.
+- A person's own authorization: filings are WorkBot's, under the app's token. The flow exists in the SDK and the transport takes it in one argument; it is the next step when a customer wants each filing under its author.
+- A second ticketing system: the ticket shape is one table with a `source` column, and a second system is a second pull into it. Day 28 is about keeping that shape honest across providers.

@@ -96,6 +96,8 @@ both calls.
 
 The company WorkBot works for is configuration: `content/customer.json` names it, its teams and what each files, and the prompts and the request model read it, so a new customer is a new file. The principles the code is held to are in [brain/architecture/principles.md](brain/architecture/principles.md), with the audit behind them in the architecture document.
 
+The ticketing system is connected through its MCP server: `src/lib/mcp.ts` is the client, the issues are pulled every 15 minutes into a `tickets` table the assistant searches (`/admin/tickets` shows the copy and pulls on demand), and `file_ticket` and `comment_on_ticket` write through the server once per key, with a dry run. `GITHUB_TOKEN` and `GITHUB_REPO` turn it on; the 3 routes to a customer's systems are compared in [docs/integrations.md](docs/integrations.md).
+
 How we work with Claude Code, the Codex CLI and OpenCode on this repository, under one policy, is in [docs/agentic-development.md](docs/agentic-development.md); the notes an agent reads first are in [brain/](brain/README.md). A fleet of agents on the backlog is `scripts/fleet.mjs`; what it did on 50 tasks is in [docs/fleet.md](docs/fleet.md). The system as built is written up in [docs/architecture.md](docs/architecture.md);
 [docs/design/brief-a.md](docs/design/brief-a.md) designs a customer support
 platform on the same parts and pitches it.

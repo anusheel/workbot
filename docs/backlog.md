@@ -59,6 +59,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-51  | Two providers behind one layer, routed per task, with a fallback that keeps WorkBot up             | M    | done   |
 | WB-52  | Evals as the development loop: 30 cases a task, a calibrated judge, the gate in CI, the scoreboard | M    | done   |
 | WB-53  | Audited against the principles; the customer in configuration; one agent where the eval allows     | M    | done   |
+| WB-54  | The ticketing system through its MCP server: the sync, 3 product-level tools, the routes compared  | M    | done   |
 
 ## Acceptance criteria
 
@@ -321,3 +322,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `docs/architecture.md`: the system drawn as it is, a row per principle with what it costs today, the 4 questions answered, the 2 migrations with before and after; `brain/architecture/principles.md` and D15 carry the principles into Weeks 7 and 8
 - `content/customer.json` and `src/lib/customer.ts`: the company, its teams and what each files, the filing rules and the customer sections as configuration; the prompts, the request model and the filing rules read it; a new customer is a new file (10 files touched became 1)
 - `src/lib/investigate.ts`: one agent in place of the analyst and its 2 specialists, after `pnpm compare:agents` scored the designs on the 17 golden answer cases (0.73 at $0.018 and 18 s a question; 0.92 at $0.0016 and 6 s for one agent on the small model); the routing table's research row reads small then large
+
+### WB-54 The ticketing system through its MCP server: the sync, 3 product-level tools, the routes compared
+
+- `src/lib/mcp.ts`: an MCP client over the official SDK, a bearer transport, the tools, a call that returns a tool's text and throws its error; `src/lib/github.ts` points it at GitHub's remote server with the issues toolset
+- `src/lib/tickets.ts` and `src/inngest/sync-tickets.ts`: the issues pulled since the newest change, 100 a page, every 15 minutes and on demand, into one ticket shape; `/admin/tickets` shows the copy and pulls now
+- 3 tools over the server's 46: `find_ticket` reads the copy; `file_ticket` and `comment_on_ticket` write through the server once per key (`filings`) and take a dry run; nothing closes or deletes
+- `docs/integrations.md`: the 3 routes compared on time to a first call, auth per user, schema control, data, what breaks on an expired token; Composio and Nango unmeasured for want of an account, and marked so; D16
