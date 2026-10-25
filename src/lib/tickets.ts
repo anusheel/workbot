@@ -150,7 +150,7 @@ export async function filingOf(
 ): Promise<Filing | undefined> {
   const [row] = await query<Filing>(
     `select key, number, url from filings
-     where kind = $1 and key = $2 and (url is not null or created_at > now() - interval '${inFlight}')`,
+     where kind = $1 and key = $2 and (url is not null or claimed_at > now() - interval '${inFlight}')`,
     [kind, key],
   );
   return row;
@@ -167,30 +167,33 @@ const record = (kind: Kind, key: string, made: Made) =>
  * second call with the same key, at the same time or later, gets the first
  * result and makes nothing. A claim with no result after 5 minutes is a
  * crashed write, and a write that throws may have reached the system before
- * it failed: both look there first, with `find`, and write only when
- * nothing was made under the key.
+ * it failed: both look there first, with `find` from the time of the first
+ * claim, and write only when nothing was made under the key.
  */
 export async function once(
   kind: Kind,
   key: string,
   write: () => Promise<Made>,
-  find: () => Promise<Made | undefined>,
+  find: (since: Date) => Promise<Made | undefined>,
 ): Promise<{ filing: Filing; made: boolean }> {
-  const [fresh] = await query(
-    `insert into filings (kind, key) values ($1, $2) on conflict (kind, key) do nothing returning key`,
+  type Claim = { since: Date };
+  const [fresh] = await query<Claim>(
+    `insert into filings (kind, key) values ($1, $2) on conflict (kind, key) do nothing returning created_at as since`,
     [kind, key],
   );
-  if (!fresh) {
+  let { since } = fresh ?? {};
+  if (!since) {
     const current = await filingOf(kind, key);
     if (current) return { filing: current, made: false };
-    const [taken] = await query(
-      `update filings set created_at = now()
-       where kind = $1 and key = $2 and url is null and created_at < now() - interval '${inFlight}'
-       returning key`,
+    const [taken] = await query<Claim>(
+      `update filings set claimed_at = now()
+       where kind = $1 and key = $2 and url is null and claimed_at < now() - interval '${inFlight}'
+       returning created_at as since`,
       [kind, key],
     );
     if (!taken) return { filing: (await filingOf(kind, key))!, made: false };
-    const prior = await find();
+    since = taken.since;
+    const prior = await find(since);
     if (prior) {
       await record(kind, key, prior);
       return { filing: { key, ...prior }, made: false };
@@ -201,7 +204,7 @@ export async function once(
     await record(kind, key, made);
     return { filing: { key, ...made }, made: true };
   } catch (err) {
-    const made = await find().catch(() => undefined);
+    const made = await find(since).catch(() => undefined);
     if (made) {
       await record(kind, key, made);
       return { filing: { key, ...made }, made: true };

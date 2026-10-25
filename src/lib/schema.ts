@@ -134,6 +134,7 @@ export const schema = [
     number integer,
     url text,
     created_at timestamptz not null default now(),
+    claimed_at timestamptz not null default now(),
     primary key (kind, key)
   )`,
 ];

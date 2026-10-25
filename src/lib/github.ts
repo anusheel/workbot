@@ -46,7 +46,8 @@ const already = (done: string, doing: string, f: Filing) =>
     ? `Already ${done} #${f.number}: ${f.url}`
     : `Being ${doing} now under the key ${f.key}; ask again in a moment.`;
 
-const day = 86_400_000;
+/** The clock skew allowed between this database and the system when looking for a write by its time. */
+const skew = 3_600_000;
 
 /**
  * The tickets as 3 product-level tools over GitHub's 46: a find that reads
@@ -67,12 +68,11 @@ export function githubTools(
     );
   const dryRun = z.boolean().default(false);
 
-  /** The issue a filing under the key made, if a crashed or failed one did: by its signature, among the day's changes. */
-  const filedUnder = (key: string) =>
+  /** The issue a filing under the key made, if a crashed or failed one did: by its signature, among the changes since the claim. */
+  const filedUnder = (key: string, since: Date) =>
     withMcp(connect, async (mcp) => {
-      const since = new Date(Date.now() - day).toISOString();
       for await (const issues of issuePages(mcp, {
-        since,
+        since: new Date(since.getTime() - skew).toISOString(),
         fields: ["number", "body"],
       })) {
         const issue = issues.find((i) =>
@@ -151,7 +151,7 @@ export function githubTools(
             );
             return { number: Number(url.split("/").pop()), url };
           },
-          () => filedUnder(key),
+          (since) => filedUnder(key, since),
         );
         return made
           ? `Filed #${filing.number}: ${filing.url}`

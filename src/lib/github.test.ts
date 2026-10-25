@@ -259,7 +259,8 @@ test("a write that fails before it is made gives its key back", async () => {
 
 test("a claim with no result is in flight for 5 minutes, then free", async () => {
   await query(
-    `insert into filings (kind, key, created_at) values ('filing', 'REQ-92', now()), ('filing', 'REQ-93', now() - interval '6 minutes')`,
+    `insert into filings (kind, key, created_at, claimed_at)
+     values ('filing', 'REQ-92', now(), now()), ('filing', 'REQ-93', now() - interval '6 minutes', now() - interval '6 minutes')`,
   );
   expect(
     await tools.file_ticket.run({ title: "Dock door stuck", key: "REQ-92" }),
@@ -269,7 +270,7 @@ test("a claim with no result is in flight for 5 minutes, then free", async () =>
   ).toBe(`Filed #6: ${issueUrl(6)}`);
 });
 
-test("a crashed filing that reached the system is found by its signature, not made again", async () => {
+test("a crashed filing that reached the system is found by its signature, however old", async () => {
   github.issues.push({
     number: 7,
     title: "Forklift charger",
@@ -277,10 +278,11 @@ test("a crashed filing that reached the system is found by its signature, not ma
     state: "OPEN",
     assignees: [],
     labels: [],
-    updated_at: new Date().toISOString(),
+    updated_at: new Date(Date.now() - 3 * 86_400_000).toISOString(),
   });
   await query(
-    `insert into filings (kind, key, created_at) values ('filing', 'REQ-94', now() - interval '6 minutes')`,
+    `insert into filings (kind, key, created_at, claimed_at)
+     values ('filing', 'REQ-94', now() - interval '3 days', now() - interval '3 days')`,
   );
   expect(
     await tools.file_ticket.run({ title: "Forklift charger", key: "REQ-94" }),
