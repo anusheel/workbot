@@ -96,3 +96,74 @@ test("a page that is not there is an error", async () => {
     scrape("https://x.example/gone", Job, model({})),
   ).rejects.toThrow("answered 404");
 });
+
+const stubSite = (site: Record<string, string>) =>
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (input: string | URL) =>
+        new Response(site[String(input)] ?? "", {
+          status: site[String(input)] ? 200 : 404,
+        }),
+    ),
+  );
+
+test("scrape stops when a next link points back to a page already read", async () => {
+  stubSite({
+    "https://x.example/jobs":
+      '<ul><li>Picker</li></ul><a href="/jobs?page=2" rel="next">Next</a>',
+    "https://x.example/jobs?page=2":
+      '<ul><li>Driver</li></ul><a href="/jobs#top">Next</a>',
+  });
+  const items = await scrape(
+    "https://x.example/jobs",
+    Job,
+    model({
+      "https://x.example/jobs": [{ title: "Picker", company: "Fieldstone" }],
+      "https://x.example/jobs?page=2": [
+        { title: "Driver", company: "Northwind" },
+      ],
+    }),
+    { pages: 5 },
+  );
+  expect(items).toHaveLength(2);
+  expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+});
+
+test("scrape keeps what it read when the next link is not http", async () => {
+  stubSite({
+    "https://x.example/jobs":
+      '<ul><li>Picker</li></ul><a href="javascript:void(0)">Next</a>',
+  });
+  const items = await scrape(
+    "https://x.example/jobs",
+    Job,
+    model({
+      "https://x.example/jobs": [{ title: "Picker", company: "Fieldstone" }],
+    }),
+    { pages: 3 },
+  );
+  expect(items).toHaveLength(1);
+  expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+});
+
+test("nextLink prefers rel=next and ignores 'More about us'", () => {
+  expect(
+    nextLink(
+      '<a href="/about">More about us</a><a href="/p2" rel="next">2</a>',
+      "https://x.example/p1",
+    ),
+  ).toBe("https://x.example/p2");
+  expect(
+    nextLink('<a href="/about">More about us</a>', "https://x.example/p1"),
+  ).toBeUndefined();
+  expect(
+    nextLink(
+      '<a href="/n">Next</a><a href="/p2" rel="next">2</a>',
+      "https://x.example/p1",
+    ),
+  ).toBe("https://x.example/p2");
+  expect(nextLink('<a href="/m">More</a>', "https://x.example/")).toBe(
+    "https://x.example/m",
+  );
+});
