@@ -10,6 +10,9 @@ export type VoiceEvent =
   | { type: "reply"; text: string }
   | { type: "spoken" };
 
+/** The voice API rejects a turn longer than this (`src/lib/voice.ts`). */
+const MAX_TURN = 2_000;
+
 export const initial: Voice = { state: "idle", turns: [], interim: "" };
 
 /**
@@ -24,13 +27,19 @@ export function next(voice: Voice, event: VoiceEvent): Voice {
       return { ...voice, state: "idle", interim: "" };
     case "heard":
       if (voice.state === "idle" || voice.state === "thinking") return voice;
-      return event.final
-        ? {
-            state: "thinking",
-            turns: [...voice.turns, { role: "caller", text: event.text }],
-            interim: "",
-          }
-        : { ...voice, state: "listening", interim: event.text };
+      if (!event.final)
+        return { ...voice, state: "listening", interim: event.text };
+      // The API rejects an empty turn, so silence must not start one.
+      if (!event.text.trim())
+        return { ...voice, state: "listening", interim: "" };
+      return {
+        state: "thinking",
+        turns: [
+          ...voice.turns,
+          { role: "caller", text: event.text.slice(0, MAX_TURN) },
+        ],
+        interim: "",
+      };
     case "reply":
       return voice.state === "thinking"
         ? {
