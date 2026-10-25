@@ -55,6 +55,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-47  | The architecture written up, and a design pitched                         | M    | done   |
 | WB-48  | One policy across 3 CLIs, the company brain, the way of working           | M    | done   |
 | WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue  | M    | done   |
+| WB-50  | The research agent on 3 frameworks, compared on 5 topics                  | M    | done   |
 
 ## Acceptance criteria
 
@@ -291,3 +292,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `scripts/fleet.mjs`: an agent per task in a worktree or a cloud session, the pull requests the cloud cannot open, a board of every task's state, a queue that reviews in batches with the 4 reviewers, merges with the agent's commit message, checks the branch and reverts what broke it, and sends a review that requests changes or a failed check back to one more session
 - `.claude/agents/brief-reviewer.md` and `/review` with 4 reviewers and a verdict line
 - `docs/fleet.md`: the numbers, the task shapes that worked and the ones that did not, what a person did, the next backlog
+
+### WB-50 The research agent on 3 frameworks, compared on 5 topics
+
+- One set of 4 tools (`web_search`, `read_url`, `save_finding`, `write_report`) and one system prompt; the same agent on LangGraph.js (plan, a research loop through the tools, write, a checkpointer so a thread resumes after the process is killed), the Claude Agent SDK (one agent with the tools and a hook on every tool call) and the OpenAI Agents SDK (a Researcher that hands off to a Writer, behind a guardrail on the topic)
+- `pnpm frameworks` runs all 3 on the 5 topics and records wall time, tokens, cost and tool calls per run
+- `docs/frameworks.md`: what each made easier and harder, and the choice, recorded in the architecture document with the 2 reasons that decided it
