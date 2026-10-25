@@ -60,12 +60,16 @@ export async function research(
     .map((p) => ({ title: p.title, text: p.body }));
   for (const query of config.brave.key ? plan.queries : []) {
     on.step(`Searching the web for "${query}"`);
-    const [top] = await searchWeb(query, 3);
-    if (!top || sources.some((s) => s.url === top.url)) continue;
+    const results = await searchWeb(query, 3).catch((error: Error) => {
+      on.step(`Search for "${query}" failed: ${error.message}`);
+      return [];
+    });
+    const next = results.find((r) => !sources.some((s) => s.url === r.url));
+    if (!next) continue;
     sources.push({
-      title: top.title,
-      url: top.url,
-      text: await readPage(top.url).catch(() => top.description),
+      title: next.title,
+      url: next.url,
+      text: await readPage(next.url).catch(() => next.description),
     });
   }
 
