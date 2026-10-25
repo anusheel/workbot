@@ -1,0 +1,9 @@
+From: Marcus Lee <m.lee@fieldstone.example>
+To: finance@fieldstone.example; ops-leads@fieldstone.example
+Subject: FYI: fuel surcharge from Bay Area Pallet from October
+
+Team,
+
+Bay Area Pallet & Crate let me know they will add a $45 fuel surcharge per delivery from 1 October. No action needed from you; I am noting it here so nobody queries the line on the next invoices.
+
+Marcus

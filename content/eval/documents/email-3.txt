@@ -1,0 +1,9 @@
+From: Priya Natarajan <priya@fieldstone.example>
+To: it@fieldstone.example
+Subject: Which VPN client for the new laptops?
+
+Hello IT,
+
+Quick question: which VPN client should the three new warehouse laptops have, and is there a guide for setting it up? No rush, the laptops arrive next week.
+
+Priya

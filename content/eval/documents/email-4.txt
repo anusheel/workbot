@@ -1,0 +1,11 @@
+From: accounts@northgate-facilities.example
+To: finance@fieldstone.example
+Subject: Second reminder: invoice NF-88213 overdue
+
+Dear Fieldstone Supply,
+
+Invoice NF-88213 for £3,082.08 was due on 27 September and remains unpaid. Please arrange payment within 7 days, or send a remittance advice if it has already been paid. Our cleaning crew will not attend from 20 October if the account is still in arrears.
+
+Regards,
+Accounts Receivable
+Northgate Facilities Services Ltd

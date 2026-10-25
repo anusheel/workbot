@@ -1,0 +1,18 @@
+Senior TypeScript Engineer, Internal Tools — Remote (US)
+Company: Plank Labs
+
+Salary range: $165,000 to $195,000 a year plus equity
+
+What you'll do:
+* Build and run the internal assistant our operations teams use every day
+* Own the request queue, the knowledge base search and the intake workflows
+* Review pull requests and mentor two mid-level engineers
+
+What we need:
+* 5+ years with TypeScript and React in production
+* Experience with Postgres and a hosted LLM API
+* Comfortable owning a service end to end, including on-call one week in six
+
+Fully remote within the United States. Quarterly on-site in Oakland.
+
+Listed at remoteworks.example
