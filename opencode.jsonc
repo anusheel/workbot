@@ -10,7 +10,19 @@
   ],
   "permission": {
     "edit": "allow",
-    "bash": "ask",
+    // The last matching pattern wins, so these deny rules come after the catch-all. A command that names
+    // an env file (after a space, a slash, a quote, `=` or a redirect) is refused even under --auto, which
+    // only answers the asks; `process.env` in a grep is not a file name and still asks.
+    "bash": {
+      "*": "ask",
+      "* .env*": "deny",
+      "*/.env*": "deny",
+      "*\".env*": "deny",
+      "*'.env*": "deny",
+      "*=.env*": "deny",
+      "*<.env*": "deny",
+      "*>.env*": "deny",
+    },
     // The last matching pattern wins; .env.example is the one env file the agent may read.
     "read": {
       "*": "allow",

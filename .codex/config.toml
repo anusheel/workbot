@@ -13,6 +13,7 @@ extends = ":workspace"
 "**/.env" = "deny"
 "**/.env.local" = "deny"
 "**/.env.*.local" = "deny"
+"**/.env.production" = "deny"
 
 [mcp_servers.linear]
 url = "https://mcp.linear.app/mcp"
