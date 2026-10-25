@@ -14,6 +14,8 @@ const date = (what: string) =>
 
 export const Invoice = z.object({
   vendor: z.string().describe("who is billing"),
+  vendorEmail: asWritten("the vendor's email address"),
+  vendorPhone: asWritten("the vendor's phone number"),
   number: asWritten("the invoice number"),
   date: date("the invoice date"),
   due: date("the due date"),

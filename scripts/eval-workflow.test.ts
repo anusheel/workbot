@@ -181,6 +181,9 @@ test("a pull request runs the smoke evals when a prompt, tool, model, eval or th
     "src/lib/prompts.ts",
     "src/lib/customer.ts",
     "src/lib/github.ts",
+    "src/lib/unified.ts",
+    "src/lib/rules.ts",
+    "content/rules.json",
     "content/customer.json",
     "package.json",
     "pnpm-lock.yaml",
@@ -195,10 +198,12 @@ test("a module the evals run is a trigger path unless it holds no prompt, tool, 
   // its own. A module the evals come to import that is in neither list fails
   // here, and a person decides which.
   const plumbing = new Set([
+    "src/lib/cache.ts",
     "src/lib/calculator.ts",
     "src/lib/config.ts",
     "src/lib/db.ts",
     "src/lib/embeddings.ts",
+    "src/lib/format.ts",
     "src/lib/mcp.ts",
     "src/lib/notes.ts",
     "src/lib/requests.ts",

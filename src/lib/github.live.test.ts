@@ -1,7 +1,8 @@
 import { afterAll, expect, test } from "vitest";
 import { githubConnect, githubTools } from "./github";
 import { withMcp } from "./mcp";
-import { listTickets, pullTickets, repository } from "./tickets";
+import { pullTickets, repository } from "./tickets";
+import { listTickets } from "./unified";
 
 // Against GitHub's own MCP server and the repository in .env.local: the sync,
 // the find, a filing and a comment made once each, and the issue closed after.
@@ -30,7 +31,7 @@ test("pulls the repository's issues into the tickets table", async () => {
   expect(tickets[0].url).toContain("github.com");
   expect(
     await tools.find_ticket.run({ query: tickets[0].title.slice(0, 12) }),
-  ).toContain(`#${tickets[0].number}`);
+  ).toContain(`#${tickets[0].key}`);
 });
 
 test("files a ticket and comments on it once per key", async () => {

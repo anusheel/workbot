@@ -109,20 +109,61 @@ export const schema = [
   )`,
   // The request a call belongs to, so a fallback is the next call of the same request.
   `alter table traces add column if not exists request text`,
-  // Tickets synced from the ticketing system into one shape, and the writes made through it, by key.
+  // One shape for tickets and contacts wherever they live, with the provider's record in raw and the rules that fired in applied.
   `create table if not exists tickets (
     id text primary key,
     source text not null,
-    number integer not null,
+    key text not null,
     title text not null,
     body text not null default '',
     state text not null,
     assignee text,
     labels jsonb not null default '[]',
+    team text,
     url text not null,
+    raw jsonb not null default '{}',
+    applied jsonb not null default '[]',
     updated_at timestamptz not null
   )`,
   `create index if not exists tickets_updated on tickets (source, updated_at)`,
+  `create table if not exists contacts (
+    id text primary key,
+    source text not null,
+    key text not null,
+    name text not null,
+    email text,
+    phone text,
+    company text,
+    url text,
+    raw jsonb not null default '{}',
+    applied jsonb not null default '[]',
+    updated_at timestamptz not null
+  )`,
+  `alter table documents add column if not exists applied jsonb not null default '[]'`,
+  // What each sync path did: a row per ticket a webhook or a pull refreshed, with how far behind the copy was, and what reconciliation found.
+  `create table if not exists sync_log (
+    id serial primary key,
+    source text not null,
+    key text not null,
+    path text not null,
+    lag_s integer not null,
+    at timestamptz not null default now()
+  )`,
+  // Cached reads per tenant, and every read's outcome, so hit rate and staleness can be measured.
+  `create table if not exists cache (
+    tenant text not null,
+    key text not null,
+    value jsonb not null,
+    fetched_at timestamptz not null default now(),
+    primary key (tenant, key)
+  )`,
+  `create table if not exists cache_reads (
+    tenant text not null,
+    key text not null,
+    outcome text not null,
+    age_s integer not null,
+    at timestamptz not null default now()
+  )`,
   `create table if not exists syncs (
     source text primary key,
     pulled_at timestamptz not null,

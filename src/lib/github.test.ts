@@ -5,7 +5,8 @@ import { z } from "zod";
 import { query } from "./db";
 import { githubTools } from "./github";
 import { connectMcp } from "./mcp";
-import { lastSync, listTickets, pullTickets } from "./tickets";
+import { pullTickets } from "./tickets";
+import { lastSync, listTickets } from "./unified";
 
 vi.hoisted(() => {
   process.env.GITHUB_REPO = "acme/helpdesk";
@@ -179,7 +180,12 @@ const tools = Object.fromEntries(
 
 test("pulls the issues that changed since the last sync, a page at a time", async () => {
   const mcp = await github.connect();
-  expect(await pullTickets(mcp)).toEqual({ pulled: 3, since: null });
+  expect(await pullTickets(mcp)).toEqual({
+    pulled: 3,
+    since: null,
+    missed: 0,
+    gone: 0,
+  });
   expect(github.since).toEqual([undefined, undefined]);
   const pulledAt = await lastSync();
 
@@ -194,15 +200,16 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
   );
 
   const tickets = await listTickets();
-  expect(tickets.map((t) => [t.number, t.state])).toEqual([
-    [2, "closed"],
-    [3, "open"],
-    [1, "open"],
+  expect(tickets.map((t) => [t.key, t.state])).toEqual([
+    ["2", "closed"],
+    ["3", "open"],
+    ["1", "open"],
   ]);
   expect(tickets[2]).toMatchObject({
-    id: "acme/helpdesk#1",
-    source: "acme/helpdesk",
+    id: "github#1",
+    source: "github",
     assignee: "sam",
+    team: "operations",
     url: issueUrl(1),
   });
   await mcp.close();
@@ -210,7 +217,7 @@ test("pulls the issues that changed since the last sync, a page at a time", asyn
 
 test("finds tickets in the synced copy", async () => {
   expect(await tools.find_ticket.run({ query: "printer" })).toBe(
-    `#1 (open, sam) Badge printer jams ${issueUrl(1)}`,
+    `#1 (open, sam, operations) Badge printer jams ${issueUrl(1)}`,
   );
   expect(await tools.find_ticket.run({ query: "espresso" })).toBe(
     'No ticket matches "espresso".',

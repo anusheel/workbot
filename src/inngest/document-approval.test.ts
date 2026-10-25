@@ -34,6 +34,8 @@ vi.mock("@/lib/routing", () => ({
 // against the embedded database.
 const invoice = {
   vendor: "Acme Supplies Co.",
+  vendorEmail: null,
+  vendorPhone: null,
   number: "INV-4471",
   date: "2026-10-01",
   due: "2026-10-31",
