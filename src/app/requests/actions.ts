@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { track } from "@/lib/analytics";
 import {
   NewRequest,
   createRequest,
@@ -21,11 +22,18 @@ export async function submitRequest(
   const parsed = NewRequest.safeParse(Object.fromEntries(formData));
   if (!parsed.success)
     return { errors: z.flattenError(parsed.error).fieldErrors };
-  await createRequest(parsed.data);
+  const request = await createRequest(parsed.data);
+  await track("request_submitted", {
+    requestId: request.id,
+    team: request.team,
+    priority: request.priority,
+  });
   redirect("/requests");
 }
 
 export async function setStatus(id: string, status: string) {
-  await updateRequest(id, { status: z.enum(statuses).parse(status) });
+  const next = z.enum(statuses).parse(status);
+  await updateRequest(id, { status: next });
+  await track("request_status_changed", { requestId: id, status: next });
   refresh();
 }
