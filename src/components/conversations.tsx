@@ -19,7 +19,7 @@ import { Chat } from "./chat";
 import { ConversationList } from "./conversation-list";
 
 /** The chat page: conversations kept in this browser, one open at a time. */
-export function Conversations() {
+export function Conversations({ assistant }: { assistant: string }) {
   // The fresh id below is random, which must not be baked into the prerender.
   use(io());
   const conversations = useSyncExternalStore(
@@ -79,6 +79,7 @@ export function Conversations() {
         </header>
         <div className="min-h-0 flex-1">
           <Chat
+            assistant={assistant}
             key={activeId}
             id={activeId}
             initialMessages={active?.messages}

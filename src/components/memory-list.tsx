@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { type Memory, kinds } from "@/lib/memory";
+import { customer } from "@/lib/customer";
 
 const titles = {
   preference: "Preferences",
@@ -18,7 +19,7 @@ export function MemoryList({ memories, onForget, onForgetAll }: Props) {
   if (memories.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Nothing yet. WorkBot remembers what you tell it in chat.
+        Nothing yet. {customer.assistant} remembers what you tell it in chat.
       </p>
     );
   }

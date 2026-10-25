@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VoiceLine } from "@/components/voice-line";
+import { customer } from "@/lib/customer";
 
 export const metadata: Metadata = { title: "Voice line" };
 
@@ -9,8 +10,8 @@ export default function VoicePage() {
       <div className="max-w-2xl">
         <h1 className="text-2xl font-semibold tracking-tight">Voice line</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Say what happened. WorkBot asks what it needs to know, files the
-          request, and tells you where it went. You can talk over it.
+          Say what happened. {customer.assistant} asks what it needs to know,
+          files the request, and tells you where it went. You can talk over it.
         </p>
         <div className="mt-8">
           <VoiceLine />

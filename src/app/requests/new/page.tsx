@@ -6,6 +6,7 @@ import { Track } from "@/lib/analytics";
 import { priorities, teams } from "@/lib/requests";
 import { submitDocument } from "../actions";
 import { RequestForm } from "./request-form";
+import { customer } from "@/lib/customer";
 
 // Reading a document is a few model calls; the action waits for them.
 export const maxDuration = 120;
@@ -31,7 +32,7 @@ export default function NewRequestPage() {
           />
           <span className="text-sm text-muted-foreground">
             An invoice, an email, a letter or a form, as a PDF or an image.
-            WorkBot reads it and files the request.
+            {customer.assistant} reads it and files the request.
           </span>
         </div>
         <div className="mt-8">

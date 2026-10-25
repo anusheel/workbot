@@ -23,6 +23,7 @@ import {
   investigateRequest,
   setStatus,
 } from "../actions";
+import { customer } from "@/lib/customer";
 
 // An investigation is a few model calls per agent; the action waits for all of them.
 export const maxDuration = 300;
@@ -170,8 +171,8 @@ async function Documents({ requestId }: { requestId: string }) {
     <section className="mt-12 border-t pt-8">
       <h2 className="text-base font-semibold">Documents</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        What this request was filed from, as WorkBot read it. Check the marked
-        fields.
+        What this request was filed from, as {customer.assistant} read it. Check
+        the marked fields.
       </p>
       {documents.map((document) => (
         <div key={document.id} className="mt-5 rounded-xl border bg-card p-6">

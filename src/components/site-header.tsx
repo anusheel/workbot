@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
+import { customer } from "@/lib/customer";
 
 const links = [
   { href: "/chat", label: "Chat" },
@@ -17,7 +18,7 @@ export function SiteHeader() {
     <header className="border-b">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-6">
         <Link href="/" className="font-semibold tracking-tight">
-          WorkBot
+          {customer.assistant}
         </Link>
         <nav aria-label="Main" className="flex items-center gap-1">
           {links.map(({ href, label }) => (
