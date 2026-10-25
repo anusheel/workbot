@@ -69,7 +69,7 @@ export async function investigateRequest(id: string) {
     ? `${request.title}\n\n${request.body}`
     : request.title;
   const { report, findings, dollars } = await withTrace(
-    { caller: user.id, name: "investigate" },
+    { caller: user.id, role: user.role, name: "investigate" },
     () => investigate(question, modelFor("research")),
   );
   await saveReport(id, { report, findings, dollars });
@@ -88,7 +88,7 @@ export async function attachRecording(id: string, formData: FormData) {
     await writeFile(path, new Uint8Array(await file.arrayBuffer()));
     const model = modelFor("read");
     const recording = await withTrace(
-      { caller: user.id, name: "recording" },
+      { caller: user.id, role: user.role, name: "recording" },
       async () => {
         const scenes = await describeFrames(await extractFrames(path), model);
         return saveRecording(id, {
@@ -119,8 +119,9 @@ export async function askAboutRecording(
   const question = String(formData.get("question") ?? "").trim();
   const recording = await getRecording(recordingId);
   if (!question || !recording) return {};
-  const answer = await withTrace({ caller: user.id, name: "recording" }, () =>
-    askRecording(recording.scenes, question, modelFor("read")),
+  const answer = await withTrace(
+    { caller: user.id, role: user.role, name: "recording" },
+    () => askRecording(recording.scenes, question, modelFor("read")),
   );
   return { question, answer };
 }
@@ -133,7 +134,7 @@ export async function submitDocument(formData: FormData) {
   const file = formData.get("document");
   if (!(file instanceof File) || !media.has(file.type)) return;
   const { request } = await withTrace(
-    { caller: user.id, name: "document" },
+    { caller: user.id, role: user.role, name: "document" },
     async () =>
       ingest(
         {

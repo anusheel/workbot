@@ -50,6 +50,7 @@ const lookups: string[] = [];
 const tools = [
   tool({
     name: "lookup",
+    access: "public",
     description: "Looks something up",
     input: z.object({ term: z.string() }),
     run: ({ term }) => {
@@ -61,6 +62,7 @@ const tools = [
   }),
   tool({
     name: "finish",
+    access: "public",
     description: "Ends with the answer",
     input: z.object({ answer: z.string() }),
     run: ({ answer }) => answer,
@@ -172,6 +174,7 @@ test("a tool that outlives the time limit fails, and the run ends on time", asyn
       ...tools,
       tool({
         name: "wait",
+        access: "public",
         description: "Never answers",
         input: z.object({}),
         run: () => new Promise<string>(() => {}),

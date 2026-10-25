@@ -200,6 +200,7 @@ test("a module the evals run is a trigger path unless it holds no prompt, tool, 
   // its own. A module the evals come to import that is in neither list fails
   // here, and a person decides which.
   const plumbing = new Set([
+    "src/lib/auth-model.ts",
     "src/lib/cache.ts",
     "src/lib/calculator.ts",
     "src/lib/config.ts",

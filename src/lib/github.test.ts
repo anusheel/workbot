@@ -7,6 +7,7 @@ import { githubTools } from "./github";
 import { connectMcp } from "./mcp";
 import { pullTickets } from "./tickets";
 import { lastSync, listTickets } from "./unified";
+import { actingAs } from "@/test/auth";
 
 vi.hoisted(() => {
   process.env.GITHUB_REPO = "acme/helpdesk";
@@ -177,7 +178,7 @@ function fakeGitHub() {
 
 const github = fakeGitHub();
 const tools = Object.fromEntries(
-  githubTools(github.connect).map((t) => [t.name, t]),
+  actingAs("agent", githubTools(github.connect)).map((t) => [t.name, t]),
 );
 
 test("pulls the issues that changed since the last sync, a page at a time", async () => {

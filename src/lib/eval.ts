@@ -1,6 +1,6 @@
 import { type LanguageModel, Output, generateText, isStepCount } from "ai";
 import { z } from "zod";
-import { chatTools } from "./chat";
+import { chatToolsFor } from "./chat";
 import type { Triage } from "./intake";
 import { priorities, teams } from "./requests";
 
@@ -52,7 +52,7 @@ export async function answer(
     model,
     instructions: prompt,
     prompt: golden.question,
-    tools: chatTools,
+    tools: chatToolsFor("public"),
     stopWhen: isStepCount(6),
   });
   return {

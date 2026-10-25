@@ -122,6 +122,7 @@ export function githubTools(
   return [
     tool({
       name: "find_ticket",
+      access: "viewer",
       description:
         "Finds tickets, the ticketing repository's issues and WorkBot's own requests as synced every 15 minutes, by words in their title or body: up to 5, newest change first, each with its number, state, assignee, team, title and link. Call it before filing a ticket, to find one that exists. Reads nothing from the network.",
       input: z.object({ query: z.string().min(2).max(200) }),
@@ -134,6 +135,7 @@ export function githubTools(
     }),
     tool({
       name: "file_ticket",
+      access: "agent",
       description:
         "Files a ticket: an issue in the ticketing repository, visible to everyone with access to it. The key names what the ticket is about, and a second call with the same key returns the ticket filed the first time rather than filing another. With dry_run, describes the ticket it would file and files nothing. Not for a question, which you answer; call find_ticket first.",
       input: z.object({
@@ -173,6 +175,7 @@ export function githubTools(
     }),
     tool({
       name: "comment_on_ticket",
+      access: "agent",
       description:
         "Adds a comment to a ticket by its number, visible to everyone with access to the repository, once per key: a second call with the same key returns the comment made the first time. With dry_run, shows the comment it would add and adds nothing. Nothing personal about anyone goes in a comment.",
       input: z.object({

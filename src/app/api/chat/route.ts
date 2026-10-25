@@ -1,4 +1,5 @@
 import {
+  type ToolSet,
   type UIMessage,
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -10,7 +11,8 @@ import {
 import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
-import { chatTools } from "@/lib/chat";
+import { userOf } from "@/lib/auth";
+import { chatToolsFor } from "@/lib/chat";
 import { modelFor } from "@/lib/routing";
 import { compact, textOf } from "@/lib/context";
 import {
@@ -49,17 +51,28 @@ export async function POST(request: Request) {
       { error: z.flattenError(body.error) },
       { status: 400 },
     );
+  // A signed-in employee gets the tools their role reaches; anyone else, the customer set.
+  const user = await userOf(request.headers);
+  const role = user?.role ?? "public";
+  const tools = chatToolsFor(role);
   const validated = await safeValidateUIMessages({
     messages: body.data.messages,
-    tools: chatTools,
+    tools,
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const caller = visitor ?? "web";
+  const caller = user?.id ?? visitor ?? "web";
   const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(
-    { caller, name: "chat", prompt: `workbot/system@${prompt.version}` },
-    () => reply(body.data.id, validated.data, visitor, prompt.text),
+    { caller, name: "chat", role, prompt: `workbot/system@${prompt.version}` },
+    () =>
+      reply(
+        body.data.id,
+        validated.data,
+        user?.id ?? visitor,
+        prompt.text,
+        tools,
+      ),
   );
 }
 
@@ -68,6 +81,7 @@ async function reply(
   input: UIMessage[],
   visitor: string | undefined,
   prompt: string,
+  tools: ToolSet,
 ) {
   const [memories, { messages, summary }] = await Promise.all([
     visitor ? listMemories(visitor) : [],
@@ -95,7 +109,7 @@ async function reply(
       ...(known ? [{ role: "system" as const, content: known }] : []),
     ],
     messages: await convertToModelMessages(messages),
-    tools: chatTools,
+    tools,
     stopWhen: isStepCount(8),
   });
 
@@ -103,7 +117,7 @@ async function reply(
   return createUIMessageStreamResponse({
     stream: toUIMessageStream({
       stream: result.stream,
-      tools: chatTools,
+      tools,
       onError: () => unavailable,
       // Once the reply is out, keep what this exchange taught about the person.
       onEnd: ({ responseMessage }) => {

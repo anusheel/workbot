@@ -1,7 +1,11 @@
 import { expect, test } from "vitest";
 import { customerSections, knowledgeTools } from "./knowledge-tools";
+import { actingAs } from "@/test/auth";
 
-const [findTool, lsTool, catTool, grepTool] = knowledgeTools();
+const [findTool, lsTool, catTool, grepTool] = actingAs(
+  "viewer",
+  knowledgeTools(),
+);
 
 test("ls walks sections, documents and headings", async () => {
   expect(await lsTool.run({})).toMatch(/^faq\/  \d+ documents/);

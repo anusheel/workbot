@@ -8,13 +8,15 @@ import type {
 } from "@ai-sdk/provider";
 import { wrapLanguageModel } from "ai";
 import { io } from "next/cache";
+import type { Access } from "./auth-model";
 import { query } from "./db";
 import { costOf } from "./providers";
 
-/** Who a model call is for and what it is doing: set once per request, read by every call inside it; `request` tells one request's calls from another's. */
+/** Who a request is for and what it is doing: set once per request, read by every model call and every tool inside it; `role` is what the caller may do, `request` tells one request's calls from another's. */
 export type Context = {
   caller: string;
   name: string;
+  role?: Access;
   prompt?: string;
   request?: string;
 };
@@ -39,6 +41,10 @@ const fallback: Context = { caller: "system", name: "call" };
 export const withTrace = <T>(ctx: Context, fn: () => Promise<T>) =>
   context.run({ request: randomUUID(), ...ctx }, fn);
 export const currentContext = (): Context => context.getStore() ?? fallback;
+
+/** For a command run in the terminal: the operator, who holds the database and every key, works as an admin. */
+export const asOperator = <T>(name: string, fn: () => Promise<T>) =>
+  withTrace({ caller: "terminal", name, role: "admin" }, fn);
 
 const columns = `id, at, caller, name, prompt, request, model, input, output, cached, dollars, ms, ok, error`;
 

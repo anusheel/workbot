@@ -18,6 +18,8 @@ import { customer } from "./customer";
  * exact phrase. Scoped to sections: a reader sees nothing outside them.
  */
 export function knowledgeTools(sections?: string[]) {
+  // Scoped to the customer-facing sections, anyone may read; the whole base is for employees.
+  const access = sections ? "public" : "viewer";
   const allowed = (document: Document) =>
     !sections || sections.includes(document.section);
   const open = async (path: string) => {
@@ -29,6 +31,7 @@ export function knowledgeTools(sections?: string[]) {
 
   const findTool = tool({
     name: "find",
+    access,
     description:
       "Finds the 10 sections of the knowledge base most relevant to a question, with their paths and scores. Start here, then cat the paths that look right.",
     input: z.object({
@@ -48,6 +51,7 @@ export function knowledgeTools(sections?: string[]) {
 
   const lsTool = tool({
     name: "ls",
+    access,
     description:
       "Lists the knowledge base: no path for the sections, a section (such as faq) for its documents, a document path for its headings.",
     input: z.object({
@@ -82,6 +86,7 @@ export function knowledgeTools(sections?: string[]) {
 
   const catTool = tool({
     name: "cat",
+    access,
     description:
       "Reads a document in full by its path, or one section with section/document#heading.",
     input: z.object({ path: z.string().min(3) }),
@@ -103,6 +108,7 @@ export function knowledgeTools(sections?: string[]) {
 
   const grepTool = tool({
     name: "grep",
+    access,
     description:
       "Searches every line of the knowledge base for a regular expression (case-insensitive), optionally under a path such as faq/ or policies/refunds. For exact phrases, numbers and names.",
     input: z.object({

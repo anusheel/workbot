@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { MemoryList } from "@/components/memory-list";
 import { listMemories } from "@/lib/memory";
-import { visitorId } from "@/lib/visitor";
+import { memoryOwner } from "@/lib/visitor";
 import { forgetEverything, forgetMemory } from "./actions";
 import { customer } from "@/lib/customer";
 
@@ -34,7 +34,7 @@ export default function SettingsPage() {
 }
 
 async function Memories() {
-  const visitor = await visitorId();
+  const visitor = await memoryOwner();
   const memories = visitor ? await listMemories(visitor) : [];
   return (
     <MemoryList

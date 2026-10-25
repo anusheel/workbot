@@ -15,8 +15,9 @@ export async function POST(request: Request) {
       { error: z.flattenError(body.error) },
       { status: 400 },
     );
-  const created = await withTrace({ caller: user.id, name: "intake" }, () =>
-    intake(body.data.message, modelFor("triage")),
+  const created = await withTrace(
+    { caller: user.id, role: user.role, name: "intake" },
+    () => intake(body.data.message, modelFor("triage")),
   );
   await track("request_submitted", {
     requestId: created.id,
