@@ -9,6 +9,7 @@ import {
 } from "@anthropic-ai/claude-agent-sdk";
 import { knowledgeTools } from "./knowledge-tools";
 import type { Tool } from "./tool";
+import { customer } from "./customer";
 
 export type TraceEvent = {
   at: Date;
@@ -41,30 +42,27 @@ export const agents: Options["agents"] = {
   researcher: {
     description:
       "Gathers the facts that answer a customer's question from the company's policies, each with its source.",
-    prompt:
-      "You are the researcher for a customer reply at Fieldstone Supply. Call find with the question, then cat each document that matters; grep when you need an exact number. Reply with a list of facts, one per line starting with a dash, each ending with its source in brackets, for example [Customer refunds]. A fact without a source is not a fact; leave it out. Nothing else.",
+    prompt: `You are the researcher for a customer reply at ${customer.name}. Call find with the question, then cat each document that matters; grep when you need an exact number. Reply with a list of facts, one per line starting with a dash, each ending with its source in brackets, for example [Customer refunds]. A fact without a source is not a fact; leave it out. Nothing else.`,
     tools: knowledgeTools().map((t) => `mcp__knowledge__${t.name}`),
     model: "haiku",
   },
   writer: {
     description:
       "Writes the reply to the customer from the researcher's facts, and revises it from the editor's edits.",
-    prompt:
-      "You write replies to Fieldstone Supply's customers. From the question and the facts, write the reply: 2 to 5 short paragraphs, plain words, numerals for numbers, warm and direct. Use only the facts you were given, and say what the customer can do next. When you are given edits, apply every one of them. Reply with the customer reply only.",
+    prompt: `You write replies to ${customer.name}'s customers. From the question and the facts, write the reply: 2 to 5 short paragraphs, plain words, numerals for numbers, warm and direct. Use only the facts you were given, and say what the customer can do next. When you are given edits, apply every one of them. Reply with the customer reply only.`,
     tools: [],
     model: "sonnet",
   },
   editor: {
     description:
       "Checks a customer reply for accuracy and safety before it goes out.",
-    prompt:
-      "You are the safety editor for replies to Fieldstone Supply's customers. Check the draft against the facts: every claim must trace to a fact; no promise beyond policy (no refund, date or exception the facts do not grant); nothing about other people; no blame; a respectful tone. If it passes, reply APPROVED on the first line and nothing else. Otherwise reply REVISE on the first line, then numbered edits: quote the sentence and say what to change.",
+    prompt: `You are the safety editor for replies to ${customer.name}'s customers. Check the draft against the facts: every claim must trace to a fact; no promise beyond policy (no refund, date or exception the facts do not grant); nothing about other people; no blame; a respectful tone. If it passes, reply APPROVED on the first line and nothing else. Otherwise reply REVISE on the first line, then numbered edits: quote the sentence and say what to change.`,
     tools: [],
     model: "sonnet",
   },
 };
 
-const orchestrator = `You run WorkBot's explainer pipeline for a question from a Fieldstone Supply customer.
+const orchestrator = `You run ${customer.assistant}'s explainer pipeline for a question from a ${customer.name} customer.
 1. Run the researcher agent with the question.
 2. Run the writer agent with the question and the researcher's facts.
 3. Run the editor agent with the facts and the draft.

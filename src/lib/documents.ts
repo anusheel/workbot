@@ -1,6 +1,7 @@
 import { type LanguageModel, Output, generateText } from "ai";
 import { io } from "next/cache";
 import { z } from "zod";
+import { customer } from "./customer";
 import { query } from "./db";
 import {
   type DocumentType,
@@ -92,7 +93,7 @@ export function toRequest(document: Extracted): NewRequest {
         body: fitBody(
           `${due ? `Due ${due}. ` : ""}${terms ? `Terms: ${terms}. ` : ""}\n\n${list(lines.map((l) => `${l.description}: ${money(currency, l.amount)}`))}`,
         ),
-        team: "finance",
+        team: customer.filing.invoice,
         priority: due ? "normal" : "low",
       });
     }
@@ -103,8 +104,8 @@ export function toRequest(document: Extracted): NewRequest {
         body: fitBody(`From ${from} (${intent}).\n\n${list(actions)}`),
         team:
           intent === "complaint" || intent === "question"
-            ? "support"
-            : "operations",
+            ? customer.filing.complaint
+            : customer.filing.other,
         priority:
           urgency === "high" ? "high" : urgency === "low" ? "low" : "normal",
       });
@@ -114,7 +115,7 @@ export function toRequest(document: Extracted): NewRequest {
       return NewRequest.parse({
         title: fitTitle(subject),
         body: fitBody(`From ${from}. ${summary}\n\n${list(requested)}`),
-        team: "operations",
+        team: customer.filing.other,
         priority: "normal",
       });
     }
@@ -123,7 +124,7 @@ export function toRequest(document: Extracted): NewRequest {
       return NewRequest.parse({
         title: fitTitle(`Hiring: ${title} at ${company}`),
         body: [location, workplace].filter(Boolean).join(", "),
-        team: "operations",
+        team: customer.filing.other,
         priority: "low",
       });
     }

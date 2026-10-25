@@ -1,5 +1,6 @@
 import { type LanguageModel, Output, generateText } from "ai";
 import { z } from "zod";
+import { customer, teamList } from "./customer";
 import { NewRequest, priorities, teams } from "./request-model";
 import { createRequest } from "./requests";
 
@@ -17,9 +18,7 @@ const Triage = z.object({
     ),
   team: z
     .enum(teams)
-    .describe(
-      "operations for facilities, vendors and logistics; finance for money; support for customers",
-    ),
+    .describe(customer.teams.map((t) => `${t.id} for ${t.files}`).join("; ")),
   priority: z
     .enum(priorities)
     .describe(
@@ -36,8 +35,7 @@ export async function triage(
   const { output } = await generateText({
     model,
     output: Output.object({ schema: Triage }),
-    instructions:
-      "You triage messages sent to Fieldstone Supply's operations, finance and support teams. Turn the message into a work request: a short title, the body in the sender's words, the team that owns it and a priority.",
+    instructions: `You triage messages sent to ${customer.name}'s ${teamList(customer)} teams. Turn the message into a work request: a short title, the body in the sender's words, the team that owns it and a priority.`,
     prompt: message,
   });
   return output;

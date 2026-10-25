@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { customer } from "./customer";
 
-export const teams = ["operations", "finance", "support"] as const;
+/** The customer's teams, from its configuration. */
+export const teams = customer.teams.map((t) => t.id) as [string, ...string[]];
 export const priorities = ["low", "normal", "high"] as const;
 export const statuses = ["open", "in_progress", "done"] as const;
 export type Team = (typeof teams)[number];
