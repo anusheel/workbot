@@ -42,4 +42,13 @@ export const schema = [
     dollars double precision not null default 0,
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists recordings (
+    id uuid primary key default gen_random_uuid(),
+    request_id uuid not null references requests(id) on delete cascade,
+    name text not null,
+    seconds integer not null,
+    scenes jsonb not null default '[]',
+    summary text not null,
+    created_at timestamptz not null default now()
+  )`,
 ];
