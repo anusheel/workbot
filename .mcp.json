@@ -1,7 +1,25 @@
 {
   "mcpServers": {
-    "linear": { "type": "http", "url": "https://mcp.linear.app/mcp" },
-    "github": { "type": "http", "url": "https://api.githubcopilot.com/mcp/" },
-    "figma": { "type": "http", "url": "https://mcp.figma.com/mcp" }
+    "linear": {
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "database": {
+      "command": "node",
+      "args": [
+        "--env-file-if-exists=.env.local",
+        "--import",
+        "tsx",
+        "mcp/database.ts"
+      ]
+    }
   }
 }
