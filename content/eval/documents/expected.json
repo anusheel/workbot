@@ -1,0 +1,269 @@
+{
+  "invoice-1": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Acme Supplies Co.",
+      "number": "INV-4471",
+      "date": "2026-10-01",
+      "due": "2026-10-31",
+      "currency": "USD",
+      "subtotal": 1420,
+      "tax": 131.35,
+      "total": 1551.35,
+      "lines": [
+        {
+          "description": "Steel shelving unit, 5 tier",
+          "quantity": 4,
+          "unitPrice": 310,
+          "amount": 1240
+        },
+        {
+          "description": "Delivery and assembly",
+          "quantity": 1,
+          "unitPrice": 180,
+          "amount": 180
+        }
+      ]
+    }
+  },
+  "invoice-2": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Bay Area Pallet & Crate",
+      "number": "2026-0911",
+      "date": "2026-09-14",
+      "currency": "USD",
+      "subtotal": 2665,
+      "tax": 266.5,
+      "total": 2931.5
+    }
+  },
+  "invoice-3": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Northgate Facilities Services Ltd",
+      "number": "NF-88213",
+      "date": "2026-08-28",
+      "due": "2026-09-27",
+      "currency": "GBP",
+      "subtotal": 2568.4,
+      "tax": 513.68,
+      "total": 3082.08
+    }
+  },
+  "invoice-4": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Golden Gate Forklift Repair",
+      "number": "7731",
+      "currency": "USD",
+      "total": 717.5,
+      "lines": [
+        {
+          "description": "Hydraulic hose replacement, unit FL-3",
+          "amount": 420
+        },
+        {
+          "description": "Labour, 2.5 hours at $95.00/h",
+          "amount": 237.5
+        },
+        {
+          "description": "Call-out fee",
+          "amount": 60
+        }
+      ]
+    }
+  },
+  "invoice-5": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Embalajes del Norte S.A.",
+      "number": "FE-2026-00312",
+      "date": "2026-07-19",
+      "due": "2026-08-18",
+      "currency": "EUR",
+      "subtotal": 810,
+      "tax": 170.1,
+      "total": 980.1
+    }
+  },
+  "email-1": {
+    "type": "email",
+    "data": {
+      "from": "Dana Whitfield <dana.whitfield@brightline-retail.example>",
+      "subject": "Order 4411 arrived damaged",
+      "intent": "complaint",
+      "urgency": "high"
+    }
+  },
+  "email-2": {
+    "type": "email",
+    "data": {
+      "from": "Marcus Lee <m.lee@fieldstone.example>",
+      "to": ["finance@fieldstone.example", "ops-leads@fieldstone.example"],
+      "subject": "FYI: fuel surcharge from Bay Area Pallet from October",
+      "intent": "information",
+      "urgency": "low",
+      "actions": []
+    }
+  },
+  "email-3": {
+    "type": "email",
+    "data": {
+      "from": "Priya Natarajan <priya@fieldstone.example>",
+      "to": ["it@fieldstone.example"],
+      "subject": "Which VPN client for the new laptops?",
+      "intent": "question",
+      "urgency": "low"
+    }
+  },
+  "email-4": {
+    "type": "email",
+    "data": {
+      "from": "accounts@northgate-facilities.example",
+      "to": ["finance@fieldstone.example"],
+      "subject": "Second reminder: invoice NF-88213 overdue",
+      "intent": "complaint",
+      "urgency": "high"
+    }
+  },
+  "email-5": {
+    "type": "email",
+    "data": {
+      "from": "Tomás Herrera <tomas.herrera@fieldstone.example>",
+      "subject": "Request: 2 days of leave, 6 and 7 November",
+      "intent": "request"
+    }
+  },
+  "job-1": {
+    "type": "job",
+    "data": {
+      "title": "Forklift Operator (Day Shift)",
+      "company": "Fieldstone Supply",
+      "location": "Oakland, CA",
+      "salary": {
+        "min": 24,
+        "max": 28,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "workplace": "onsite"
+    }
+  },
+  "job-2": {
+    "type": "job",
+    "data": {
+      "title": "Senior TypeScript Engineer, Internal Tools",
+      "company": "Plank Labs",
+      "salary": {
+        "min": 165000,
+        "max": 195000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "workplace": "remote"
+    }
+  },
+  "job-3": {
+    "type": "job",
+    "data": {
+      "title": "Customer Support Specialist",
+      "company": "Brightline Retail",
+      "salary": {
+        "min": 58000,
+        "max": 64000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "workplace": "hybrid"
+    }
+  },
+  "job-4": {
+    "type": "job",
+    "data": {
+      "title": "Night Security Officer",
+      "company": "Northgate Facilities Services Ltd",
+      "salary": {
+        "min": 21.5,
+        "max": 21.5,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "workplace": "onsite"
+    }
+  },
+  "job-5": {
+    "type": "job",
+    "data": {
+      "title": "Finance Assistant (part-time, 20 hours a week)",
+      "company": "Embalajes del Norte",
+      "salary": {
+        "min": 24000,
+        "max": 27000,
+        "currency": "EUR",
+        "period": "year"
+      },
+      "workplace": "hybrid"
+    }
+  },
+  "letter-1": {
+    "type": "letter",
+    "data": {
+      "from": "Oakland Fire Department",
+      "date": "2026-10-20",
+      "requested": [
+        "Confirm the inspection date of November 12, 2026 at 9:00 am within 10 days, or propose another date in November",
+        "Have the sprinkler system certificate, fire extinguisher service tags and evacuation plan ready on the day"
+      ]
+    }
+  },
+  "letter-2": {
+    "type": "letter",
+    "data": {
+      "from": "Marcus Lee",
+      "date": "2026-10-26",
+      "fields": [
+        {
+          "name": "Visitor name",
+          "value": "Lena Ortiz"
+        },
+        {
+          "name": "Company",
+          "value": "Golden Gate Forklift Repair"
+        },
+        {
+          "name": "Date of visit",
+          "value": "2026-10-28"
+        },
+        {
+          "name": "Arrival time",
+          "value": "07:30"
+        },
+        {
+          "name": "Host",
+          "value": "Marcus Lee, Operations"
+        },
+        {
+          "name": "Purpose",
+          "value": "Service forklift FL-3 and FL-5"
+        },
+        {
+          "name": "Vehicle registration",
+          "value": "8KTR442"
+        },
+        {
+          "name": "Needs forklift bay access?",
+          "value": "Yes"
+        }
+      ]
+    }
+  },
+  "letter-3": {
+    "type": "letter",
+    "data": {
+      "from": "Dana Whitfield",
+      "date": "2026-09-30",
+      "to": "Support Team, Fieldstone Supply"
+    }
+  }
+}

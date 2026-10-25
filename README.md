@@ -54,3 +54,9 @@ what it needs, files the request and says where it went; talk over it and it
 listens. On a request's page, Investigate runs the research analyst and
 Attach a recording reads a video frame by frame into a timeline you can ask
 about (`pnpm video <file>` does the same from the terminal; it needs ffmpeg).
+
+A document files its own request: on the new-request page, or at `POST
+/api/documents`, an invoice, an email, a letter or a form (as a PDF, an
+image or text) is read into a typed record, filed with the right team, and
+kept on the request with its doubtful fields marked. `pnpm extract <file>`
+runs the extraction alone; `pnpm extract:eval` measures it on 18 documents.

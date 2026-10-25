@@ -1,14 +1,17 @@
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Film, Search } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { DocumentFields } from "@/components/document-fields";
+import { FileUpload } from "@/components/file-upload";
 import { Markdown } from "@/components/markdown";
 import { PendingButton } from "@/components/pending-button";
 import { RecordingQuestion } from "@/components/recording-question";
-import { RecordingUpload } from "@/components/recording-upload";
 import { Badge } from "@/components/ui/badge";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { schemas } from "@/lib/document-model";
+import { listDocuments } from "@/lib/documents";
 import { listRecordings } from "@/lib/recordings";
 import { latestReport } from "@/lib/reports";
 import { getRequest, statusLabels, statuses } from "@/lib/requests";
@@ -82,6 +85,7 @@ async function RequestDetail({
             </Button>
           ))}
       </form>
+      <Documents requestId={request.id} />
       <Research requestId={request.id} />
       <Recordings requestId={request.id} />
     </article>
@@ -133,7 +137,14 @@ async function Recordings({ requestId }: { requestId: string }) {
               : "A meeting recording or a video of the problem, read frame by frame and filed here as a timeline."}
           </p>
         </div>
-        <RecordingUpload action={attachRecording.bind(null, requestId)} />
+        <FileUpload
+          action={attachRecording.bind(null, requestId)}
+          name="recording"
+          accept="video/*"
+          label="Attach a recording"
+          busy="Reading the recording…"
+          icon={<Film />}
+        />
       </div>
       {recordings.map((recording) => (
         <div key={recording.id} className="mt-5 rounded-xl border bg-card p-6">
@@ -153,6 +164,46 @@ async function Recordings({ requestId }: { requestId: string }) {
           <RecordingQuestion
             action={askAboutRecording.bind(null, recording.id)}
           />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+async function Documents({ requestId }: { requestId: string }) {
+  const documents = await listDocuments(requestId);
+  if (documents.length === 0) return null;
+  return (
+    <section className="mt-12 border-t pt-8">
+      <h2 className="text-base font-semibold">Documents</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        What this request was filed from, as WorkBot read it. Check the marked
+        fields.
+      </p>
+      {documents.map((document) => (
+        <div key={document.id} className="mt-5 rounded-xl border bg-card p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-sm font-medium">
+              <Badge variant="secondary" className="capitalize">
+                {document.type}
+              </Badge>
+              {document.name}
+            </h3>
+            <span className="text-xs text-muted-foreground">
+              read{" "}
+              {document.createdAt.toLocaleString("en-GB", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </span>
+          </div>
+          <div className="mt-4">
+            <DocumentFields
+              data={document.data}
+              order={Object.keys(schemas[document.type].shape)}
+              review={document.review}
+            />
+          </div>
         </div>
       ))}
     </section>

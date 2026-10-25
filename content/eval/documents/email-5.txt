@@ -1,0 +1,11 @@
+From: Tomás Herrera <tomas.herrera@fieldstone.example>
+To: hr@fieldstone.example
+Cc: ops-leads@fieldstone.example
+Subject: Request: 2 days of leave, 6 and 7 November
+
+Hi HR,
+
+I would like to take 6 and 7 November as paid leave. My lead has agreed cover for the dock. Please confirm the days are approved and let me know if you need anything else from me.
+
+Thank you,
+Tomás

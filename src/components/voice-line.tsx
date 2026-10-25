@@ -76,8 +76,14 @@ function webSpeechSpeaker(): Speaker | undefined {
     speak: (text) =>
       new Promise((resolve) => {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
+        // Chrome does not always fire end; a timer sized to the line stands in for it.
+        const timer = setTimeout(done, 2_000 + text.length * 80);
+        function done() {
+          clearTimeout(timer);
+          resolve();
+        }
+        utterance.onend = done;
+        utterance.onerror = done;
         speechSynthesis.speak(utterance);
       }),
     stop: () => speechSynthesis.cancel(),
