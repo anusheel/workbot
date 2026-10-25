@@ -109,23 +109,33 @@ export const schema = [
   )`,
   // The request a call belongs to, so a fallback is the next call of the same request.
   `alter table traces add column if not exists request text`,
-  // One shape for tickets and contacts wherever they live, with the provider's record in raw and the rules that fired in applied.
+  // Tickets synced from the ticketing system, as Day 27 shaped them.
   `create table if not exists tickets (
     id text primary key,
     source text not null,
-    key text not null,
+    number integer not null,
     title text not null,
     body text not null default '',
     state text not null,
     assignee text,
     labels jsonb not null default '[]',
-    team text,
     url text not null,
-    raw jsonb not null default '{}',
-    applied jsonb not null default '[]',
     updated_at timestamptz not null
   )`,
   `create index if not exists tickets_updated on tickets (source, updated_at)`,
+  // One shape for tickets and contacts wherever they live, with the provider's record in raw and the rules that fired in applied.
+  // A ticket is keyed as text under its source now, not by issue number under the repository's name.
+  `alter table tickets add column if not exists key text`,
+  `alter table tickets add column if not exists team text`,
+  `alter table tickets add column if not exists raw jsonb not null default '{}'`,
+  `alter table tickets add column if not exists applied jsonb not null default '[]'`,
+  `do $$ begin
+    if exists (select 1 from information_schema.columns where table_name = 'tickets' and column_name = 'number') then
+      update tickets set key = number::text, source = 'github', id = 'github#' || number;
+      alter table tickets drop column number;
+      alter table tickets alter column key set not null;
+    end if;
+  end $$`,
   `create table if not exists contacts (
     id text primary key,
     source text not null,
