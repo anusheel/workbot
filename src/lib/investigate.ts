@@ -13,7 +13,7 @@ import { knowledgeTools } from "./knowledge-tools";
 import { costOf } from "./providers";
 import { type Tool, tool } from "./tool";
 import { readUrl, webSearch } from "./tools";
-import { readPage } from "./web";
+import { isPublic, readPage } from "./web";
 
 export type Finding = { text: string; source: string };
 export type Agent = "analyst" | "knowledge" | "web";
@@ -152,6 +152,9 @@ export async function investigate(
         .describe("what to do on the page and what to report"),
     }),
     run: async ({ url, task }) => {
+      // The browser's bounds always include the site it starts on, so the start itself has to be public.
+      if (!isPublic(new URL(url)))
+        throw new Error(`${url} is not a public web address`);
       const once = async () => {
         const page = await browser(url);
         try {
