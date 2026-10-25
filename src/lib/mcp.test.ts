@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { z } from "zod";
 import { connectMcp, withMcp } from "./mcp";
 
-async function connect() {
+async function connect(timeout?: number) {
   const server = new McpServer({ name: "fake", version: "1.0.0" });
   server.registerTool(
     "echo",
@@ -15,16 +15,27 @@ async function connect() {
     content: [{ type: "text", text: "no such thing" }],
     isError: true,
   }));
+  server.registerTool("hang", {}, () => new Promise(() => {}));
   const [client, transport] = InMemoryTransport.createLinkedPair();
   await server.connect(transport);
-  return connectMcp(client);
+  return connectMcp(client, timeout);
 }
 
 test("lists the server's tools, returns a tool's text and throws its error", async () => {
   const mcp = await connect();
-  expect((await mcp.tools()).map((t) => t.name)).toEqual(["echo", "fail"]);
+  expect((await mcp.tools()).map((t) => t.name)).toEqual([
+    "echo",
+    "fail",
+    "hang",
+  ]);
   expect(await mcp.call("echo", { text: "hi" })).toBe("hi");
   await expect(mcp.call("fail", {})).rejects.toThrow("no such thing");
+  await mcp.close();
+});
+
+test("a call that outlasts the timeout fails here", async () => {
+  const mcp = await connect(50);
+  await expect(mcp.call("hang", {})).rejects.toThrow(/timed out/i);
   await mcp.close();
 });
 

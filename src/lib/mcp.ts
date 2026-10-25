@@ -24,14 +24,28 @@ export const remote = (
     requestInit: { headers: { Authorization: `Bearer ${token}`, ...headers } },
   });
 
-/** Connects to an MCP server. A tool's failure comes back as an error carrying the server's message. */
-export async function connectMcp(transport: Transport): Promise<Mcp> {
+/** How long a call may take before it fails here, whatever the server goes on to do with it. */
+export const callTimeout = 60_000;
+
+/**
+ * Connects to an MCP server. A tool's failure comes back as an error
+ * carrying the server's message; a call that outlasts the timeout fails too,
+ * so nothing waits on a server for longer than a minute.
+ */
+export async function connectMcp(
+  transport: Transport,
+  timeout = callTimeout,
+): Promise<Mcp> {
   const client = new Client({ name: "workbot", version: "1.0.0" });
   await client.connect(transport);
   return {
     tools: async () => (await client.listTools()).tools,
     call: async (name, args) => {
-      const result = await client.callTool({ name, arguments: args });
+      const result = await client.callTool(
+        { name, arguments: args },
+        undefined,
+        { timeout },
+      );
       const text = (result.content as { type: string; text?: string }[])
         .filter((part) => part.type === "text")
         .map((part) => part.text ?? "")

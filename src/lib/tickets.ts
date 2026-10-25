@@ -140,7 +140,7 @@ export type Filing = { key: string; number: number | null; url: string | null };
 export type Kind = "filing" | "comment";
 type Made = { number: number; url: string };
 
-/** How long a claim with no result counts as a write in flight rather than a crashed one. */
+/** How long a claim with no result counts as a write in flight rather than a crashed one: longer than any call, which the client cuts off after a minute. */
 const inFlight = "5 minutes";
 
 /** The write made under a key, or the claim of one in flight; a crashed claim is invisible here and free below. */
