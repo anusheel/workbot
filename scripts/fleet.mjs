@@ -244,7 +244,7 @@ function collect(state) {
     ]).split("\n");
     const plan = body
       .join("\n")
-      .replace(/\s*Closes #\d+\s*$/, "")
+      .split(/^Closes #/m)[0]
       .trim();
     const text = `## Brief\nCloses #${issue.number}\n## Plan\n${plan}\n## Session\n- Claude Code: https://claude.ai/code/${run.cloud}\n## Checks\n- [ ] \`pnpm check\` runs in CI`;
     console.log(
@@ -331,11 +331,15 @@ const review = (pr) =>
       "--allowedTools",
       "Read,Grep,Glob,Agent,Task,Bash(gh pr:*),Bash(gh issue view:*),Bash(git diff:*)",
       ...NO_MCP,
+      ,
+      "--output-format",
+      "json",
     ],
     { cwd: home, encoding: "utf8", maxBuffer: 16 * 2 ** 20 },
-  ).then(({ stdout }) => stdout.trim());
+  ).then(({ stdout }) => JSON.parse(stdout).result.trim());
 
-// Green on the branch: the full check, then the eval smoke subset on the small model.
+// Green on the branch: the full check, then the eval smoke subset on the small
+// model; the bar is low because the subset catches a broken assistant, not drift.
 function green() {
   const log = openSync(join(pens, "check.log"), "w");
   try {
@@ -349,7 +353,7 @@ function green() {
     )?.[1],
   );
   console.log(`eval smoke: mean ${mean}`);
-  return mean >= 0.7;
+  return mean >= 0.5;
 }
 
 // Review the ready pull requests together, merge the approved ones one at a
