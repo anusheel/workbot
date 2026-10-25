@@ -15,7 +15,7 @@ const rows = [["Commit", config.commit]];
 
 export default function SettingsPage() {
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+    <>
       <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
       <Card className="mt-8 max-w-xl">
         <CardHeader>
@@ -37,6 +37,6 @@ export default function SettingsPage() {
           </dl>
         </CardContent>
       </Card>
-    </main>
+    </>
   );
 }
