@@ -47,3 +47,5 @@ next-env.d.ts
 
 # fleet runs in progress
 .fleet.json
+# Generated cases wait here for review; the reviewed ones move into the sets.
+content/eval/candidates/

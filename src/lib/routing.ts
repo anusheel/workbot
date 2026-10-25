@@ -38,7 +38,8 @@ export const allRoutes = providerNames.flatMap((provider) =>
 /**
  * The production routing, from the table in docs/routing.md: the model each
  * task runs on, then the ones that answer when it cannot, in order. The judge
- * has no fallback: a score from another model is not the same score.
+ * is the large model, never the one under test, and has no fallback: a score
+ * from another model is not the same score.
  */
 export const routes: Record<Task, Route[]> = {
   chat: ["anthropic/small", "anthropic/large"],
@@ -48,7 +49,7 @@ export const routes: Record<Task, Route[]> = {
   extract: ["anthropic/small", "anthropic/large"],
   triage: ["anthropic/small", "anthropic/large"],
   read: ["anthropic/small", "anthropic/large"],
-  judge: ["anthropic/small"],
+  judge: ["anthropic/large"],
 };
 
 const isTask = (value: string): value is Task =>
