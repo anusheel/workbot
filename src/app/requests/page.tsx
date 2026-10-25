@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FilterRow } from "@/components/filter-row";
 import { RequestList } from "@/components/request-list";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,12 +43,14 @@ async function Requests({
       <div className="mt-6 flex flex-col gap-2">
         <FilterRow
           name="team"
+          label="Team"
           all="All teams"
           options={teams}
           filter={filter}
         />
         <FilterRow
           name="status"
+          label="Status"
           all="All statuses"
           options={statuses}
           filter={filter}
@@ -55,48 +58,12 @@ async function Requests({
         />
       </div>
       <div className="mt-6">
-        <RequestList requests={await listRequests(filter)} />
+        <RequestList
+          requests={await listRequests(filter)}
+          filtered={Boolean(filter.team || filter.status)}
+          showCount
+        />
       </div>
     </>
-  );
-}
-
-// One link per value, as a row of buttons; the chosen one is filled in. Links,
-// not controls, so the filters work without JavaScript and can be shared.
-function FilterRow({
-  name,
-  all,
-  options,
-  filter,
-  labels = {},
-}: {
-  name: keyof RequestFilter;
-  all: string;
-  options: readonly string[];
-  filter: RequestFilter;
-  labels?: Record<string, string>;
-}) {
-  const href = (value?: string) => ({
-    pathname: "/requests" as const,
-    query: Object.fromEntries(
-      Object.entries({ ...filter, [name]: value }).filter(([, v]) => v),
-    ),
-  });
-  return (
-    <div className="flex flex-wrap gap-1">
-      {[undefined, ...options].map((value) => (
-        <Button
-          key={value ?? "all"}
-          asChild
-          size="sm"
-          variant={filter[name] === value ? "secondary" : "ghost"}
-          className="capitalize"
-        >
-          <Link href={href(value)}>
-            {value ? (labels[value] ?? value) : all}
-          </Link>
-        </Button>
-      ))}
-    </div>
   );
 }
