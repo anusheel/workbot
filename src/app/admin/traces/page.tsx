@@ -183,7 +183,7 @@ async function Dashboard() {
                       <div className="space-y-1">
                         <Badge variant="destructive">failed</Badge>
                         {trace.error && (
-                          <p className="max-w-xs text-xs text-muted-foreground">
+                          <p className="max-w-xs text-xs whitespace-normal text-muted-foreground">
                             {trace.error}
                           </p>
                         )}
