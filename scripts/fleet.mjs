@@ -400,13 +400,15 @@ const review = (pr) =>
   ).then(({ stdout }) => JSON.parse(stdout).result.trim());
 
 // Green on the branch: the full check, then the eval smoke subset on the small
-// model; the bar is low because the subset catches a broken assistant, not drift.
+// model; the bar is low because the subset catches a broken assistant, not
+// drift. True when green, otherwise the path of the log that says why.
 function green() {
-  const log = openSync(join(pens, "check.log"), "w");
+  const path = join(pens, `check-${Date.now()}.log`);
+  const log = openSync(path, "w");
   try {
     execFileSync("pnpm", ["check"], { cwd: home, stdio: ["ignore", log, log] });
   } catch {
-    return false;
+    return path;
   }
   const mean = Number(
     sh("pnpm", ["eval", "--runs", "1", "--only", "answer"]).match(
@@ -414,7 +416,7 @@ function green() {
     )?.[1],
   );
   console.log(`eval smoke: mean ${mean}`);
-  return mean >= 0.5;
+  return mean >= 0.5 || path;
 }
 
 // Review the ready pull requests together, merge the approved ones one at a
@@ -492,7 +494,13 @@ async function merge(batch) {
     "--format=%H",
   ]).split("\n");
   for (const [i, sha] of shas.entries()) {
-    if (green()) break;
+    const failed = green();
+    if (failed === true) break;
+    const lines = readFileSync(failed, "utf8")
+      .split("\n")
+      .filter((line) => /FAIL|error|×|✗/.test(line))
+      .slice(-8)
+      .join("\n");
     const issue = merged[merged.length - 1 - i];
     sh("git", ["revert", "--no-edit", sha]);
     gh(
@@ -500,7 +508,7 @@ async function merge(batch) {
       "reopen",
       String(issue.number),
       "--comment",
-      "Reverted: the branch failed its checks with this change. The brief needs a look.",
+      `Reverted: the branch failed its checks with this change. The brief needs a look.\n\n\`\`\`\n${lines}\n\`\`\``,
     );
     console.log(`#${issue.number}: reverted`);
   }
