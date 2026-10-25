@@ -1,8 +1,9 @@
 import { connection } from "next/server";
-import { config } from "@/lib/config";
+import { health } from "@/lib/health";
 
 export async function GET() {
   // Answer from the running server, not from the prerendered build.
   await connection();
-  return Response.json({ status: "ok", commit: config.commit });
+  const report = await health();
+  return Response.json(report, { status: report.status === "ok" ? 200 : 503 });
 }
