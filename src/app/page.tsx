@@ -37,12 +37,12 @@ export default function Home() {
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">
-            <Link href="/settings">
-              Open settings <ArrowRight />
+            <Link href="/requests/new">
+              File a request <ArrowRight />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <a href="/api/health">Health check</a>
+            <Link href="/admin">Admin console</Link>
           </Button>
         </div>
       </section>

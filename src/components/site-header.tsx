@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const links = [
   { href: "/requests", label: "Requests" },
-  { href: "/settings", label: "Settings" },
+  { href: "/admin", label: "Admin" },
 ] as const;
 
 export function SiteHeader() {

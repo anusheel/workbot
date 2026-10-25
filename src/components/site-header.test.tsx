@@ -7,5 +7,5 @@ test("renders the product name and a link to each page", () => {
   expect(html).toContain('href="/"');
   expect(html).toContain("WorkBot");
   expect(html).toContain('href="/requests"');
-  expect(html).toContain('href="/settings"');
+  expect(html).toContain('href="/admin"');
 });
