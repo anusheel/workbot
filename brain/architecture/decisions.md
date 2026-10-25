@@ -45,3 +45,7 @@ Haiku reads, extracts, judges and runs specialists; Sonnet decides and writes; O
 ## D11. One policy for 3 CLIs, instruction files per package (Day 21)
 
 `AGENTS.md` is the source, `CLAUDE.md` imports it; MCP servers declared per CLI from one list; skills shared as commands. Costs: 3 config files to keep in step, which a test checks. To reverse: delete 2 of them.
+
+## D12. The loop stays; LangGraph.js for the first resumable agent, the Claude Agent SDK where Claude Code parity matters (Day 23)
+
+The same research agent on 3 frameworks, 5 topics each (`docs/frameworks.md`): the product keeps its own 90-line loop; the explainer stays on the Claude Agent SDK; LangGraph.js is the choice for an agent that must pause for a person and resume, because its checkpoints live in the Postgres we have and its graph is testable with a scripted model and drawable. The OpenAI Agents SDK is a pattern to copy, not a dependency: we run Anthropic models and the adapter for them is beta. Costs: 3 framework packages in the tree for the comparison. To reverse: `src/lib/frameworks/` is the only place they are imported.

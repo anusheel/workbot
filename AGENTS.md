@@ -13,6 +13,7 @@ site is a second app in `site/`, with its own AGENTS.md.
 - `pnpm knowledge:index`: rebuild the knowledge base index; `pnpm compare:retrieval`: 10 questions by top-5 retrieval and by the agent, side by side
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working
 - `pnpm eval [--prompt name@version] [--runs n]`: the golden cases through the assistant, scored by a judge model
+- `pnpm frameworks [--only langgraph|claude|openai] [--topic id] [--thread id]`: the research agent on each framework, on the 5 topics, with time, tool calls, tokens and cost per run
 - `pnpm test:live`: the tests that call the real APIs, on the small models, with the keys in `.env.local`; run it before pushing a change to a prompt or a provider
 - `pnpm check`: lint, types, tests and a production build, for both apps; CI runs the same on every pull request and on `main`
 - `pnpm --filter workbot-site dev`: the public site on http://localhost:3001

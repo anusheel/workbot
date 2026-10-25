@@ -1,0 +1,22 @@
+[
+  {
+    "id": "refunds",
+    "question": "What is the refund policy for a damaged item, and who approves a refund above the usual limit?"
+  },
+  {
+    "id": "shipping",
+    "question": "What are the shipping cutoffs, and how long does delivery take after them?"
+  },
+  {
+    "id": "vendors",
+    "question": "What does a new vendor have to provide before the first purchase order goes out?"
+  },
+  {
+    "id": "invoices",
+    "question": "How is a vendor invoice approved, and when does the payment run happen?"
+  },
+  {
+    "id": "support",
+    "question": "What is the support SLA for customers, and how is an incident handled when it is missed?"
+  }
+]
