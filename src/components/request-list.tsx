@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { statusLabels, type WorkRequest } from "@/lib/requests";
+import { statusLabels, type WorkRequest } from "@/lib/request-model";
 
 const priorityTone = {
   low: "outline",

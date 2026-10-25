@@ -1,75 +1,48 @@
 import { io } from "next/cache";
 import { z } from "zod";
+import { query } from "./db";
+import { NewRequest, RequestFilter, WorkRequest } from "./request-model";
 
-export const teams = ["operations", "finance", "support"] as const;
-export const priorities = ["low", "normal", "high"] as const;
-export const statuses = ["open", "in_progress", "done"] as const;
-export type Status = (typeof statuses)[number];
+export * from "./request-model";
 
-export const statusLabels: Record<Status, string> = {
-  open: "Open",
-  in_progress: "In progress",
-  done: "Done",
-};
-
-export const NewRequest = z.object({
-  title: z.string().trim().min(3).max(120),
-  body: z.string().trim().max(5000).default(""),
-  team: z.enum(teams),
-  priority: z.enum(priorities).default("normal"),
-});
-export type NewRequest = z.infer<typeof NewRequest>;
-
-export const RequestFilter = z.object({
-  team: z.enum(teams).optional().catch(undefined),
-  status: z.enum(statuses).optional().catch(undefined),
-});
-export type RequestFilter = z.infer<typeof RequestFilter>;
-
-export type WorkRequest = NewRequest & {
-  id: string;
-  status: Status;
-  createdAt: Date;
-};
-
-// In memory until the database arrives (WB-17), newest first. Each route is
-// bundled on its own, so module state would be per route; the server process
-// shares one list through globalThis.
-type Store = typeof globalThis & { requests?: WorkRequest[] };
-const requests = ((globalThis as Store).requests ??= []);
+const columns = `id, title, body, team, priority, status, created_at as "createdAt"`;
 
 export async function createRequest(input: NewRequest): Promise<WorkRequest> {
-  const request = {
-    ...input,
-    id: crypto.randomUUID(),
-    status: "open" as const,
-    createdAt: new Date(),
-  };
-  requests.unshift(request);
-  return request;
+  const [row] = await query(
+    `insert into requests (title, body, team, priority) values ($1, $2, $3, $4) returning ${columns}`,
+    [input.title, input.body, input.team, input.priority],
+  );
+  return WorkRequest.parse(row);
 }
 
 export async function listRequests(
   filter: RequestFilter = {},
 ): Promise<WorkRequest[]> {
   await io();
-  return requests.filter(
-    (r) =>
-      (!filter.team || r.team === filter.team) &&
-      (!filter.status || r.status === filter.status),
+  const rows = await query(
+    `select ${columns} from requests
+     where ($1::text is null or team = $1) and ($2::text is null or status = $2)
+     order by created_at desc`,
+    [filter.team ?? null, filter.status ?? null],
   );
+  return WorkRequest.array().parse(rows);
 }
 
 export async function getRequest(id: string): Promise<WorkRequest | undefined> {
   await io();
-  return requests.find((r) => r.id === id);
+  if (!z.uuid().safeParse(id).success) return undefined;
+  const [row] = await query(`select ${columns} from requests where id = $1`, [
+    id,
+  ]);
+  return row && WorkRequest.parse(row);
 }
 
 export async function updateRequest(
   id: string,
-  patch: Partial<Pick<WorkRequest, "status">>,
-) {
-  const request = requests.find((r) => r.id === id);
-  if (request) Object.assign(request, patch);
-  return request;
+  patch: Pick<WorkRequest, "status">,
+): Promise<void> {
+  await query(`update requests set status = $2 where id = $1`, [
+    id,
+    patch.status,
+  ]);
 }
