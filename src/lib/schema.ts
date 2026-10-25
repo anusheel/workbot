@@ -193,7 +193,7 @@ export const schema = [
   // A trace and a cached read name their caller: a visitor, a user, the terminal, the system. Tenant now means the customer.
   ...["traces", "cache", "cache_reads"].map(
     (table) => `do $$ begin
-      if exists (select 1 from information_schema.columns where table_name = '${table}' and column_name = 'tenant') then
+      if not exists (select 1 from information_schema.columns where table_name = '${table}' and column_name = 'caller') then
         alter table ${table} rename column tenant to caller;
       end if;
     end $$`,
