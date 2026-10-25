@@ -47,3 +47,19 @@ test("2 first requests at once seed the prompt once, and both get it", async () 
   expect(b).toMatchObject({ version: 1, text: "Seeded." });
   expect(await versions("test/race")).toHaveLength(1);
 });
+
+test("setShares rejects shares outside 0 to 100 and unknown versions, and leaves the shares unchanged", async () => {
+  await promptOf("test/bad-shares", "x", "A");
+  await addVersion("test/bad-shares", "B");
+  await expect(
+    setShares("test/bad-shares", { 1: 150, 2: -50 }),
+  ).rejects.toThrow("150");
+  await expect(
+    setShares("test/bad-shares", { 1: 50.5, 2: 49.5 }),
+  ).rejects.toThrow("50.5");
+  await expect(setShares("test/bad-shares", { 9: 100 })).rejects.toThrow("9");
+  expect((await versions("test/bad-shares")).map((v) => v.share)).toEqual([
+    0, 100,
+  ]);
+  expect((await promptOf("test/bad-shares", "anyone", "A")).version).toBe(1);
+});

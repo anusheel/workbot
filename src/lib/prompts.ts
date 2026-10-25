@@ -41,6 +41,15 @@ export async function setShares(
   name: string,
   shares: Record<number, number>,
 ): Promise<void> {
+  const known = new Set((await versions(name)).map((row) => row.version));
+  for (const [version, share] of Object.entries(shares)) {
+    if (!known.has(Number(version)))
+      throw new Error(`Version ${version} of ${name} does not exist.`);
+    if (!Number.isInteger(share) || share < 0 || share > 100)
+      throw new Error(
+        `Share ${share} for version ${version} is not a whole number from 0 to 100.`,
+      );
+  }
   const total = Object.values(shares).reduce((sum, share) => sum + share, 0);
   if (total !== 100) throw new Error(`Shares add up to ${total}, not 100.`);
   await query(`update prompts set share = 0 where name = $1`, [name]);
