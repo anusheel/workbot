@@ -242,13 +242,13 @@ checks. Sizes: S is under an hour, M is a few hours.
 
 ### WB-43 Tracing with cost per tenant
 
-- Every model call goes through `src/lib/tracing.ts`: a middleware on the AI SDK model records tokens, cached tokens, dollars (cached tokens at a tenth), latency and failure, under the request's tenant (a visitor, `api`, `admin`, `workflow`, `terminal`) and purpose; the terminal's calls are recorded from the session
+- Every model call goes through `src/lib/tracing.ts`: a middleware on the AI SDK model records tokens, cached tokens, dollars (a cache read at a tenth of the input price, a twentieth on Sonnet and Opus 5.5, a write at 1.25 times), latency and failure, under the request's tenant (a visitor, `api`, `admin`, `workflow`, `terminal`) and purpose; the terminal's calls are recorded from the session
 - `/admin/traces`: the last 24 hours as calls, spend, error rate, p50 and p95, spend by tenant, spend and latency by prompt version, and the latest calls; nothing of a call's content is stored
 
 ### WB-44 Prompts outside the code
 
 - The assistant's system prompt lives in the `prompts` table, versioned; the code's text seeds version 1. `/admin/prompts` adds a version and splits traffic between versions by share; a visitor always lands on the same version, and the trace records which one answered
-- The chat route marks the prompt for the provider's cache, so a repeated prefix is billed at a tenth
+- The chat route marks the prompt for the provider's cache, so a repeated prefix is read at a fraction of the input price
 
 ### WB-45 Evals and alerting
 

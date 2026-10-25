@@ -10,11 +10,15 @@ export type Message = { role: "user" | "assistant"; content: string };
 export type Usage = { input: number; output: number };
 export type Effort = "low" | "medium" | "high";
 
-/** A model id, its size for routing, and its published price in dollars per million tokens where there is one. */
+/**
+ * A model id, its size for routing, and its published price in dollars per
+ * million tokens where there is one. A cache read costs `cacheRead` times the
+ * input price (a tenth unless said otherwise), a cache write 1.25 times it.
+ */
 export type Model = {
   id: string;
   size: "small" | "large";
-  price?: { input: number; output: number };
+  price?: { input: number; output: number; cacheRead?: number };
 };
 
 export type Completion = {
@@ -91,14 +95,18 @@ export function anthropic(
       {
         id: "claude-sonnet-5-5",
         size: "large",
-        price: { input: 2, output: 10 },
+        price: { input: 2, output: 10, cacheRead: 0.05 },
       },
       {
         id: "claude-haiku-5-5",
         size: "small",
         price: { input: 0.1, output: 0.5 },
       },
-      { id: "claude-opus-5-5", size: "large", price: { input: 4, output: 20 } },
+      {
+        id: "claude-opus-5-5",
+        size: "large",
+        price: { input: 4, output: 20, cacheRead: 0.05 },
+      },
     ],
     async stream(
       { model, system, messages, maxTokens, tools = [], effort, temperature },
@@ -263,10 +271,16 @@ export const priceOf = (modelId: string) =>
     .flatMap((provider) => provider().models)
     .find((m) => m.id === modelId)?.price;
 
+/** Tokens by kind: fresh input, output, and input served from or written to the cache. */
+export type Spend = Usage & { cacheRead?: number; cacheWrite?: number };
+
 /** What a run cost in dollars at the model's published price; 0 when it has none. */
-export function costOf(modelId: string, usage: Usage): number {
+export function costOf(modelId: string, spend: Spend): number {
   const price = priceOf(modelId);
-  return price
-    ? (usage.input * price.input + usage.output * price.output) / 1e6
-    : 0;
+  if (!price) return 0;
+  const input =
+    spend.input +
+    (spend.cacheRead ?? 0) * (price.cacheRead ?? 0.1) +
+    (spend.cacheWrite ?? 0) * 1.25;
+  return (input * price.input + spend.output * price.output) / 1e6;
 }

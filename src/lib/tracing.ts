@@ -57,18 +57,16 @@ export async function recordTrace(
   );
 }
 
-// Anthropic bills a cache read at a tenth of the input price and a cache
-// write at 1.25 times it; the models' input prices are in providers.ts.
 const dollarsOf = (
   model: string,
   usage: LanguageModelV4Usage | undefined,
   output: number,
 ) => {
   const total = usage?.inputTokens.total ?? 0;
-  const read = usage?.inputTokens.cacheRead ?? 0;
-  const write = usage?.inputTokens.cacheWrite ?? 0;
-  const fresh = usage?.inputTokens.noCache ?? total - read - write;
-  return costOf(model, { input: fresh + read / 10 + write * 1.25, output });
+  const cacheRead = usage?.inputTokens.cacheRead ?? 0;
+  const cacheWrite = usage?.inputTokens.cacheWrite ?? 0;
+  const input = usage?.inputTokens.noCache ?? total - cacheRead - cacheWrite;
+  return costOf(model, { input, output, cacheRead, cacheWrite });
 };
 
 async function record(
