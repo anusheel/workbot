@@ -1,6 +1,6 @@
-import { cookies } from "next/headers";
 import { after } from "next/server";
 import { config } from "./config";
+import { visitorId } from "./visitor";
 
 type Properties = Record<string, string | number | boolean>;
 
@@ -8,11 +8,10 @@ type Properties = Record<string, string | number | boolean>;
 export async function track(event: string, properties: Properties = {}) {
   const { key, host } = config.posthog;
   if (!key) return;
-  const distinctId = (await cookies()).get("visitor")?.value ?? "anonymous";
   const body = JSON.stringify({
     api_key: key,
     event,
-    distinct_id: distinctId,
+    distinct_id: (await visitorId()) ?? "anonymous",
     properties,
     timestamp: new Date().toISOString(),
   });
