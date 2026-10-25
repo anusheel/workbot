@@ -6,7 +6,7 @@ import { type Access, permits } from "./auth-model";
 import { cached } from "./cache";
 import { config } from "./config";
 import { when } from "./format";
-import { githubEnabled, githubTools } from "./github";
+import { githubTools } from "./github";
 import { type Contact, findContacts } from "./unified";
 import { saveNote } from "./notes";
 import { tool } from "./tool";
@@ -84,7 +84,7 @@ export const webSearch = tool({
 
 const web = config.brave.key ? [webSearch] : [];
 
-/** What the assistant can call for an employee, by role: the whole knowledge base, notes, the web, and the tickets when a ticketing system is configured. */
+/** What the assistant can call for an employee, by role: the whole knowledge base, notes, the web, and the tickets when a ticketing repository is configured. */
 export const employeeTools: Tool[] = [
   ...knowledgeTools(),
   calculator,
@@ -92,7 +92,8 @@ export const employeeTools: Tool[] = [
   noteTaker,
   findContact,
   ...web,
-  ...(githubEnabled() ? githubTools() : []),
+  // Offered wherever a ticketing repository is configured: a call runs with the user's own token, or the app's.
+  ...(config.github.repo ? githubTools() : []),
 ];
 
 /** What it can call for anyone else: the customer-facing documents, no notes. */

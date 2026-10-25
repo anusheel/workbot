@@ -13,7 +13,10 @@ const patterns: [RegExp, string][] = [
   [/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "[email]"],
   [/\b\d{3}-\d{2}-\d{4}\b/g, "[ssn]"],
   [/\b\d(?:[ -]?\d){12,18}\b/g, "[card]"],
-  [/(?<![\w+])(?:\+\d{1,3}[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}(?!\d)/g, "[phone]"],
+  [
+    /(?<![\w+])(?:\+\d{1,3}[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}(?!\d)/g,
+    "[phone]",
+  ],
 ];
 
 /** The Luhn checksum every payment card number passes and most other long numbers fail. */
