@@ -200,4 +200,46 @@ export const schema = [
   ),
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
+  // Tenancy, last so it covers every table above. Every row belongs to the
+  // customer whose deployment wrote it (app.tenant, set on each connection),
+  // and every query sees only those rows. The app runs as a role that owns
+  // nothing and bypasses nothing, so the policies bind it.
+  `do $$ begin
+    if not exists (select 1 from pg_roles where rolname = 'workbot_app') then
+      create role workbot_app nologin;
+    end if;
+  end $$`,
+  `grant workbot_app to current_user`,
+  `do $$
+  declare t text;
+  begin
+    for t in select tablename from pg_tables where schemaname = 'public' loop
+      execute format('alter table %I add column if not exists tenant text not null default nullif(current_setting(''app.tenant'', true), '''')', t);
+      execute format('alter table %I enable row level security', t);
+      execute format('alter table %I force row level security', t);
+      if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = t and policyname = 'tenant_isolation') then
+        execute format('create policy tenant_isolation on %I using (tenant = nullif(current_setting(''app.tenant'', true), '''')) with check (tenant = nullif(current_setting(''app.tenant'', true), ''''))', t);
+      end if;
+    end loop;
+  end $$`,
+  // A natural key is unique within a tenant, not across them.
+  ...Object.entries({
+    chunks: "path",
+    prompts: "name, version",
+    tickets: "id",
+    contacts: "id",
+    cache: "caller, key",
+    syncs: "source",
+    filings: "kind, key",
+  }).map(
+    ([table, key]) => `do $$ begin
+      if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then
+        alter table ${table} drop constraint ${table}_pkey;
+        alter table ${table} add primary key (tenant, ${key});
+      end if;
+    end $$`,
+  ),
+  `grant usage on schema public to workbot_app`,
+  `grant select, insert, update, delete on all tables in schema public to workbot_app`,
+  `grant usage, select on all sequences in schema public to workbot_app`,
 ];

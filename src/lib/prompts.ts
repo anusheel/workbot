@@ -82,7 +82,7 @@ export async function promptOf(
   if (rows.length === 0) {
     // Two first requests at once both seed version 1; the primary key keeps one, and both read it back.
     await query(
-      `insert into prompts (name, version, text, note, share) values ($1, 1, $2, 'the prompt as written in code', 100) on conflict (name, version) do nothing`,
+      `insert into prompts (name, version, text, note, share) values ($1, 1, $2, 'the prompt as written in code', 100) on conflict (tenant, name, version) do nothing`,
       [name, seed],
     );
     rows = await versions(name);

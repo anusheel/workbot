@@ -10,6 +10,15 @@ function dailyDollars(value: string | undefined) {
 }
 
 // Comma-separated values, trimmed; none when unset.
+/** A customer id names a file and is set on every database connection, so it is a plain lowercase word with hyphens. */
+function customerId(value = "fieldstone") {
+  if (!/^[a-z][a-z0-9-]*$/.test(value))
+    throw new Error(
+      `CUSTOMER="${value}" is not a customer id: lowercase letters, digits and hyphens`,
+    );
+  return value;
+}
+
 const list = (value: string | undefined) =>
   value
     ?.split(",")
@@ -17,8 +26,8 @@ const list = (value: string | undefined) =>
     .filter(Boolean) ?? [];
 
 export const config = {
-  // The customer this deployment serves: a file in content/customers.
-  customer: process.env.CUSTOMER || "fieldstone",
+  // The customer this deployment serves: a file in content/customers, and the tenant every row it writes belongs to.
+  customer: customerId(process.env.CUSTOMER),
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
   commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
   // A postgres:// URL, or a directory for an embedded PGlite database.

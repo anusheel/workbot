@@ -34,7 +34,7 @@ export async function cached<T>(
     const value = await fetch();
     await query(
       `insert into cache (caller, key, value) values ($1, $2, $3::jsonb)
-       on conflict (caller, key) do update set value = excluded.value, fetched_at = now()`,
+       on conflict (tenant, caller, key) do update set value = excluded.value, fetched_at = now()`,
       [caller, key, JSON.stringify(value)],
     );
     return value;

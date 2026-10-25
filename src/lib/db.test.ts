@@ -15,7 +15,8 @@ describe("connect", () => {
   });
 
   it("returns null for an undefined parameter in the embedded driver", async () => {
-    const connection = connect("memory://");
+    // A fresh database has no app role until the owner applies the schema.
+    const connection = connect("memory://", { owner: true });
     const rows = await connection.query<{ v: string | null }>(
       "select $1::text as v",
       [undefined],
