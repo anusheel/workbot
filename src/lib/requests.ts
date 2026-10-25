@@ -1,7 +1,17 @@
 import { io } from "next/cache";
 import { z } from "zod";
 import { query } from "./db";
-import { NewRequest, RequestFilter, WorkRequest } from "./request-model";
+import {
+  NewRequest,
+  type Priority,
+  RequestFilter,
+  type Status,
+  type Team,
+  WorkRequest,
+  priorities,
+  statuses,
+  teams,
+} from "./request-model";
 
 export * from "./request-model";
 
@@ -45,4 +55,37 @@ export async function updateRequest(
     id,
     patch.status,
   ]);
+}
+
+export type RequestSummary = {
+  total: number;
+  byStatus: Record<Status, number>;
+  byTeam: Record<Team, number>;
+  byPriority: Record<Priority, number>;
+  latest: WorkRequest[];
+};
+
+/** The numbers a dashboard is built from: counts by status, team and priority, and the 10 latest requests. */
+export async function requestSummary(): Promise<RequestSummary> {
+  type Tally = {
+    team: Team;
+    status: Status;
+    priority: Priority;
+    count: number;
+  };
+  const rows = await query<Tally>(
+    `select team, status, priority, count(*)::int as count from requests group by 1, 2, 3`,
+  );
+  const sum = (rows: Tally[]) => rows.reduce((n, r) => n + r.count, 0);
+  const by = <K extends string>(keys: readonly K[], of: (row: Tally) => K) =>
+    Object.fromEntries(
+      keys.map((key) => [key, sum(rows.filter((row) => of(row) === key))]),
+    ) as Record<K, number>;
+  return {
+    total: sum(rows),
+    byStatus: by(statuses, (r) => r.status),
+    byTeam: by(teams, (r) => r.team),
+    byPriority: by(priorities, (r) => r.priority),
+    latest: (await listRequests()).slice(0, 10),
+  };
 }

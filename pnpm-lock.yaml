@@ -23,6 +23,12 @@ importers:
       '@electric-sql/pglite':
         specifier: ^0.5.11
         version: 0.5.11
+      '@json-render/core':
+        specifier: ^0.21.3
+        version: 0.21.3(zod@4.6.7)
+      '@json-render/react':
+        specifier: ^0.21.3
+        version: 0.21.3(react@19.3.0)(zod@4.6.7)
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)
@@ -758,6 +764,16 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@json-render/core@0.21.3':
+    resolution: {integrity: sha512-sgzPtRhRB5wkhrbLtPm9bAhna5Q0x/U0vUpb3S/VEutouWEvvZRebHhpM5XiEjRM5Shv4W70VMZ8pGcGcz7j+A==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@json-render/react@0.21.3':
+    resolution: {integrity: sha512-+/i0vPRQ164KzvNdPpQleLp+WjfRS2zYRIujLbRZUEmqiQb+WtEi1i9tZMYL/dRFOUzeNveu421KDzI11Wounw==}
+    peerDependencies:
+      react: ^19.2.3
 
   '@modelcontextprotocol/sdk@1.32.2':
     resolution: {integrity: sha512-SWsVtH/0vULSQStoZ6xxH2K09Li8fXYTMC64ZeogCdpZ3XSi1eCPOByV1OpuJxuI3OcmHhosDWYyii07tpPsLw==}
@@ -5189,6 +5205,17 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@json-render/core@0.21.3(zod@4.6.7)':
+    dependencies:
+      zod: 4.6.7
+
+  '@json-render/react@0.21.3(react@19.3.0)(zod@4.6.7)':
+    dependencies:
+      '@json-render/core': 0.21.3(zod@4.6.7)
+      react: 19.3.0
+    transitivePeerDependencies:
+      - zod
 
   '@modelcontextprotocol/sdk@1.32.2(zod@4.6.7)':
     dependencies:

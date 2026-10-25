@@ -12,6 +12,9 @@ import { chatModel, chatTools } from "@/lib/chat";
 import { systemPrompt } from "@/lib/system-prompt";
 import { ChatBody } from "./types";
 
+// A tool loop on the large model can outlast a serverless function's default limit.
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const body = ChatBody.safeParse(await request.json().catch(() => null));
   if (!body.success)

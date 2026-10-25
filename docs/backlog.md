@@ -31,6 +31,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-23  | Research with citations                    | M    | done   |
 | WB-24  | Web chat                                   | M    | done   |
 | WB-25  | Assistant in the admin console             | S    | done   |
+| WB-26  | Generated dashboards, forms and timelines  | M    | done   |
 
 ## Acceptance criteria
 
@@ -134,3 +135,9 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-25 Assistant in the admin console
 
 - `/admin/assistant` shows the same chat in a panel of the console, on the same route handler
+
+### WB-26 Generated dashboards, forms and timelines
+
+- `/dashboards` turns a description into a page composed from a catalog of 22 components: layout, metrics, tables, 3 chart kinds, a timeline, tabs and form fields
+- The route hands the model the live request counts and latest requests; the page fills in as the JSON streams, and a follow-up description edits the page on screen
+- Tabs switch through state; a generated form creates a request through the `submit_request` action

@@ -5,6 +5,7 @@ import {
   createRequest,
   getRequest,
   listRequests,
+  requestSummary,
   updateRequest,
 } from "./requests";
 
@@ -55,4 +56,13 @@ test("the schema trims, defaults and rejects", () => {
   expect(RequestFilter.parse({ team: "legal", status: "open" })).toEqual({
     status: "open",
   });
+});
+
+test("the summary counts requests by status, team and priority", async () => {
+  const summary = await requestSummary();
+  expect(summary.total).toBe(3);
+  expect(summary.byTeam).toEqual({ operations: 1, finance: 1, support: 1 });
+  expect(summary.byStatus).toEqual({ open: 2, in_progress: 1, done: 0 });
+  expect(summary.byPriority).toEqual({ low: 0, normal: 1, high: 2 });
+  expect(summary.latest).toHaveLength(3);
 });

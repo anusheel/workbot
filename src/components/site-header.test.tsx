@@ -9,5 +9,6 @@ test("renders the product name and a link to each page", () => {
   expect(html).toContain('href="/chat"');
   expect(html).toContain('href="/requests"');
   expect(html).toContain('href="/policies"');
+  expect(html).toContain('href="/dashboards"');
   expect(html).toContain('href="/admin"');
 });
