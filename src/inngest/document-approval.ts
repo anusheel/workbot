@@ -82,6 +82,22 @@ export const documentApproval = inngest.createFunction(
       data = { ...data, ...review.data.data };
     }
 
+    // The reviewer's corrections are free-form, so the merged record is
+    // checked here; a bad field will not get better on a retry.
+    const checked = await step.run("validate", async () => {
+      const parsed = schemas[type].safeParse(data);
+      if (parsed.success) return null;
+      const fields = parsed.error.issues.map(
+        (issue) => `${issue.path.join(".") || "record"}: ${issue.message}`,
+      );
+      await updateItem(id, { status: "failed", review: fields });
+      return fields;
+    });
+    if (checked)
+      throw new NonRetriableError(
+        `The corrected record is invalid: ${checked.join("; ")}`,
+      );
+
     // Filing the request is its own step, so a failure in the writes after
     // it is retried without filing a second one.
     const request = await step.run("file", async () => {
