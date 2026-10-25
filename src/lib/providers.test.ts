@@ -78,7 +78,7 @@ const anthropicText = (text: string, stop = "end_turn") =>
     ["message_stop", { type: "message_stop" }],
   ]);
 
-const anthropicToolCall = (name: string, input: object) =>
+const anthropicToolCall = (name: string, input: object, stop = "tool_use") =>
   sse([
     [
       "message_start",
@@ -120,7 +120,7 @@ const anthropicToolCall = (name: string, input: object) =>
       "message_delta",
       {
         type: "message_delta",
-        delta: { stop_reason: "tool_use", stop_sequence: null },
+        delta: { stop_reason: stop, stop_sequence: null },
         usage: { output_tokens: 9 },
       },
     ],
@@ -193,6 +193,20 @@ test("anthropic runs a tool the model calls, sends the result back and sums the 
       content: [{ type: "tool_result", tool_use_id: "toolu_1", content: "42" }],
     },
   ]);
+});
+
+test("anthropic runs nothing when a reply is cut off inside a tool call", async () => {
+  const { requests, fetch } = capture(
+    anthropicToolCall("calculator", { expression: "6 * 7" }, "max_tokens"),
+  );
+  const calls: unknown[] = [];
+  const usage = await anthropic({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [calculator] },
+    { text: () => {}, tool: (call) => calls.push(call) },
+  );
+  expect(calls).toEqual([]);
+  expect(requests).toHaveLength(1);
+  expect(usage).toEqual({ input: 20, output: 9 });
 });
 
 test("anthropic returns a tool's error to the model as an error result", async () => {
