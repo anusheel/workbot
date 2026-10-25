@@ -1,0 +1,39 @@
+name: Task
+description: File a task with the goal, acceptance criteria, and constraints.
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be accomplished?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: List outcomes that can be checked.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: What must not change?
+    validations:
+      required: false
+  - type: textarea
+    id: related-code-and-docs
+    attributes:
+      label: Related code and docs
+      description: Add relevant paths.
+    validations:
+      required: false
+  - type: input
+    id: session-link
+    attributes:
+      label: Session link
+      description: Link to the agent session, if available.
+    validations:
+      required: false
