@@ -232,21 +232,22 @@ function startCloud(issue) {
 
 const fixBrief = (
   issue,
-  review,
+  why,
   session,
-) => `The pull request for issue #${issue.number} (branch ${branchOf(issue)}, checked out here) cannot merge yet; below is why: a review that requests changes, or a failed check. Address every blocking item, and the should-fix items where the change is small; keep every criterion of the issue met. If a blocking item cannot be fixed within the issue's constraints, say so in a comment on the pull request (\`gh pr comment\`) and stop. Run \`pnpm lint\`, \`pnpm typecheck\` and the tests you touched until they pass, commit (a new commit, imperative subject), push, and add the line "- Claude Code (fix): ${session}" under Session in the pull request body with \`gh pr edit --body-file\`.
+  branch,
+) => `The pull request for issue #${issue.number} (branch ${branch}, checked out here) cannot merge yet; below is why: a review that requests changes, or a failed check. Address every blocking item, and the should-fix items where the change is small; keep every criterion of the issue met. If a blocking item cannot be fixed within the issue's constraints, say so in a comment on the pull request (\`gh pr comment\`) and stop. Run \`pnpm lint\`, \`pnpm typecheck\` and the tests you touched until they pass, commit (a new commit, imperative subject), push, and add the line "- Claude Code (fix): ${session}" under Session in the pull request body with \`gh pr edit --body-file\`.
 
-${review}`;
+${why}`;
 
 // A review that requests changes, or a failed check, goes back to an agent,
 // once: a session on the pull request's branch, in the task's worktree or a
 // new one for a cloud branch.
-function startFix(issue, review) {
+function startFix(issue, why, branch = branchOf(issue)) {
   const dir = join(pens, String(issue.number));
   if (existsSync(dir)) sh("git", ["pull", "-q", "--ff-only"], { cwd: dir });
   else {
-    sh("git", ["fetch", "-q", "origin", branchOf(issue)]);
-    sh("git", ["worktree", "add", "-q", dir, branchOf(issue)]);
+    sh("git", ["fetch", "-q", "origin", branch]);
+    sh("git", ["worktree", "add", "-q", dir, branch]);
     sh("pnpm", ["install", "--frozen-lockfile", "--silent"], { cwd: dir });
   }
   const session = randomUUID();
@@ -255,7 +256,7 @@ function startFix(issue, review) {
     "claude",
     [
       "-p",
-      fixBrief(issue, review, session),
+      fixBrief(issue, why, session, branch),
       "--model",
       "sonnet",
       "--session-id",
@@ -283,14 +284,23 @@ function startFix(issue, review) {
 function collect(state) {
   for (const { issue, run, pr } of tasks()) {
     if (!run?.cloud || pr) continue;
-    if (!sh("git", ["ls-remote", "--heads", "origin", branchOf(issue)]))
-      continue;
-    sh("git", ["fetch", "-q", "origin", branchOf(issue)]);
+    const head = sh("git", [
+      "ls-remote",
+      "--heads",
+      "origin",
+      branchOf(issue),
+      `claude/fleet-${issue.number}-*`,
+    ])
+      .split("\n")
+      .find(Boolean)
+      ?.split("refs/heads/")[1];
+    if (!head) continue;
+    sh("git", ["fetch", "-q", "origin", head]);
     const [subject, ...body] = sh("git", [
       "log",
       "-1",
       "--format=%s%n%b",
-      `origin/${branchOf(issue)}`,
+      `origin/${head}`,
     ]).split("\n");
     const plan = body
       .join("\n")
@@ -304,14 +314,14 @@ function collect(state) {
         "--base",
         base,
         "--head",
-        branchOf(issue),
+        head,
         "--title",
         subject,
         "--body",
         text,
       ),
     );
-    state[issue.number].collected = true;
+    Object.assign(state[issue.number], { collected: true, branch: head });
   }
 }
 
@@ -431,7 +441,7 @@ async function merge(batch) {
       console.log(`#${pr.number}: changes requested`);
       if (!run?.fixing)
         state[issue.number] = {
-          ...startFix(issue, reviews[i]),
+          ...startFix(issue, reviews[i], run?.branch),
           reviewed: pr.headRefOid,
         };
       continue;
@@ -465,7 +475,10 @@ async function merge(batch) {
     )
       continue;
     const why = `CI failed on pull request #${pr.number}: \`gh pr checks ${pr.number}\` names the run, \`gh run view <id> --log-failed\` shows the failure.`;
-    state[issue.number] = { ...startFix(issue, why), reviewed: pr.headRefOid };
+    state[issue.number] = {
+      ...startFix(issue, why, run?.branch),
+      reviewed: pr.headRefOid,
+    };
   }
   save(state);
   if (!merged.length) return;
