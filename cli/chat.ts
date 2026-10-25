@@ -2,8 +2,11 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { z } from "zod";
+import { close } from "@/lib/db";
 import { providerNames, providers } from "@/lib/providers";
+import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
+import { tools } from "@/lib/tools";
 
 const { values } = parseArgs({
   options: {
@@ -19,18 +22,22 @@ const Provider = z.enum(providerNames);
 const Effort = z.enum(["low", "medium", "high"]);
 
 const session = new Session(Provider.parse(values.provider), values.model, {
+  tools,
   maxTokens: Number(values["max-tokens"]),
   effort: values.effort === undefined ? undefined : Effort.parse(values.effort),
   temperature:
     values.temperature === undefined ? undefined : Number(values.temperature),
 });
 
-const help = `/model [provider] [model]  switch models; no arguments lists them
+const help = `/research <question>       answer from the company's sources, with citations
+/model [provider] [model]  switch models; no arguments lists them
 /system [text]             show or replace the system prompt
 /cost                      tokens and dollars spent in this session
 /exit                      leave`;
 
-function command(line: string): string | null {
+const dim = (text: string) => `\x1b[2m${text}\x1b[0m`;
+
+async function command(line: string): Promise<string | null> {
   const [name, ...args] = line.slice(1).split(/\s+/);
   switch (name) {
     case "exit":
@@ -59,6 +66,15 @@ function command(line: string): string | null {
         .join("\n  ");
       return `using ${session.provider.name} ${session.model.id}\n  ${available}`;
     }
+    case "research": {
+      if (!args.length) return "Usage: /research <question>";
+      const { usage } = await research(args.join(" "), session.provider, {
+        step: (message) => console.log(dim(`· ${message}`)),
+        text: (text) => stdout.write(text),
+        spend: (model, usage) => session.record(model, usage),
+      });
+      return `\n${dim(`${usage.input} tokens in, ${usage.output} out`)}`;
+    }
     default:
       return `Unknown command /${name}. ${help}`;
   }
@@ -75,19 +91,28 @@ prompt();
 
 for await (const raw of rl) {
   const line = raw.trim();
-  if (line.startsWith("/")) {
-    const output = command(line);
-    if (output === null) break;
-    console.log(output);
-  } else if (line) {
-    stdout.write("\nworkbot> ");
-    try {
-      await session.send(line, (text) => stdout.write(text));
+  try {
+    if (line.startsWith("/")) {
+      const output = await command(line);
+      if (output === null) break;
+      console.log(output);
+    } else if (line) {
+      stdout.write("\nworkbot> ");
+      await session.send(line, {
+        text: (text) => stdout.write(text),
+        tool: ({ name, input, failed }) =>
+          stdout.write(
+            dim(
+              `\n⚙ ${name} ${JSON.stringify(input)}${failed ? " failed" : ""}\n`,
+            ),
+          ),
+      });
       stdout.write("\n\n");
-    } catch (err) {
-      stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
     }
+  } catch (err) {
+    stdout.write(`\n${err instanceof Error ? err.message : String(err)}\n\n`);
   }
   prompt();
 }
 rl.close();
+await close();

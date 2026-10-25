@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { anthropic, openai } from "./providers";
+import { calculator } from "./tools";
 
 const sse = (events: [string, object][]) =>
   new Response(
@@ -13,11 +14,12 @@ const sse = (events: [string, object][]) =>
     },
   );
 
-const capture = (response: Response) => {
-  const requests: { url: string; body: Record<string, unknown> }[] = [];
-  const fetch = async (input: string | URL | Request, init?: RequestInit) => {
-    requests.push({ url: String(input), body: JSON.parse(String(init?.body)) });
-    return response;
+/** A fetch that answers from a queue of responses and keeps the request bodies. */
+const capture = (...responses: Response[]) => {
+  const requests: Record<string, unknown>[] = [];
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    requests.push(JSON.parse(String(init?.body)));
+    return responses.shift()!;
   };
   return { requests, fetch };
 };
@@ -30,128 +32,234 @@ const completion = {
   effort: "low" as const,
 };
 
+const anthropicText = (text: string, stop = "end_turn") =>
+  sse([
+    [
+      "message_start",
+      {
+        type: "message_start",
+        message: {
+          id: "m",
+          type: "message",
+          role: "assistant",
+          model: "test-model",
+          content: [],
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 12, output_tokens: 1 },
+        },
+      },
+    ],
+    [
+      "content_block_start",
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "text", text: "" },
+      },
+    ],
+    [
+      "content_block_delta",
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "text_delta", text },
+      },
+    ],
+    ["content_block_stop", { type: "content_block_stop", index: 0 }],
+    [
+      "message_delta",
+      {
+        type: "message_delta",
+        delta: { stop_reason: stop, stop_sequence: null },
+        usage: { output_tokens: 5 },
+      },
+    ],
+    ["message_stop", { type: "message_stop" }],
+  ]);
+
+const anthropicToolCall = (name: string, input: object) =>
+  sse([
+    [
+      "message_start",
+      {
+        type: "message_start",
+        message: {
+          id: "m",
+          type: "message",
+          role: "assistant",
+          model: "test-model",
+          content: [],
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 20, output_tokens: 1 },
+        },
+      },
+    ],
+    [
+      "content_block_start",
+      {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "tool_use", id: "toolu_1", name, input: {} },
+      },
+    ],
+    [
+      "content_block_delta",
+      {
+        type: "content_block_delta",
+        index: 0,
+        delta: {
+          type: "input_json_delta",
+          partial_json: JSON.stringify(input),
+        },
+      },
+    ],
+    ["content_block_stop", { type: "content_block_stop", index: 0 }],
+    [
+      "message_delta",
+      {
+        type: "message_delta",
+        delta: { stop_reason: "tool_use", stop_sequence: null },
+        usage: { output_tokens: 9 },
+      },
+    ],
+    ["message_stop", { type: "message_stop" }],
+  ]);
+
 test("anthropic streams text deltas and reports usage from the final message", async () => {
-  const { requests, fetch } = capture(
-    sse([
-      [
-        "message_start",
-        {
-          type: "message_start",
-          message: {
-            id: "m",
-            type: "message",
-            role: "assistant",
-            model: "test-model",
-            content: [],
-            stop_reason: null,
-            stop_sequence: null,
-            usage: { input_tokens: 12, output_tokens: 1 },
-          },
-        },
-      ],
-      [
-        "content_block_start",
-        {
-          type: "content_block_start",
-          index: 0,
-          content_block: { type: "text", text: "" },
-        },
-      ],
-      [
-        "content_block_delta",
-        {
-          type: "content_block_delta",
-          index: 0,
-          delta: { type: "text_delta", text: "Hel" },
-        },
-      ],
-      [
-        "content_block_delta",
-        {
-          type: "content_block_delta",
-          index: 0,
-          delta: { type: "text_delta", text: "lo" },
-        },
-      ],
-      ["content_block_stop", { type: "content_block_stop", index: 0 }],
-      [
-        "message_delta",
-        {
-          type: "message_delta",
-          delta: { stop_reason: "end_turn", stop_sequence: null },
-          usage: { output_tokens: 5 },
-        },
-      ],
-      ["message_stop", { type: "message_stop" }],
-    ]),
-  );
+  const { requests, fetch } = capture(anthropicText("Hello"));
   let text = "";
-  const usage = await anthropic({ apiKey: "test", fetch }).stream(
-    completion,
-    (t) => (text += t),
-  );
+  const usage = await anthropic({ apiKey: "test", fetch }).stream(completion, {
+    text: (t) => (text += t),
+  });
   expect(text).toBe("Hello");
   expect(usage).toEqual({ input: 12, output: 5 });
-  expect(requests[0].body).toMatchObject({
+  expect(requests[0]).toMatchObject({
     model: "test-model",
     system: "Be brief.",
     max_tokens: 64,
     output_config: { effort: "low" },
   });
-  expect(requests[0].body).not.toHaveProperty("temperature");
+  expect(requests[0]).not.toHaveProperty("temperature");
+  expect(requests[0]).not.toHaveProperty("tools");
 });
 
-test("openai streams output text deltas and reports usage from the completed response", async () => {
+test("anthropic runs a tool the model calls, sends the result back and sums the usage", async () => {
   const { requests, fetch } = capture(
-    sse([
-      [
-        "response.output_text.delta",
-        {
-          type: "response.output_text.delta",
-          item_id: "i",
-          output_index: 0,
-          content_index: 0,
-          delta: "Hel",
-          sequence_number: 1,
-        },
-      ],
-      [
-        "response.output_text.delta",
-        {
-          type: "response.output_text.delta",
-          item_id: "i",
-          output_index: 0,
-          content_index: 0,
-          delta: "lo",
-          sequence_number: 2,
-        },
-      ],
-      [
-        "response.completed",
-        {
-          type: "response.completed",
-          sequence_number: 3,
-          response: {
-            id: "r",
-            object: "response",
-            created_at: 0,
-            status: "completed",
-            model: "test-model",
-            output: [],
-            usage: { input_tokens: 7, output_tokens: 3, total_tokens: 10 },
-          },
-        },
-      ],
-    ]),
+    anthropicToolCall("calculator", { expression: "6 * 7" }),
+    anthropicText("42."),
   );
+  const calls: unknown[] = [];
+  let text = "";
+  const usage = await anthropic({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [calculator] },
+    { text: (t) => (text += t), tool: (call) => calls.push(call) },
+  );
+  expect(calls).toEqual([
+    {
+      name: "calculator",
+      input: { expression: "6 * 7" },
+      result: "42",
+      failed: false,
+    },
+  ]);
+  expect(text).toBe("42.");
+  expect(usage).toEqual({ input: 32, output: 14 });
+  expect(requests[0]).toMatchObject({
+    tools: [
+      {
+        name: "calculator",
+        input_schema: { type: "object", required: ["expression"] },
+        eager_input_streaming: true,
+      },
+    ],
+  });
+  expect(requests[1].messages).toEqual([
+    { role: "user", content: "Hi" },
+    {
+      role: "assistant",
+      content: [
+        {
+          type: "tool_use",
+          id: "toolu_1",
+          name: "calculator",
+          input: { expression: "6 * 7" },
+        },
+      ],
+    },
+    {
+      role: "user",
+      content: [{ type: "tool_result", tool_use_id: "toolu_1", content: "42" }],
+    },
+  ]);
+});
+
+test("anthropic returns a tool's error to the model as an error result", async () => {
+  const { requests, fetch } = capture(
+    anthropicToolCall("calculator", { expression: "2 +" }),
+    anthropicText("Sorry."),
+  );
+  await anthropic({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [calculator] },
+    { text: () => {} },
+  );
+  expect(requests[1].messages).toMatchObject([
+    {},
+    {},
+    {
+      content: [
+        {
+          type: "tool_result",
+          is_error: true,
+          content: "Unexpected end of expression",
+        },
+      ],
+    },
+  ]);
+});
+
+const openaiCompleted = (output: object[], deltas: string[] = []) =>
+  sse([
+    ...deltas.map((delta, i): [string, object] => [
+      "response.output_text.delta",
+      {
+        type: "response.output_text.delta",
+        item_id: "i",
+        output_index: 0,
+        content_index: 0,
+        delta,
+        sequence_number: i,
+      },
+    ]),
+    [
+      "response.completed",
+      {
+        type: "response.completed",
+        sequence_number: 99,
+        response: {
+          id: "r",
+          object: "response",
+          created_at: 0,
+          status: "completed",
+          model: "test-model",
+          output,
+          usage: { input_tokens: 7, output_tokens: 3, total_tokens: 10 },
+        },
+      },
+    ],
+  ]);
+
+test("openai streams output text deltas and reports usage from the completed response", async () => {
+  const { requests, fetch } = capture(openaiCompleted([], ["Hel", "lo"]));
   let text = "";
   const usage = await openai({ apiKey: "test", fetch }).stream(
     { ...completion, temperature: 0.2 },
-    (t) => (text += t),
+    { text: (t) => (text += t) },
   );
   expect(text).toBe("Hello");
   expect(usage).toEqual({ input: 7, output: 3 });
-  expect(requests[0].body).toMatchObject({
+  expect(requests[0]).toMatchObject({
     model: "test-model",
     instructions: "Be brief.",
     max_output_tokens: 64,
@@ -159,6 +267,43 @@ test("openai streams output text deltas and reports usage from the completed res
     temperature: 0.2,
     stream: true,
   });
+});
+
+test("openai runs a function the model calls and sends the output back with the call id", async () => {
+  const call = {
+    type: "function_call",
+    id: "fc_1",
+    call_id: "call_1",
+    name: "calculator",
+    arguments: '{"expression":"6 * 7"}',
+    status: "completed",
+  };
+  const { requests, fetch } = capture(
+    openaiCompleted([call]),
+    openaiCompleted([], ["42."]),
+  );
+  let text = "";
+  const usage = await openai({ apiKey: "test", fetch }).stream(
+    { ...completion, tools: [calculator] },
+    { text: (t) => (text += t) },
+  );
+  expect(text).toBe("42.");
+  expect(usage).toEqual({ input: 14, output: 6 });
+  expect(requests[0]).toMatchObject({
+    tools: [
+      {
+        type: "function",
+        name: "calculator",
+        strict: true,
+        parameters: { type: "object", additionalProperties: false },
+      },
+    ],
+  });
+  expect(requests[1].input).toEqual([
+    { role: "user", content: "Hi" },
+    call,
+    { type: "function_call_output", call_id: "call_1", output: "42" },
+  ]);
 });
 
 test("openai keeps the usage of a response cut short, and reports a failed one", async () => {
@@ -195,10 +340,9 @@ test("openai keeps the usage of a response cut short, and reports a failed one",
     ]),
   );
   expect(
-    await openai({ apiKey: "test", fetch: cut.fetch }).stream(
-      completion,
-      () => {},
-    ),
+    await openai({ apiKey: "test", fetch: cut.fetch }).stream(completion, {
+      text: () => {},
+    }),
   ).toEqual({ input: 7, output: 64 });
 
   const failed = capture(
@@ -225,9 +369,8 @@ test("openai keeps the usage of a response cut short, and reports a failed one",
     ]),
   );
   await expect(
-    openai({ apiKey: "test", fetch: failed.fetch }).stream(
-      completion,
-      () => {},
-    ),
+    openai({ apiKey: "test", fetch: failed.fetch }).stream(completion, {
+      text: () => {},
+    }),
   ).rejects.toThrow("The server had an error.");
 });

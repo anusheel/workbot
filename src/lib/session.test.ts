@@ -4,9 +4,9 @@ import { Session } from "./session";
 
 const fake = (reply: string, usage = { input: 10, output: 5 }): Provider => ({
   name: "anthropic",
-  models: [{ id: "fake", price: { input: 1, output: 10 } }],
-  stream: vi.fn(async (_completion, onText) => {
-    for (const part of reply.split(" ")) onText(part + " ");
+  models: [{ id: "fake", size: "large", price: { input: 1, output: 10 } }],
+  stream: vi.fn(async (_completion, on) => {
+    for (const part of reply.split(" ")) on.text(part + " ");
     return usage;
   }),
 });
@@ -18,7 +18,9 @@ test("a turn keeps both messages and the tokens it used", async () => {
   session.model = provider.models[0];
 
   let streamed = "";
-  await session.send("What is the meal limit?", (text) => (streamed += text));
+  await session.send("What is the meal limit?", {
+    text: (text) => (streamed += text),
+  });
   expect(streamed).toBe("Ask Finance. ");
   expect(session.messages).toEqual([
     { role: "user", content: "What is the meal limit?" },
@@ -30,7 +32,7 @@ test("a turn keeps both messages and the tokens it used", async () => {
       system: session.system,
       maxTokens: 2048,
     }),
-    expect.any(Function),
+    expect.objectContaining({ text: expect.any(Function) }),
   );
   expect(session.cost()).toEqual({
     input: 10,
@@ -46,7 +48,9 @@ test("a failed turn leaves no trace in the history", async () => {
     ...fake(""),
     stream: vi.fn().mockRejectedValue(new Error("rate limited")),
   };
-  await expect(session.send("hello", () => {})).rejects.toThrow("rate limited");
+  await expect(session.send("hello", { text: () => {} })).rejects.toThrow(
+    "rate limited",
+  );
   expect(session.messages).toEqual([]);
 });
 
@@ -54,14 +58,15 @@ test("switching models mid-conversation keeps the history and prices each turn b
   const session = new Session("anthropic", "claude-haiku-5-5");
   expect(session.model).toEqual({
     id: "claude-haiku-5-5",
+    size: "small",
     price: { input: 0.1, output: 0.5 },
   });
   session.use("openai", "gpt-5.5-pro");
   expect(session.provider.name).toBe("openai");
-  expect(session.model).toEqual({ id: "gpt-5.5-pro" });
+  expect(session.model).toEqual({ id: "gpt-5.5-pro", size: "large" });
 
   session.provider = fake("ok");
-  await session.send("hi", () => {});
+  await session.send("hi", { text: () => {} });
   expect(session.cost()).toMatchObject({
     dollars: 0,
     unpriced: ["gpt-5.5-pro"],
