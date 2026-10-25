@@ -51,4 +51,14 @@ export const schema = [
     summary text not null,
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists documents (
+    id uuid primary key default gen_random_uuid(),
+    request_id uuid not null references requests(id) on delete cascade,
+    type text not null,
+    name text not null,
+    data jsonb not null,
+    confidence jsonb not null default '{}',
+    review jsonb not null default '[]',
+    created_at timestamptz not null default now()
+  )`,
 ];

@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { chatModel } from "@/lib/chat";
+import { ingest } from "@/lib/documents";
+import { type MediaType, mediaTypes } from "@/lib/extract";
 import { investigate } from "@/lib/investigate";
 import { getRecording, saveRecording } from "@/lib/recordings";
 import { saveReport } from "@/lib/reports";
@@ -111,4 +113,28 @@ export async function askAboutRecording(
     chatModel("small"),
   );
   return { question, answer };
+}
+
+const media = new Set<string>(Object.values(mediaTypes));
+
+/** Files a request from an uploaded document: an invoice, an email, a letter or a form, as PDF or image. */
+export async function submitDocument(formData: FormData) {
+  const file = formData.get("document");
+  if (!(file instanceof File) || !media.has(file.type)) return;
+  const { request } = await ingest(
+    {
+      kind: "file",
+      data: new Uint8Array(await file.arrayBuffer()),
+      mediaType: file.type as MediaType,
+    },
+    file.name,
+    chatModel("small"),
+  );
+  await track("request_submitted", {
+    requestId: request.id,
+    team: request.team,
+    priority: request.priority,
+    channel: "document",
+  });
+  redirect(`/requests/${request.id}`);
 }

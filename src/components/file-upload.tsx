@@ -1,13 +1,19 @@
 "use client";
 
-import { Film } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { PendingButton } from "@/components/pending-button";
 
-type Props = { action: (formData: FormData) => Promise<void> };
+type Props = {
+  action: (formData: FormData) => Promise<void>;
+  name: string;
+  accept: string;
+  label: string;
+  busy: string;
+  icon: ReactNode;
+};
 
-/** One button: pick a recording, and the form submits itself. */
-export function RecordingUpload({ action }: Props) {
+/** One button: pick a file, and the form submits itself. */
+export function FileUpload({ action, name, accept, label, busy, icon }: Props) {
   const form = useRef<HTMLFormElement>(null);
   const file = useRef<HTMLInputElement>(null);
   return (
@@ -15,19 +21,19 @@ export function RecordingUpload({ action }: Props) {
       <input
         ref={file}
         type="file"
-        name="recording"
-        accept="video/*"
-        aria-label="Recording"
+        name={name}
+        accept={accept}
+        aria-label={label}
         className="sr-only"
         onChange={() => form.current?.requestSubmit()}
       />
       <PendingButton
         type="button"
-        busy="Reading the recording…"
-        icon={<Film />}
+        busy={busy}
+        icon={icon}
         onClick={() => file.current?.click()}
       >
-        Attach a recording
+        {label}
       </PendingButton>
     </form>
   );
