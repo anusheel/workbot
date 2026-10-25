@@ -9,3 +9,5 @@ Create the route handler `/api/$1` with the methods named after it (default: GET
 3. `src/app/api/$1/route.test.ts`: a Vitest test per method that calls the handler with a `Request` and checks status and body, including one invalid input.
 
 Read an existing route first (`src/app/api/health/route.ts`) and match its style. Run `pnpm test` when done.
+
+$2
