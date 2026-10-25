@@ -38,10 +38,10 @@ test("readPage refuses private addresses, other schemes, and redirects into them
     "http://[fd00::1]/",
     "http://db.internal/",
   ]) {
-    await expect(readPage(url)).rejects.toThrow("not a public address");
+    await expect(readPage(url)).rejects.toThrow("not a public web address");
   }
   await expect(readPage("file:///etc/passwd")).rejects.toThrow(
-    "Only http and https",
+    "not a public web address",
   );
 
   vi.stubGlobal(
@@ -55,7 +55,7 @@ test("readPage refuses private addresses, other schemes, and redirects into them
     ),
   );
   await expect(readPage("https://example.com/go")).rejects.toThrow(
-    "not a public address",
+    "not a public web address",
   );
 });
 

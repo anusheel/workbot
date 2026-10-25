@@ -42,9 +42,9 @@ const privateV4 =
 const privateV6 = /^(::1?$|f[cd]|fe[89ab])/;
 const maxBytes = 512_000;
 
-function assertPublic(url: URL) {
-  if (url.protocol !== "http:" && url.protocol !== "https:")
-    throw new Error("Only http and https pages can be read");
+/** Whether an address is on the public web: http or https, and not this machine, a private network or link-local. */
+export function isPublic(url: URL): boolean {
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
   const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
   // The URL parser writes an IPv4-mapped address as ::ffff:7f00:1; check it as the IPv4 it is.
   const mapped = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
@@ -54,10 +54,14 @@ function assertPublic(url: URL) {
         .flatMap((hex) => [parseInt(hex, 16) >> 8, parseInt(hex, 16) & 255])
         .join(".")
     : host;
-  const isPrivate =
+  return !(
     privateName.test(address) ||
-    (address.includes(":") ? privateV6.test(address) : privateV4.test(address));
-  if (isPrivate) throw new Error(`${url.hostname} is not a public address`);
+    (address.includes(":") ? privateV6.test(address) : privateV4.test(address))
+  );
+}
+
+function assertPublic(url: URL) {
+  if (!isPublic(url)) throw new Error(`${url} is not a public web address`);
 }
 
 async function readUpTo(response: Response, bytes: number): Promise<string> {
