@@ -30,25 +30,36 @@ export const sizeOf = (message: UIMessage) =>
   estimateTokens(JSON.stringify(message.parts));
 
 /**
- * Keeps the first user message (the original intent) and as many of the most
- * recent messages as fit the budget; what falls between is handed back to be
- * summarized, so nothing is silently forgotten.
+ * Always keeps the last message, the question being answered. Beside it, keeps
+ * the first user message (the original intent) when both fit, and as many of
+ * the most recent messages as fit the budget; what falls between is handed
+ * back to be summarized, so nothing is silently forgotten.
  */
 export function fitContext(
   messages: UIMessage[],
   budget: number,
 ): { kept: UIMessage[]; dropped: UIMessage[] } {
-  if (messages.reduce((sum, m) => sum + sizeOf(m), 0) <= budget)
+  if (
+    messages.length < 2 ||
+    messages.reduce((sum, m) => sum + sizeOf(m), 0) <= budget
+  )
     return { kept: messages, dropped: [] };
 
-  const [first, ...rest] = messages;
-  let remaining = budget - sizeOf(first);
-  let start = rest.length;
-  while (start > 0 && remaining - sizeOf(rest[start - 1]) >= 0) {
-    remaining -= sizeOf(rest[start - 1]);
+  const first = messages[0];
+  const last = messages[messages.length - 1];
+  const middle = messages.slice(1, -1);
+  let remaining = budget - sizeOf(last);
+  const keepFirst = remaining - sizeOf(first) >= 0;
+  if (keepFirst) remaining -= sizeOf(first);
+  let start = middle.length;
+  while (start > 0 && remaining - sizeOf(middle[start - 1]) >= 0) {
+    remaining -= sizeOf(middle[start - 1]);
     start -= 1;
   }
-  return { kept: [first, ...rest.slice(start)], dropped: rest.slice(0, start) };
+  return {
+    kept: [...(keepFirst ? [first] : []), ...middle.slice(start), last],
+    dropped: [...(keepFirst ? [] : [first]), ...middle.slice(0, start)],
+  };
 }
 
 /**

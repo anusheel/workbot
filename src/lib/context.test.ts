@@ -29,6 +29,31 @@ test("over budget, the first message and the most recent ones stay; the middle i
   expect(dropped.map((m) => m.id)).toEqual(["1", "2", "3", "4", "5", "6"]);
 });
 
+test("the last message is kept even when the first cannot fit beside it", () => {
+  const messages = [
+    message("0", "user", "x".repeat(4_000)),
+    message("1", "assistant", "Noted."),
+    message("2", "user", "And the refund limit?"),
+  ];
+  const { kept, dropped } = fitContext(messages, 200);
+  expect(kept.map((m) => m.id)).toEqual(["1", "2"]);
+  expect(dropped.map((m) => m.id)).toEqual(["0"]);
+});
+
+test("the last message is kept even when it alone is over budget", () => {
+  const messages = [
+    message("0", "user", "hi"),
+    message("1", "assistant", "Noted."),
+    message("2", "user", "x".repeat(4_000)),
+  ];
+  const { kept, dropped } = fitContext(messages, 200);
+  expect(kept.map((m) => m.id)).toEqual(["2"]);
+  expect(dropped.map((m) => m.id)).toEqual(["0", "1"]);
+
+  const only = [messages[2]];
+  expect(fitContext(only, 200)).toEqual({ kept: only, dropped: [] });
+});
+
 test("tool results count toward the budget", () => {
   const withTool: UIMessage = {
     id: "t",
