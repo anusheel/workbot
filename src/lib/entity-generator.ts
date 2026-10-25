@@ -221,7 +221,7 @@ export async function create${Name}Action(form: FormData) {${employee ? '\n  awa
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 ${employee ? "" : 'import { io } from "next/cache";\n'}import { Suspense } from "react";
-import { PendingButton } from "@/components/pending-button";
+${employee ? 'import { Allowed } from "@/components/allowed";\n' : ""}import { PendingButton } from "@/components/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 ${choices.length ? 'import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";\n' : ""}import {
@@ -242,6 +242,7 @@ export default function ${cap(e.plural)}Page() {
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">${cap(e.plural)}</h1>
+      ${employee ? '<Suspense>\n<Allowed role="agent">' : ""}
       <form action={create${Name}Action} className="mt-6 grid gap-4 sm:grid-cols-2">
       ${e.fields.map((f) => input(e, f)).join("\n      ")}
         <div className="sm:col-span-2">
@@ -250,6 +251,7 @@ export default function ${cap(e.plural)}Page() {
           </PendingButton>
         </div>
       </form>
+      ${employee ? "</Allowed>\n</Suspense>" : ""}
       <Suspense fallback={<p className="mt-8 text-sm text-muted-foreground">Loading…</p>}>
         <${cap(e.plural)} />
       </Suspense>

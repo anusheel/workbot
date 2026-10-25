@@ -16,7 +16,8 @@ import {
 import { listInbox } from "@/lib/inbox";
 import { listNotifications } from "@/lib/notify";
 import { review, runReminders, uploadDocuments } from "./actions";
-import { requireUser } from "@/lib/auth";
+import { permits, requireUser } from "@/lib/auth";
+import { Allowed } from "@/components/allowed";
 
 export const metadata: Metadata = { title: "Inbox" };
 
@@ -31,15 +32,19 @@ export default function InboxPage() {
             the approval workflow; a doubtful field pauses it here for you.
           </p>
         </div>
-        <FileUpload
-          action={uploadDocuments}
-          name="documents"
-          accept=".pdf,image/png,image/jpeg,image/webp"
-          label="Upload documents"
-          busy="Sending…"
-          icon={<FileText />}
-          multiple
-        />
+        <Suspense>
+          <Allowed role="agent">
+            <FileUpload
+              action={uploadDocuments}
+              name="documents"
+              accept=".pdf,image/png,image/jpeg,image/webp"
+              label="Upload documents"
+              busy="Sending…"
+              icon={<FileText />}
+              multiple
+            />
+          </Allowed>
+        </Suspense>
       </div>
       <Suspense
         fallback={
@@ -56,7 +61,7 @@ export default function InboxPage() {
 }
 
 async function Items() {
-  await requireUser();
+  const user = await requireUser();
   const items = await listInbox();
   if (items.length === 0)
     return (
@@ -93,7 +98,10 @@ async function Items() {
               </TableCell>
               <TableCell className="capitalize">{item.type ?? "—"}</TableCell>
               <TableCell>
-                <InboxStatus item={item} review={review} />
+                <InboxStatus
+                  item={item}
+                  review={permits(user.role, "agent") ? review : undefined}
+                />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {item.status === "awaiting_review"
@@ -114,7 +122,7 @@ async function Items() {
 }
 
 async function Outbox() {
-  await requireUser();
+  const user = await requireUser();
   const notifications = await listNotifications(8);
   return (
     <section className="mt-10">
@@ -125,15 +133,17 @@ async function Outbox() {
             What the workflows and the morning reminders would send.
           </p>
         </div>
-        <form>
-          <PendingButton
-            formAction={runReminders}
-            busy="Running…"
-            icon={<Bell />}
-          >
-            Run the reminders now
-          </PendingButton>
-        </form>
+        {permits(user.role, "admin") && (
+          <form>
+            <PendingButton
+              formAction={runReminders}
+              busy="Running…"
+              icon={<Bell />}
+            >
+              Run the reminders now
+            </PendingButton>
+          </form>
+        )}
       </div>
       {notifications.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">Nothing sent yet.</p>

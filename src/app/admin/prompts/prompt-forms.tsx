@@ -20,7 +20,16 @@ type Row = {
   label: string;
 };
 
-export function SplitForm({ name, rows }: { name: string; rows: Row[] }) {
+export function SplitForm({
+  name,
+  rows,
+  readOnly = false,
+}: {
+  name: string;
+  rows: Row[];
+  // For a role that may read the versions but not change their traffic.
+  readOnly?: boolean;
+}) {
   const [state, action, pending] = useActionState<SplitState, FormData>(
     splitTraffic.bind(null, name),
     {},
@@ -48,6 +57,7 @@ export function SplitForm({ name, rows }: { name: string; rows: Row[] }) {
                 min={0}
                 max={100}
                 value={value(row)}
+                disabled={readOnly}
                 onChange={(event) =>
                   setTyped((prev) => ({
                     ...prev,
@@ -64,17 +74,19 @@ export function SplitForm({ name, rows }: { name: string; rows: Row[] }) {
           </pre>
         </div>
       ))}
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" variant="outline" disabled={pending}>
-          Save the split
-        </Button>
-        <span className="text-sm text-muted-foreground">Total {total}%</span>
-        {state.message && (
-          <p role="alert" className="text-sm text-destructive">
-            {state.message}
-          </p>
-        )}
-      </div>
+      {!readOnly && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" variant="outline" disabled={pending}>
+            Save the split
+          </Button>
+          <span className="text-sm text-muted-foreground">Total {total}%</span>
+          {state.message && (
+            <p role="alert" className="text-sm text-destructive">
+              {state.message}
+            </p>
+          )}
+        </div>
+      )}
     </form>
   );
 }

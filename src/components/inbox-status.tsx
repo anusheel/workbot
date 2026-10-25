@@ -23,7 +23,8 @@ export function InboxStatus({
   review,
 }: {
   item: InboxItem;
-  review: (id: string, decision: string) => Promise<void>;
+  // Absent for a role that may not review: the status shows, the buttons do not.
+  review?: (id: string, decision: string) => Promise<void>;
 }) {
   const { label, variant } = statusLabels[item.status];
   if (item.status === "failed")
@@ -33,7 +34,7 @@ export function InboxStatus({
         <span className="text-muted-foreground">{item.review.join(", ")}</span>
       </span>
     );
-  if (item.status !== "awaiting_review")
+  if (item.status !== "awaiting_review" || !review)
     return <Badge variant={variant}>{label}</Badge>;
   return (
     <form className="flex items-center gap-2">

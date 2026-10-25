@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { type Role, permits } from "./auth-model";
 import type { Provider } from "./credentials";
 import { query } from "./db";
@@ -127,7 +128,8 @@ export async function userOf(headers: Headers): Promise<User | undefined> {
   return token ? userBySession(token) : undefined;
 }
 
-export const currentUser = async () => userOf(await headers());
+/** The caller of the request being rendered, looked up once however many components ask. */
+export const currentUser = cache(async () => userOf(await headers()));
 
 /** For a page or a server action: the user, sent to sign in when there is none and refused when the role is too low. */
 export async function requireUser(need: Role = "viewer"): Promise<User> {
