@@ -20,7 +20,7 @@ site is a second app in `site/`, with its own AGENTS.md.
 
 ## Claude Code
 
-Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path.
+Skills in `.claude/skills/`: `/component <Name>`, `/api-route <name>`, `/pre-deploy`, and `/review [pr]`, which runs the 3 reviewers in `.claude/agents/` in parallel. A hook in `.claude/settings.json` formats every file Claude edits. The backlog is mirrored in `docs/backlog.md` so agents can read tickets by path; `docs/architecture.md` is the system as built.
 
 ## Tooling for agents
 

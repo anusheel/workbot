@@ -259,3 +259,8 @@ checks. Sizes: S is under an hour, M is a few hours.
 ### WB-46 Deployment
 
 - Vercel for the app, Inngest Cloud for the workflows, a Postgres with pgvector for the database; the keys per environment in `.env.example`, the steps in the README, and `/pre-deploy` before each release
+
+### WB-47 The architecture written up, and a design pitched
+
+- `docs/architecture.md`: the system as built after Day 19, in one diagram, with the agents and their patterns, where each kind of data lives, the technology and why, the tradeoffs, and what reliability is built and what is missing
+- `docs/design/brief-a.md`: the design for an AI customer support platform at 10,000 tickets a day: 3 workflows, 4 agents, the data and the technology, the tradeoffs, 5 features by impact and effort with the MVP, what to promise and what to caveat, and the 5-minute pitch
