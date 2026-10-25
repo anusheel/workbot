@@ -54,6 +54,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-46  | Deployment                                                                | S    | open   |
 | WB-47  | The architecture written up, and a design pitched                         | M    | done   |
 | WB-48  | One policy across 3 CLIs, the company brain, the way of working           | M    | done   |
+| WB-49  | A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue  | L    | done   |
 
 ## Acceptance criteria
 
@@ -283,3 +284,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `AGENTS.md` at the root and in `site/`, `src/app/api/` and `content/knowledge/`, each with a `CLAUDE.md` importing it; the MCP servers declared once per CLI from the same list (`.mcp.json`, `.codex/config.toml`, `opencode.jsonc`); the same permission policy in each; the skills as Codex skills and OpenCode commands pointing at the same files; `scripts/agent-config.test.ts` fails when they drift
 - `brain/`: the product, the architecture decisions, the customer and the style notes, with an index, `Reviewed` dates and a retention rule; the root `AGENTS.md` points at it
 - An issue form with acceptance criteria and constraints, a pull request template with the brief, the plan, the sessions and the checks; `docs/agentic-development.md` records the policy, the workflow and what each CLI was faster or clearer at on the day's 3 tasks
+
+### WB-49 A fleet of 50 tasks: the dispatcher, the review fleet, the batched queue
+
+- `docs/fleet-tasks.md`: 50 tasks with a goal, criteria, constraints, files and the test to write first, no two changing the same file, filed as issues by `scripts/fleet.mjs file`
+- `scripts/fleet.mjs`: an agent per task in a worktree or a cloud session, the pull requests the cloud cannot open, a board of every task's state, a queue that reviews in batches with the 4 reviewers, merges with the agent's commit message, checks the branch and reverts what broke it, and sends a review that requests changes or a failed check back to one more session
+- `.claude/agents/brief-reviewer.md` and `/review` with 4 reviewers and a verdict line
+- `docs/fleet.md`: the numbers, the task shapes that worked and the ones that did not, what a person did, the next backlog
