@@ -15,4 +15,12 @@ export const schema = [
     text text not null,
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists memories (
+    id uuid primary key default gen_random_uuid(),
+    visitor text not null,
+    kind text not null,
+    text text not null,
+    created_at timestamptz not null default now(),
+    unique (visitor, text)
+  )`,
 ];

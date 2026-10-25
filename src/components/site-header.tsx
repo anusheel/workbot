@@ -7,6 +7,7 @@ const links = [
   { href: "/policies", label: "Policies" },
   { href: "/dashboards", label: "Dashboards" },
   { href: "/admin", label: "Admin" },
+  { href: "/settings", label: "Settings" },
 ] as const;
 
 export function SiteHeader() {

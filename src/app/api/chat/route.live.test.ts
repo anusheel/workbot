@@ -1,10 +1,13 @@
 import { expect, test, vi } from "vitest";
+import { listMemories } from "@/lib/memory";
 import { POST } from "./route";
 
-// The request context Next.js would provide; the model and the tools are real.
+// The request context Next.js would provide; the model, the tools and the database are real.
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/visitor", () => ({ visitorId: async () => "live-visitor" }));
+vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
 
-test("the web chat streams a reply that used the calculator", async () => {
+test("the web chat answers with a tool and remembers what it learned about the person", async () => {
   const response = await POST(
     new Request("http://workbot/api/chat", {
       method: "POST",
@@ -17,7 +20,7 @@ test("the web chat streams a reply that used the calculator", async () => {
             parts: [
               {
                 type: "text",
-                text: "What is 1234 * 5678? Use the calculator.",
+                text: "I run the support team and I like short answers. What is 1234 * 5678? Use the calculator.",
               },
             ],
           },
@@ -29,4 +32,9 @@ test("the web chat streams a reply that used the calculator", async () => {
   const body = await response.text();
   expect(body).toContain('"toolName":"calculator"');
   expect(body.replace(/,/g, "")).toMatch(/7006652|7 006 652/);
+  await vi.waitFor(
+    async () =>
+      expect((await listMemories("live-visitor")).length).toBeGreaterThan(0),
+    { timeout: 30_000 },
+  );
 });
