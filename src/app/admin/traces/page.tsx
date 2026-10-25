@@ -78,8 +78,8 @@ async function Dashboard() {
               <TableBody>
                 {day.byTenant.map((row) => (
                   <TableRow key={row.tenant}>
-                    <TableCell className="font-mono text-xs">
-                      {row.tenant}
+                    <TableCell className="font-mono text-xs" title={row.tenant}>
+                      {row.tenant.slice(0, 8)}
                     </TableCell>
                     <TableCell className="text-right">{row.calls}</TableCell>
                     <TableCell className="text-right">

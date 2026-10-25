@@ -73,6 +73,10 @@ Every model call is traced with its tenant, tokens, cost and latency, and
 assistant against 12 golden cases with a judge model; an hourly watch raises
 alerts into the outbox for failures and spend.
 
+The system as built is written up in [docs/architecture.md](docs/architecture.md);
+[docs/design/brief-a.md](docs/design/brief-a.md) designs a customer support
+platform on the same parts and pitches it.
+
 ## Deploy
 
 The app runs on Vercel, the workflows on Inngest Cloud, the database on any

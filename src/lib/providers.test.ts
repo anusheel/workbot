@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { anthropic, openai } from "./providers";
+import { anthropic, costOf, openai } from "./providers";
 import { calculator } from "./tools";
 
 const sse = (events: [string, object][]) =>
@@ -387,4 +387,17 @@ test("openai keeps the usage of a response cut short, and reports a failed one",
       text: () => {},
     }),
   ).rejects.toThrow("The server had an error.");
+});
+
+test("a cache read is a tenth of the input price, a twentieth on the large models, and a write 1.25 times it", () => {
+  expect(
+    costOf("claude-haiku-5-5", { input: 0, output: 0, cacheRead: 1e6 }),
+  ).toBeCloseTo(0.01, 6);
+  expect(
+    costOf("claude-sonnet-5-5", { input: 0, output: 0, cacheRead: 1e6 }),
+  ).toBeCloseTo(0.1, 6);
+  expect(
+    costOf("claude-sonnet-5-5", { input: 0, output: 0, cacheWrite: 1e6 }),
+  ).toBeCloseTo(2.5, 6);
+  expect(costOf("gpt-5.5", { input: 1e6, output: 1e6 })).toBe(0);
 });
