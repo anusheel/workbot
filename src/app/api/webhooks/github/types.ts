@@ -10,7 +10,10 @@ export const IssuesEvent = z.object({
     state: z.string(),
     user: z.object({ login: z.string() }).optional(),
     assignees: z.array(z.object({ login: z.string() })).default([]),
-    labels: z.array(z.object({ name: z.string() })).default([]),
+    // A delivery carries label objects; the server's own read of an issue, names.
+    labels: z
+      .array(z.union([z.string(), z.object({ name: z.string() })]))
+      .default([]),
     html_url: z.url(),
     updated_at: z.string(),
   }),

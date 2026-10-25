@@ -56,6 +56,17 @@ test("a signed issues delivery replaces the ticket's row, routed, and is logged 
   expect(logged.lag_s).toBeGreaterThanOrEqual(4);
 });
 
+test("labels come as objects from a delivery and as names from the server's read; both land", async () => {
+  const named = {
+    ...issue(15, "Scissor lift"),
+    labels: ["fleet", "urgent"],
+  };
+  expect(
+    (await deliver({ action: "labeled", issue: named, repository })).status,
+  ).toBe(204);
+  expect((await findTickets("scissor"))[0].labels).toEqual(["fleet", "urgent"]);
+});
+
 test("a deleted issue's row goes, and the deletion is logged as gone", async () => {
   const deleted = {
     action: "deleted",
