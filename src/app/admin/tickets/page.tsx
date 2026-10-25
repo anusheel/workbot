@@ -116,9 +116,9 @@ async function Synced() {
           note={`${total.contacts} contacts`}
         />
         <Stat
-          label="Behind by, median"
-          value={`webhook ${seconds(sync.medianLagS.webhook)}`}
-          note={`pull ${seconds(sync.medianLagS.pull)}`}
+          label="Behind by webhook, median"
+          value={seconds(sync.medianLagS.webhook)}
+          note={`${seconds(sync.medianLagS.pull)} by pull`}
         />
         <Stat
           label="Reconciliation found"
