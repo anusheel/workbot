@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { readPage, searchWeb, textOf } from "./web";
+import { isPublic, readPage, searchWeb, textOf } from "./web";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -37,6 +37,8 @@ test("readPage refuses private addresses, other schemes, and redirects into them
     "http://[::ffff:127.0.0.1]/",
     "http://[fd00::1]/",
     "http://db.internal/",
+    "http://localhost./",
+    "http://db.internal./",
   ]) {
     await expect(readPage(url)).rejects.toThrow("not a public web address");
   }
@@ -57,6 +59,32 @@ test("readPage refuses private addresses, other schemes, and redirects into them
   await expect(readPage("https://example.com/go")).rejects.toThrow(
     "not a public web address",
   );
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response("", {
+          status: 302,
+          headers: { location: "http://localhost./" },
+        }),
+    ),
+  );
+  await expect(readPage("https://example.com/go")).rejects.toThrow(
+    "not a public web address",
+  );
+});
+
+test("isPublic keeps a public host public with a trailing dot, and stays fast on long dot runs", () => {
+  expect(isPublic(new URL("https://example.com./page"))).toBe(true);
+  expect(isPublic(new URL("https://example.com../page"))).toBe(true);
+
+  const dots = ".".repeat(100_000);
+  const started = performance.now();
+  expect(isPublic(new URL(`http://a${dots}b/`))).toBe(true);
+  expect(isPublic(new URL(`http://a${dots}b${dots}/`))).toBe(true);
+  expect(isPublic(new URL(`http://localhost${dots}/`))).toBe(false);
+  expect(performance.now() - started).toBeLessThan(500);
 });
 
 test("readPage follows public redirects and gives up after 3 hops", async () => {

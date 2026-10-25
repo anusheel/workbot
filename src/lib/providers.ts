@@ -221,7 +221,10 @@ export function openai(
               event.response.usage ?? {};
             usage.input += input_tokens;
             usage.output += output_tokens;
-            output = event.response.output;
+            // A response cut off at the token limit may hold a call with partial
+            // arguments: its tokens count, but its output must never run.
+            if (event.type === "response.completed")
+              output = event.response.output;
           }
         }
         const calls = output.filter((item) => item.type === "function_call");
@@ -237,8 +240,20 @@ export function openai(
             input.push(item);
         }
         for (const call of calls) {
-          const parsed = JSON.parse(call.arguments) as unknown;
-          const { result } = await run(tools, call.name, parsed, on);
+          let parsed: unknown;
+          let result: string | undefined;
+          try {
+            parsed = JSON.parse(call.arguments);
+          } catch (err) {
+            result = `The arguments are not valid JSON: ${(err as Error).message}`;
+            on.tool?.({
+              name: call.name,
+              input: call.arguments,
+              result,
+              failed: true,
+            });
+          }
+          result ??= (await run(tools, call.name, parsed, on)).result;
           input.push({
             type: "function_call_output",
             call_id: call.call_id,

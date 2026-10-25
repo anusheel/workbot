@@ -3,9 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FileUpload } from "@/components/file-upload";
+import { InboxStatus } from "@/components/inbox-status";
 import { PendingButton } from "@/components/pending-button";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,27 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type InboxItem, type InboxStatus, listInbox } from "@/lib/inbox";
+import { listInbox } from "@/lib/inbox";
 import { listNotifications } from "@/lib/notify";
 import { review, runReminders, uploadDocuments } from "./actions";
 
 export const metadata: Metadata = { title: "Inbox" };
-
-const statusLabels: Record<
-  InboxStatus,
-  {
-    label: string;
-    variant: "default" | "secondary" | "outline" | "destructive";
-  }
-> = {
-  received: { label: "Received", variant: "secondary" },
-  extracted: { label: "Extracting", variant: "secondary" },
-  awaiting_review: { label: "Needs review", variant: "outline" },
-  stored: { label: "Filed", variant: "default" },
-  rejected: { label: "Rejected", variant: "destructive" },
-  expired: { label: "Expired", variant: "destructive" },
-  failed: { label: "Failed", variant: "destructive" },
-};
 
 export default function InboxPage() {
   return (
@@ -108,10 +91,12 @@ async function Items() {
               </TableCell>
               <TableCell className="capitalize">{item.type ?? "—"}</TableCell>
               <TableCell>
-                <Status item={item} />
+                <InboxStatus item={item} review={review} />
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {item.review.join(", ") || "—"}
+                {item.status === "awaiting_review"
+                  ? item.review.join(", ") || "—"
+                  : "—"}
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
                 {item.updatedAt.toLocaleTimeString("en-GB", {
@@ -123,27 +108,6 @@ async function Items() {
         </TableBody>
       </Table>
     </div>
-  );
-}
-
-function Status({ item }: { item: InboxItem }) {
-  const { label, variant } = statusLabels[item.status];
-  if (item.status !== "awaiting_review")
-    return <Badge variant={variant}>{label}</Badge>;
-  return (
-    <form className="flex items-center gap-2">
-      <Badge variant={variant}>{label}</Badge>
-      <Button size="sm" formAction={review.bind(null, item.id, "approved")}>
-        Approve
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        formAction={review.bind(null, item.id, "rejected")}
-      >
-        Reject
-      </Button>
-    </form>
   );
 }
 

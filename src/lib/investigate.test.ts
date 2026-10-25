@@ -289,6 +289,58 @@ test("a browser that fails midway is tried once more, and both attempts are on t
   expect(run.cost.web).toBeCloseTo(4 * perCall, 12);
 });
 
+test("browse_site refuses a private address before the browser starts or anything is fetched", async () => {
+  const fetched = vi.fn();
+  vi.stubGlobal("fetch", fetched);
+  const analyst = scripted([
+    {
+      calls: [
+        {
+          name: "ask_web",
+          input: { question: "What does http://169.254.169.254 serve?" },
+        },
+      ],
+    },
+    {
+      calls: [
+        {
+          name: "write_report",
+          input: { report: "The address is not a public web address." },
+        },
+      ],
+    },
+  ]);
+  const specialist = scripted([
+    {
+      calls: [
+        {
+          name: "browse_site",
+          input: {
+            url: "http://169.254.169.254/latest/meta-data",
+            task: "Report what the page lists.",
+          },
+        },
+      ],
+    },
+    { text: "That address is not a public web address." },
+  ]);
+  const browser = vi.fn(async () => fakeBrowser([]));
+  const run = await investigate(
+    "What does http://169.254.169.254 serve?",
+    { analyst, specialist },
+    { browser },
+  );
+  const entry = run.log.find(
+    (e) => e.kind === "tool" && e.name === "browse_site",
+  );
+  expect(entry).toMatchObject({ failed: true });
+  expect(toolResult(run.log, "browse_site")).toContain(
+    "not a public web address",
+  );
+  expect(browser).not.toHaveBeenCalled();
+  expect(fetched).not.toHaveBeenCalled();
+});
+
 test("a run cut off by its limits reports the findings so far and says why", async () => {
   const analyst = scripted([
     {

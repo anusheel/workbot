@@ -8,12 +8,14 @@ const lines = [
   '{"op":"add","path":"/elements/page","value":{"type":"Page","props":{"title":"Operations","description":null},"children":[]}}',
 ];
 let instructions = "";
+let modelCalls = 0;
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/chat", () => ({
   chatModel: () =>
     new MockLanguageModelV4({
       doStream: async ({ prompt }) => {
+        modelCalls += 1;
         instructions = prompt.find((m) => m.role === "system")
           ?.content as string;
         return {
@@ -65,4 +67,37 @@ test("streams the model's JSONL patches as text, with the catalog and live data 
 
 test("rejects an empty prompt", async () => {
   expect((await post({ prompt: "  " })).status).toBe(400);
+});
+
+test("rejects a spec with more than 200 elements before any model call", async () => {
+  modelCalls = 0;
+  const elements = Object.fromEntries(
+    Array.from({ length: 5_000 }, (_, i) => [`e${i}`, { type: "Text" }]),
+  );
+  const response = await post({
+    prompt: "Change it",
+    currentSpec: { root: "e0", elements },
+  });
+  expect(response.status).toBe(400);
+  expect((await response.json()).error.fieldErrors.currentSpec).toBeDefined();
+  expect(modelCalls).toBe(0);
+});
+
+test("rejects a spec whose JSON is over 50,000 characters", async () => {
+  modelCalls = 0;
+  const response = await post({
+    prompt: "Change it",
+    currentSpec: { root: "a", elements: { a: { text: "x".repeat(50_000) } } },
+  });
+  expect(response.status).toBe(400);
+  expect(modelCalls).toBe(0);
+});
+
+test("still streams an edit of a normal spec", async () => {
+  const response = await post({
+    prompt: "Change it",
+    currentSpec: { root: "page", elements: { page: { type: "Page" } } },
+  });
+  expect(response.status).toBe(200);
+  await response.text();
 });

@@ -1,14 +1,26 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
 const root = new URL("../", import.meta.url);
 const read = (path: string) => readFileSync(new URL(path, root), "utf8");
 
-const agentDocs = [
-  "site/AGENTS.md",
-  "src/app/api/AGENTS.md",
-  "content/knowledge/AGENTS.md",
-];
+// Untracked files count too, so a new package is checked before it is committed.
+const agentDocs = execFileSync(
+  "git",
+  ["ls-files", "--cached", "--others", "--exclude-standard"],
+  { cwd: fileURLToPath(root), encoding: "utf8" },
+)
+  .split("\n")
+  .filter((file) => file.endsWith("/AGENTS.md"));
+
+type McpServer = { url: string } | { command: string[] };
+type McpDefinition = {
+  url?: string;
+  command?: string | string[];
+  args?: string[];
+};
 
 // opencode.jsonc is JSON with // comment lines and trailing commas, neither
 // of which JSON.parse accepts.
@@ -20,23 +32,115 @@ function parseJsonc(source: string) {
     .replace(/,(\s*[}\]])/g, "$1");
   return JSON.parse(stripped) as {
     instructions?: string[];
-    mcp?: Record<string, unknown>;
+    permission?: { read?: string | Record<string, string> };
+    mcp?: Record<string, McpDefinition>;
   };
 }
 
-function mcpNamesFromMcpJson(source: string): string[] {
+// The Codex tables read here are `key = value` lines whose values are also
+// valid JSON, so no TOML parser is needed. The table "" holds the top-level keys.
+function tomlTables(source: string) {
+  const tables = new Map<string, Record<string, unknown>>([["", {}]]);
+  // Undefined inside an array table such as [[skills.config]], which is not read here.
+  let current: Record<string, unknown> | undefined = tables.get("");
+  for (const line of source.split("\n")) {
+    if (line.startsWith("[")) {
+      const name = line.match(/^\[([^[\]]+)\]\s*$/)?.[1];
+      current = name ? {} : undefined;
+      if (name && current) tables.set(name, current);
+      continue;
+    }
+    const entry = line.match(/^("[^"]+"|[\w-]+)\s*=\s*(.+)$/);
+    if (entry && current) {
+      current[entry[1].replace(/^"|"$/g, "")] = JSON.parse(entry[2]);
+    }
+  }
+  return tables;
+}
+
+// Each CLI spells a server differently (`type: http`/`remote`, `args` apart
+// from or inside `command`); what has to agree is where it points or what it runs.
+function serverOf(definition: McpDefinition): McpServer {
+  if (definition.url) return { url: definition.url };
+  if (!definition.command)
+    throw new Error("an MCP server has no url or command");
+  return { command: [definition.command, ...(definition.args ?? [])].flat() };
+}
+
+function mcpServersFromMcpJson(source: string) {
   const { mcpServers } = JSON.parse(source) as {
-    mcpServers: Record<string, unknown>;
+    mcpServers: Record<string, McpDefinition>;
   };
-  return Object.keys(mcpServers);
+  return Object.fromEntries(
+    Object.entries(mcpServers).map(([name, def]) => [name, serverOf(def)]),
+  );
 }
 
-function mcpNamesFromCodex(source: string): string[] {
-  return [...source.matchAll(/\[mcp_servers\.([^\]]+)\]/g)].map((m) => m[1]);
+function mcpServersFromCodex(source: string) {
+  return Object.fromEntries(
+    [...tomlTables(source)]
+      .filter(([name]) => name.startsWith("mcp_servers."))
+      .map(([name, def]) => [
+        name.slice("mcp_servers.".length),
+        serverOf(def as McpDefinition),
+      ]),
+  );
 }
 
-function mcpNamesFromOpenCode(source: string): string[] {
-  return Object.keys(parseJsonc(source).mcp ?? {});
+function mcpServersFromOpenCode(source: string) {
+  return Object.fromEntries(
+    Object.entries(parseJsonc(source).mcp ?? {}).map(([name, def]) => [
+      name,
+      serverOf(def),
+    ]),
+  );
+}
+
+// `*` stays inside a path segment and `**/` spans directories, which is all
+// the env-file patterns in these configs use.
+function globMatches(pattern: string, path: string) {
+  const escape = (text: string) => text.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  const source = pattern
+    .split("**/")
+    .map((part) => part.split("*").map(escape).join("[^/]*"))
+    .join("(?:.*/)?");
+  return new RegExp(`^${source}$`).test(path);
+}
+
+// A deny entry is a glob: Read(./.env.*) covers .env.local as Read(./.env.local) does.
+function claudeDeniesRead(source: string, path: string) {
+  const { permissions } = JSON.parse(source) as {
+    permissions?: { deny?: string[] };
+  };
+  return (permissions?.deny ?? []).some((rule) => {
+    const glob = rule.match(/^Read\(\.\/(.+)\)$/)?.[1];
+    if (!glob) return false;
+    const pattern = glob
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*");
+    return new RegExp(`^${pattern}$`).test(path);
+  });
+}
+
+function codexDeniesRead(source: string, path: string) {
+  const tables = tomlTables(source);
+  const profile = tables.get("")?.default_permissions;
+  return [...tables]
+    .filter(([name]) => name.startsWith(`permissions.${profile}.filesystem`))
+    .flatMap(([, rules]) => Object.entries(rules))
+    .some(
+      ([pattern, action]) => action === "deny" && globMatches(pattern, path),
+    );
+}
+
+function opencodeDeniesRead(source: string, path: string) {
+  const rules = parseJsonc(source).permission?.read;
+  if (typeof rules === "string") return rules === "deny";
+  // The last matching pattern wins, so a later allow would undo an earlier deny.
+  const matching = Object.entries(rules ?? {}).filter(([pattern]) =>
+    globMatches(pattern, path),
+  );
+  return matching.at(-1)?.[1] === "deny";
 }
 
 function skillPathsFromCodex(source: string): string[] {
@@ -50,12 +154,31 @@ function skillPathsFromCodex(source: string): string[] {
     });
 }
 
-test("the three configs declare the same MCP servers", () => {
-  const inMcpJson = mcpNamesFromMcpJson(read(".mcp.json")).sort();
-  const inCodex = mcpNamesFromCodex(read(".codex/config.toml")).sort();
-  const inOpenCode = mcpNamesFromOpenCode(read("opencode.jsonc")).sort();
-  expect(inMcpJson).toEqual(inCodex);
-  expect(inMcpJson).toEqual(inOpenCode);
+test("the three configs declare the same MCP servers, each with the same url or command", () => {
+  const inMcpJson = mcpServersFromMcpJson(read(".mcp.json"));
+  expect(
+    mcpServersFromCodex(read(".codex/config.toml")),
+    ".codex/config.toml differs from .mcp.json",
+  ).toEqual(inMcpJson);
+  expect(
+    mcpServersFromOpenCode(read("opencode.jsonc")),
+    "opencode.jsonc differs from .mcp.json",
+  ).toEqual(inMcpJson);
+});
+
+test("each config denies reading .env.local", () => {
+  expect(
+    claudeDeniesRead(read(".claude/settings.json"), ".env.local"),
+    ".claude/settings.json does not deny Read(./.env.local)",
+  ).toBe(true);
+  expect(
+    codexDeniesRead(read(".codex/config.toml"), ".env.local"),
+    ".codex/config.toml has no deny filesystem rule matching .env.local",
+  ).toBe(true);
+  expect(
+    opencodeDeniesRead(read("opencode.jsonc"), ".env.local"),
+    "opencode.jsonc does not deny reading .env.local",
+  ).toBe(true);
 });
 
 test("every AGENTS.md below the root is an instruction in opencode.jsonc", () => {

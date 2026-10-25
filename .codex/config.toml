@@ -5,7 +5,9 @@
 approval_policy = "on-request"
 default_permissions = "workbot"
 
-# Writes inside the tree, system temp aside; the env files out of reach, as in the other 2 CLIs.
+# Writes inside the tree, system temp aside; the env files out of reach, as in the other 2 CLIs: `.env` and
+# `.env.*`, except .env.example. A deny has no exception, so the 2 classes cover every `.env.<x>` but the
+# names that start with `.env.ex`; `.env.*.local` still catches `.env.example.local`.
 # A profile applies only when no loaded config sets the older sandbox_mode.
 [permissions.workbot]
 extends = ":workspace"
@@ -13,6 +15,9 @@ extends = ":workspace"
 "**/.env" = "deny"
 "**/.env.local" = "deny"
 "**/.env.*.local" = "deny"
+"**/.env.production" = "deny"
+"**/.env.[!e]*" = "deny"
+"**/.env.e[!x]*" = "deny"
 
 [mcp_servers.linear]
 url = "https://mcp.linear.app/mcp"

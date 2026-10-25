@@ -47,6 +47,36 @@ export async function classify(
 
 const money = (currency: string, amount: number) =>
   `${currency} ${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+// Read from the request model so the two cannot drift apart.
+const titleMax = NewRequest.shape.title.maxLength ?? 120;
+const bodyMax = NewRequest.shape.body.unwrap().maxLength ?? 5000;
+
+const fitTitle = (title: string) => {
+  const text = title.trim();
+  return text.length > titleMax ? `${text.slice(0, titleMax - 1)}…` : text;
+};
+
+/** Whole lines up to the limit, then a note of how many were left out. */
+const fitBody = (body: string) => {
+  if (body.length <= bodyMax) return body;
+  const lines = body.split("\n");
+  const note = (left: number) =>
+    `\n… ${left} more line${left === 1 ? "" : "s"} left out.`;
+  let kept = 0;
+  let length = 0;
+  while (kept < lines.length) {
+    const next = length + (kept ? 1 : 0) + lines[kept].length;
+    if (next + note(lines.length - kept - 1).length > bodyMax) break;
+    length = next;
+    kept++;
+  }
+  const left = lines.length - kept;
+  const head = kept
+    ? lines.slice(0, kept).join("\n")
+    : lines[0].slice(0, bodyMax - note(left - 1).length - 1) + "…";
+  return head + note(kept ? left : left - 1);
+};
+
 const list = (items: string[]) => items.map((item) => `- ${item}`).join("\n");
 
 /** The work a document asks for: a title, a team and a priority by its kind, the record's substance as the body. */
@@ -56,8 +86,12 @@ export function toRequest(document: Extracted): NewRequest {
       const { vendor, number, currency, total, due, lines, terms } =
         document.data;
       return NewRequest.parse({
-        title: `Pay ${vendor} invoice${number ? ` ${number}` : ""}, ${money(currency, total)}`,
-        body: `${due ? `Due ${due}. ` : ""}${terms ? `Terms: ${terms}. ` : ""}\n\n${list(lines.map((l) => `${l.description}: ${money(currency, l.amount)}`))}`,
+        title: fitTitle(
+          `Pay ${vendor} invoice${number ? ` ${number}` : ""}, ${money(currency, total)}`,
+        ),
+        body: fitBody(
+          `${due ? `Due ${due}. ` : ""}${terms ? `Terms: ${terms}. ` : ""}\n\n${list(lines.map((l) => `${l.description}: ${money(currency, l.amount)}`))}`,
+        ),
         team: "finance",
         priority: due ? "normal" : "low",
       });
@@ -65,8 +99,8 @@ export function toRequest(document: Extracted): NewRequest {
     case "email": {
       const { from, subject, intent, actions, urgency } = document.data;
       return NewRequest.parse({
-        title: subject ?? actions[0] ?? `Email from ${from}`,
-        body: `From ${from} (${intent}).\n\n${list(actions)}`,
+        title: fitTitle(subject?.trim() || actions[0] || `Email from ${from}`),
+        body: fitBody(`From ${from} (${intent}).\n\n${list(actions)}`),
         team:
           intent === "complaint" || intent === "question"
             ? "support"
@@ -78,8 +112,8 @@ export function toRequest(document: Extracted): NewRequest {
     case "letter": {
       const { from, subject, summary, requested } = document.data;
       return NewRequest.parse({
-        title: subject,
-        body: `From ${from}. ${summary}\n\n${list(requested)}`,
+        title: fitTitle(subject),
+        body: fitBody(`From ${from}. ${summary}\n\n${list(requested)}`),
         team: "operations",
         priority: "normal",
       });
@@ -87,7 +121,7 @@ export function toRequest(document: Extracted): NewRequest {
     case "job": {
       const { title, company, location, workplace } = document.data;
       return NewRequest.parse({
-        title: `Hiring: ${title} at ${company}`,
+        title: fitTitle(`Hiring: ${title} at ${company}`),
         body: [location, workplace].filter(Boolean).join(", "),
         team: "operations",
         priority: "low",

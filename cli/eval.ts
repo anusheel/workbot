@@ -36,6 +36,11 @@ const [label, prompt] = await promptText();
 const model = chatModel();
 const judgeModel = chatModel("small");
 
+if (!cases.length) {
+  console.log(`No case matched --only ${values.only}.`);
+  await close();
+  process.exit(0);
+}
 console.log(`Prompt ${label}, ${cases.length} cases, ${runs} runs each\n`);
 console.log("| Case | Kind | Mean | SD | Last reason |");
 console.log("| --- | --- | --- | --- | --- |");

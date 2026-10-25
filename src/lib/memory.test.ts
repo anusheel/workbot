@@ -1,5 +1,6 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test } from "vitest";
+import { query } from "./db";
 import {
   extractMemories,
   forget,
@@ -42,6 +43,24 @@ test("the memory note lists what is known, and is empty when nothing is", () => 
     },
   ]);
   expect(note).toContain("- The person wants short answers. (preference)");
+});
+
+test("the note carries the newest 30 memories, and the list still has them all", async () => {
+  // Explicit minutes apart: rows inserted back to back can share a timestamp,
+  // and then "newest" is not defined.
+  await query(
+    `insert into memories (visitor, kind, text, created_at)
+     select 'v3', 'case', 'The person is on case ' || i || '.', now() - make_interval(mins => 40 - i)
+     from generate_series(1, 40) as i`,
+    [],
+  );
+  const all = await listMemories("v3");
+  expect(all).toHaveLength(40);
+  expect(await listMemories("v3", 5)).toHaveLength(5);
+  const lines = memoryNote(all).split("\n").slice(1);
+  expect(lines).toHaveLength(30);
+  expect(lines[0]).toContain("case 40.");
+  expect(lines[29]).toContain("case 11.");
 });
 
 test("extraction asks a model for durable facts and returns them typed", async () => {
@@ -102,4 +121,15 @@ test("extraction asks a model for durable facts and returns them typed", async (
   expect(instructions).toContain(
     "Already known:\n- The person wants short answers.",
   );
+
+  const forty = Array.from({ length: 40 }, (_, i) => ({
+    id: String(40 - i),
+    kind: "case" as const,
+    text: `The person is on case ${40 - i}.`,
+    createdAt: new Date(),
+  }));
+  await extractMemories(model, { user: "Hi.", assistant: "Hello." }, forty);
+  expect(instructions).toContain("- The person is on case 40.");
+  expect(instructions).toContain("- The person is on case 11.");
+  expect(instructions).not.toContain("- The person is on case 10.");
 });

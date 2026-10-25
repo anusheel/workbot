@@ -6,6 +6,12 @@ export const GenerateBody = z.object({
   currentSpec: z
     .object({ root: z.string(), elements: z.record(z.string(), z.unknown()) })
     .partial()
+    .refine((spec) => Object.keys(spec.elements ?? {}).length <= 200, {
+      error: "The page has more than 200 elements.",
+    })
+    .refine((spec) => JSON.stringify(spec).length <= 50_000, {
+      error: "The page spec is over 50,000 characters.",
+    })
     .optional(),
 });
 export type GenerateBody = z.infer<typeof GenerateBody>;

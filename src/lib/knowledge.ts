@@ -164,9 +164,15 @@ const countOf = async (where: string) =>
     )[0].count,
   );
 
-/** Builds the index on first use, embedding it when an embedder is given. */
+let building: Promise<number> | undefined;
+
+/** Builds the index on first use; callers that arrive while it builds wait for that run. */
 async function indexed(embed?: Embed) {
-  if ((await countOf("")) === 0) await indexKnowledge(embed);
+  if (!building && (await countOf("")) === 0)
+    building ??= indexKnowledge(embed).finally(() => {
+      building = undefined;
+    });
+  await building;
 }
 
 /**

@@ -58,3 +58,20 @@ test("nothing is heard while idle or thinking, and stop keeps the transcript", (
   expect(stopped.state).toBe("idle");
   expect(stopped.turns).toHaveLength(1);
 });
+
+test("an empty or whitespace-only final result is not a turn", () => {
+  const listening = run([{ type: "start" }]);
+  for (const text of ["", "   \n"]) {
+    expect(next(listening, { type: "heard", text, final: true })).toEqual(
+      listening,
+    );
+  }
+});
+
+test("a final result over the API limit is cut to 2,000 characters", () => {
+  const heard = run([
+    { type: "start" },
+    { type: "heard", text: "a".repeat(2_500), final: true },
+  ]);
+  expect(heard.turns[0].text).toHaveLength(2_000);
+});

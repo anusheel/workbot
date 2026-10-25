@@ -66,3 +66,15 @@ test("the summary counts requests by status, team and priority", async () => {
   expect(summary.byPriority).toEqual({ low: 0, normal: 1, high: 2 });
   expect(summary.latest).toHaveLength(3);
 });
+
+test("updateRequest returns the updated request, or undefined for a bad or unknown id", async () => {
+  const printer = await request("Fix the label printer", "operations");
+  expect(await updateRequest(printer.id, { status: "done" })).toEqual({
+    ...printer,
+    status: "done",
+  });
+  expect(await updateRequest("nope", { status: "done" })).toBeUndefined();
+  expect(
+    await updateRequest(crypto.randomUUID(), { status: "done" }),
+  ).toBeUndefined();
+});

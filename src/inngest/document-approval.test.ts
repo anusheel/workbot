@@ -1,5 +1,6 @@
 import { InngestTestEngine, mockCtx } from "@inngest/test";
 import { MockLanguageModelV4 } from "ai/test";
+import { NonRetriableError } from "inngest";
 import { expect, test, vi } from "vitest";
 import { listDocuments } from "@/lib/documents";
 import { getItem, receive } from "@/lib/inbox";
@@ -209,4 +210,36 @@ test("the real classify and extract steps write what they found to the inbox row
     confidence: { vendor: 1, total: 0.4 },
   });
   expect((await getItem(item.id))?.review).toContain("total");
+});
+
+test("corrections that break the schema file nothing and fail without a retry", async () => {
+  const item = await receive(
+    "bad.pdf",
+    "application/pdf",
+    new Uint8Array([37]),
+  );
+  const { result, error } = await engine(item.id, {
+    decision: "approved",
+    data: { total: "twelve" },
+  }).execute({
+    steps: [
+      { id: "classify", handler: () => "invoice" },
+      {
+        id: "extract",
+        handler: () => ({
+          data: invoice,
+          confidence: {},
+          review: ["total"],
+          attempts: 1,
+        }),
+      },
+    ],
+  });
+  expect(result).not.toMatchObject({ status: "stored" });
+  // The engine hands the error back serialized, so it is matched by name.
+  expect(error).toMatchObject({ name: NonRetriableError.name });
+  const row = await getItem(item.id);
+  expect(row?.requestId).toBeNull();
+  expect(row?.status).not.toBe("stored");
+  expect(row?.review.join(" ")).toContain("total");
 });

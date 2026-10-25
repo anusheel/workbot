@@ -9,14 +9,36 @@
     "brain/README.md",
   ],
   "permission": {
-    "edit": "allow",
-    "bash": "ask",
-    // The last matching pattern wins; .env.example is the one env file the agent may read.
+    // `.env` and `.env.*` are out of reach of the file tools, as in the other 2 CLIs; .env.example is the one
+    // env file the agent may read and edit. The last matching pattern wins, so the exception comes last.
+    // Patterns are case-sensitive and the disk may not be: `.ENV.local` is the same file and is not matched.
+    "edit": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+    },
     "read": {
       "*": "allow",
       "*.env": "deny",
       "*.env.*": "deny",
       "*.env.example": "allow",
+    },
+    // A command that spells an env file name (after a space, a tab, a slash, a quote, `=` or a redirect) is
+    // refused even under --auto, which only answers the asks; `process.env` in a grep is not a file name and
+    // still asks. This is a filter on literal lower-case names, not a boundary: a name built with a glob, a
+    // variable or a script, and `grep -r KEY .`, fall through to `ask`, which --auto answers. In an
+    // interactive session, "Always" on any bash prompt stores an allow rule that outranks these denies.
+    "bash": {
+      "*": "ask",
+      "* .env*": "deny",
+      "*\t.env*": "deny",
+      "*/.env*": "deny",
+      "*\".env*": "deny",
+      "*'.env*": "deny",
+      "*=.env*": "deny",
+      "*<.env*": "deny",
+      "*>.env*": "deny",
     },
   },
   "mcp": {

@@ -15,7 +15,7 @@ export function ConversationList({
   onNew,
 }: Props) {
   return (
-    <nav className="flex h-full flex-col gap-3">
+    <nav aria-label="Conversations" className="flex h-full flex-col gap-3">
       <Button type="button" variant="outline" onClick={onNew}>
         New chat
       </Button>

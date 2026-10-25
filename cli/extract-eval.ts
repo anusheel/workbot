@@ -6,6 +6,7 @@ import { close } from "@/lib/db";
 import { type DocumentType, schemas } from "@/lib/document-model";
 import { classify } from "@/lib/documents";
 import { type Source, extract } from "@/lib/extract";
+import { same } from "@/lib/field-match";
 
 // The documents of content/eval/documents, each with the record it should
 // become in expected.json, run through classification and extraction. An
@@ -45,37 +46,23 @@ async function source(name: string): Promise<Source> {
   };
 }
 
-/**
- * A field is right when what was extracted carries what was expected: a
- * string contains the expected text, case and spacing aside; a list holds
- * every expected item; a record every expected field; a number is equal.
- */
-function same(got: unknown, want: unknown): boolean {
-  if (Array.isArray(want))
-    return Array.isArray(got) && want.every((w) => got.some((g) => same(g, w)));
-  if (want && typeof want === "object")
-    return (
-      !!got &&
-      typeof got === "object" &&
-      Object.entries(want).every(([k, w]) =>
-        same((got as Record<string, unknown>)[k], w),
-      )
-    );
-  if (typeof want === "string" && typeof got === "string")
-    return normal(got).includes(normal(want));
-  return got === want;
-}
-const normal = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim();
-
 let fields = 0;
 let right = 0;
 let kinds = 0;
+const failures: string[] = [];
 console.log("| Document | Kind | Fields right | Wrong |");
 console.log("| --- | --- | --- | --- |");
 for (const [name, want] of Object.entries(expected)) {
-  const input = await source(name);
+  let input: Source;
+  try {
+    input = await source(name);
+  } catch (error) {
+    failures.push(`${name}: ${(error as Error).message}`);
+    continue;
+  }
   const type = await classify(input, model);
   if (type === want.type) kinds++;
+  else failures.push(`${name}: classified as ${type}, not ${want.type}`);
   const { data } = await extract(input, schemas[want.type], model);
   const wrong = Object.keys(want.data).filter(
     (field) =>
@@ -93,3 +80,7 @@ console.log(
 );
 await browser.close();
 await close();
+if (failures.length) {
+  console.error(`\n${failures.join("\n")}`);
+  process.exit(1);
+}

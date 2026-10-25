@@ -20,12 +20,19 @@ const Extracted = z.object({
     ),
 });
 
+/** How many memories one prompt carries, so it does not grow with every reply. */
+const promptLimit = 30;
+
 const columns = `id, kind, text, created_at as "createdAt"`;
 
-export async function listMemories(visitor: string): Promise<Memory[]> {
+/** Newest first; without a limit it returns everything, for the settings page. */
+export async function listMemories(
+  visitor: string,
+  limit?: number,
+): Promise<Memory[]> {
   return query<Memory>(
-    `select ${columns} from memories where visitor = $1 order by created_at desc`,
-    [visitor],
+    `select ${columns} from memories where visitor = $1 order by created_at desc limit $2`,
+    [visitor, limit ?? null],
   );
 }
 
@@ -55,7 +62,10 @@ export async function forgetAll(visitor: string): Promise<void> {
 /** What the assistant should know about the person, for the system prompt; empty when there is nothing. */
 export function memoryNote(memories: Memory[]): string {
   if (memories.length === 0) return "";
-  const lines = memories.map((m) => `- ${m.text} (${m.kind})`).join("\n");
+  const lines = memories
+    .slice(0, promptLimit)
+    .map((m) => `- ${m.text} (${m.kind})`)
+    .join("\n");
   return `What you know about this person from earlier conversations. Use it; do not repeat it back unless asked.\n${lines}`;
 }
 
@@ -68,6 +78,7 @@ export async function extractMemories(
   exchange: { user: string; assistant: string },
   known: Memory[],
 ) {
+  known = known.slice(0, promptLimit);
   const { output } = await generateText({
     model,
     output: Output.object({ schema: Extracted }),

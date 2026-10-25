@@ -1,6 +1,7 @@
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test } from "vitest";
 import { ingest, listDocuments, toRequest } from "./documents";
+import { NewRequest } from "./request-model";
 
 const scripted = (replies: object[]) =>
   new MockLanguageModelV4({
@@ -86,6 +87,52 @@ test("each kind of document becomes the right request", () => {
     team: "operations",
     priority: "low",
   });
+});
+
+test("a filed request fits the request model's limits", () => {
+  const email = (subject: string | null) =>
+    toRequest({
+      type: "email",
+      data: {
+        from: "dana@fieldstone.example",
+        to: ["support@fieldstone.example"],
+        subject,
+        intent: "question",
+        actions: ["Call Dana back"],
+        urgency: "medium",
+      },
+    });
+  const long = email("x".repeat(200));
+  expect(long.title).toHaveLength(NewRequest.shape.title.maxLength ?? 0);
+  expect(long.title.endsWith("…")).toBe(true);
+  expect(email("").title).toBe("Call Dana back");
+  expect(email("  ").title).toBe("Call Dana back");
+
+  const invoice = toRequest({
+    type: "invoice",
+    data: {
+      vendor: "Acme Supplies",
+      number: null,
+      date: "2026-10-01",
+      due: null,
+      currency: "USD",
+      lines: Array.from({ length: 500 }, (_, i) => ({
+        description: `Shelving bracket ${i}`,
+        quantity: 1,
+        unitPrice: 2,
+        amount: 2,
+      })),
+      subtotal: 1000,
+      tax: 0,
+      total: 1000,
+      terms: null,
+    },
+  });
+  expect(invoice.body.length).toBeLessThanOrEqual(
+    NewRequest.shape.body.unwrap().maxLength ?? 0,
+  );
+  expect(invoice.body).toMatch(/\d+ more lines? left out\.?$/);
+  expect(NewRequest.safeParse(invoice).success).toBe(true);
 });
 
 test("a document is classified, extracted, filed as a request and kept on it", async () => {

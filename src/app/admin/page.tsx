@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
+import { io } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 import { RequestList } from "@/components/request-list";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { listRequests, statusLabels, statuses } from "@/lib/requests";
+import { StatusCounts } from "@/components/status-counts";
+import { requestSummary } from "@/lib/requests";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -29,20 +25,14 @@ export default function AdminPage() {
 }
 
 async function Overview() {
-  const requests = await listRequests();
+  // requestSummary queries before it reaches listRequests' io(), so without
+  // this the build prerenders the page and needs a database.
+  await io();
+  const summary = await requestSummary();
   return (
     <>
-      <div className="mt-8 grid grid-cols-3 gap-4">
-        {statuses.map((status) => (
-          <Card key={status}>
-            <CardHeader>
-              <CardDescription>{statusLabels[status]}</CardDescription>
-              <CardTitle className="text-3xl">
-                {requests.filter((r) => r.status === status).length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
+      <div className="mt-8">
+        <StatusCounts byStatus={summary.byStatus} />
       </div>
       <div className="mt-10 flex items-center justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">
@@ -53,7 +43,7 @@ async function Overview() {
         </Button>
       </div>
       <div className="mt-3">
-        <RequestList requests={requests.slice(0, 5)} />
+        <RequestList requests={summary.latest.slice(0, 5)} />
       </div>
     </>
   );

@@ -8,7 +8,7 @@ import {
   documentReviewed,
   remindersRequested,
 } from "@/inngest/events";
-import { type MediaType, mediaTypes } from "@/lib/extract";
+import { type MediaType, fileSizeError, mediaTypes } from "@/lib/extract";
 import { discard, receive } from "@/lib/inbox";
 
 const media = new Set<string>(Object.values(mediaTypes));
@@ -19,6 +19,10 @@ export async function uploadDocuments(formData: FormData) {
     .getAll("documents")
     .filter((f): f is File => f instanceof File && media.has(f.type))
     .slice(0, 10);
+  for (const file of files) {
+    const tooBig = fileSizeError(file.size);
+    if (tooBig) throw new Error(`${file.name}: ${tooBig}`);
+  }
   const items = await Promise.all(
     files.map(async (file) =>
       receive(

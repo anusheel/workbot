@@ -1,4 +1,5 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
+import { query } from "./db";
 import {
   chunksOf,
   find,
@@ -90,4 +91,26 @@ test("an index built without embeddings still answers a find that comes with an 
   const hits = await find("refund limit for agents", embed);
   expect(hits.length).toBeGreaterThan(0);
   expect(hits[0].path).toMatch(/refund/);
+});
+
+vi.mock("./db", async (importOriginal) => {
+  const db = await importOriginal<typeof import("./db")>();
+  return { ...db, query: vi.fn(db.query) };
+});
+
+test("two first searches share one indexing run", async () => {
+  const expected = (await listDocuments()).flatMap(chunksOf).length;
+  await query(`delete from chunks`);
+  vi.mocked(query).mockClear();
+  const [a, b] = await Promise.all([find("refund"), find("refund")]);
+  expect(a.length).toBeGreaterThan(0);
+  expect(b).toEqual(a);
+  const rebuilds = vi
+    .mocked(query)
+    .mock.calls.filter(([sql]) => sql.startsWith("delete from chunks"));
+  expect(rebuilds).toHaveLength(1);
+  const rows = await query<{ count: number }>(
+    `select count(*)::int as count from chunks`,
+  );
+  expect(rows[0].count).toBe(expected);
 });
