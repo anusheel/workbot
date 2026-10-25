@@ -4,6 +4,13 @@ import { z } from "zod";
 export const teams = ["operations", "finance", "support"] as const;
 export const priorities = ["low", "normal", "high"] as const;
 export const statuses = ["open", "in_progress", "done"] as const;
+export type Status = (typeof statuses)[number];
+
+export const statusLabels: Record<Status, string> = {
+  open: "Open",
+  in_progress: "In progress",
+  done: "Done",
+};
 
 export const NewRequest = z.object({
   title: z.string().trim().min(3).max(120),
@@ -13,9 +20,15 @@ export const NewRequest = z.object({
 });
 export type NewRequest = z.infer<typeof NewRequest>;
 
+export const RequestFilter = z.object({
+  team: z.enum(teams).optional().catch(undefined),
+  status: z.enum(statuses).optional().catch(undefined),
+});
+export type RequestFilter = z.infer<typeof RequestFilter>;
+
 export type WorkRequest = NewRequest & {
   id: string;
-  status: (typeof statuses)[number];
+  status: Status;
   createdAt: Date;
 };
 
@@ -36,7 +49,27 @@ export async function createRequest(input: NewRequest): Promise<WorkRequest> {
   return request;
 }
 
-export async function listRequests(): Promise<WorkRequest[]> {
+export async function listRequests(
+  filter: RequestFilter = {},
+): Promise<WorkRequest[]> {
   await io();
-  return requests;
+  return requests.filter(
+    (r) =>
+      (!filter.team || r.team === filter.team) &&
+      (!filter.status || r.status === filter.status),
+  );
+}
+
+export async function getRequest(id: string): Promise<WorkRequest | undefined> {
+  await io();
+  return requests.find((r) => r.id === id);
+}
+
+export async function updateRequest(
+  id: string,
+  patch: Partial<Pick<WorkRequest, "status">>,
+) {
+  const request = requests.find((r) => r.id === id);
+  if (request) Object.assign(request, patch);
+  return request;
 }

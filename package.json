@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm --filter workbot-site check"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -20,10 +20,12 @@
     "radix-ui": "^1.8.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

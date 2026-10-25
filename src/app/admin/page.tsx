@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { RequestList, label } from "@/components/request-list";
+import { RequestList } from "@/components/request-list";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { listRequests, statuses } from "@/lib/requests";
+import { listRequests, statusLabels, statuses } from "@/lib/requests";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -36,9 +36,7 @@ async function Overview() {
         {statuses.map((status) => (
           <Card key={status}>
             <CardHeader>
-              <CardDescription className="capitalize">
-                {label(status)}
-              </CardDescription>
+              <CardDescription>{statusLabels[status]}</CardDescription>
               <CardTitle className="text-3xl">
                 {requests.filter((r) => r.status === status).length}
               </CardTitle>

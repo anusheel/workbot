@@ -21,8 +21,9 @@ test("shows an empty state, then one row per request", () => {
       ]}
     />,
   );
+  expect(html).toContain('href="/requests/1"');
   expect(html).toContain("Replace the badge printer");
   expect(html).toContain("operations");
   expect(html).toContain(">high<");
-  expect(html).toContain(">in progress<");
+  expect(html).toContain(">In progress<");
 });
