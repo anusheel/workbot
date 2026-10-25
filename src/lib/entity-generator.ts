@@ -28,9 +28,10 @@ function zodType(e: Entity, f: Field) {
     case "choice":
       return `z.enum(${e.name}${cap(f.name)}).default(${JSON.stringify(f.default ?? f.options![0])})`;
     case "number":
+      // An empty string is no value, not zero: coercion would make it 0.
       return f.required
         ? "z.coerce.number()"
-        : "z.coerce.number().nullable().default(null)";
+        : 'z.preprocess((v) => (v === "" ? null : v), z.coerce.number().nullable()).default(null)';
     case "email":
       return f.required ? "z.email()" : "z.email().nullable().default(null)";
     case "phone":

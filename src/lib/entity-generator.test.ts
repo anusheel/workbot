@@ -79,6 +79,19 @@ test("the index lists every table for the schema, in a file that imports nothing
   );
 });
 
+test("an optional number takes an empty string as no value, not zero", () => {
+  const counted = Entity.parse({
+    ...vendor,
+    fields: [
+      { name: "name", type: "text", required: true },
+      { name: "vans", type: "number" },
+    ],
+  });
+  expect(generate(counted)[0].source).toContain(
+    'vans: z.preprocess((v) => (v === "" ? null : v), z.coerce.number().nullable()).default(null),',
+  );
+});
+
 test("a choice value with a quote in it is escaped into the SQL and the code", () => {
   const quoted = Entity.parse({
     ...vendor,
