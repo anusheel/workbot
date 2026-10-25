@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
 
 const nav = [
@@ -13,7 +13,7 @@ const nav = [
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 gap-12 px-6 py-16">
-      <nav className="w-44 shrink-0">
+      <nav aria-label="Admin" className="w-44 shrink-0">
         <p className="px-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Admin
         </p>
@@ -21,7 +21,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           {nav.map(({ href, label }) => (
             <li key={href}>
               <Button asChild variant="ghost" className="w-full justify-start">
-                <Link href={href}>{label}</Link>
+                <NavLink href={href} exact={href === "/admin"}>
+                  {label}
+                </NavLink>
               </Button>
             </li>
           ))}
