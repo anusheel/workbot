@@ -107,11 +107,19 @@ function globMatches(pattern: string, path: string) {
   return new RegExp(`^${source}$`).test(path);
 }
 
+// A deny entry is a glob: Read(./.env.*) covers .env.local as Read(./.env.local) does.
 function claudeDeniesRead(source: string, path: string) {
   const { permissions } = JSON.parse(source) as {
     permissions?: { deny?: string[] };
   };
-  return (permissions?.deny ?? []).includes(`Read(./${path})`);
+  return (permissions?.deny ?? []).some((rule) => {
+    const glob = rule.match(/^Read\(\.\/(.+)\)$/)?.[1];
+    if (!glob) return false;
+    const pattern = glob
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*");
+    return new RegExp(`^${pattern}$`).test(path);
+  });
 }
 
 function codexDeniesRead(source: string, path: string) {
