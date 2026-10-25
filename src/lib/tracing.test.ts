@@ -1,3 +1,4 @@
+import type { LanguageModelV4StreamPart } from "@ai-sdk/provider";
 import { MockLanguageModelV4 } from "ai/test";
 import { generateText, streamText } from "ai";
 import { expect, test } from "vitest";
@@ -124,4 +125,70 @@ test("the summary adds up the window by tenant and prompt, with latency percenti
     summary.byPrompt.find((p) => p.prompt === "p@1")?.calls,
   ).toBeGreaterThanOrEqual(3);
   expect(summary.recent[0].at).toBeInstanceOf(Date);
+});
+
+const streamOf = (parts: LanguageModelV4StreamPart[], fail?: Error) =>
+  new MockLanguageModelV4({
+    modelId: "claude-haiku-5-5",
+    doStream: async () => ({
+      stream: new ReadableStream({
+        start(controller) {
+          for (const part of parts) controller.enqueue(part);
+          if (fail) controller.error(fail);
+          else controller.close();
+        },
+      }),
+    }),
+  });
+
+const rowsFor = (tenant: string) =>
+  query<{ ok: boolean; error: string | null }>(
+    `select ok, error from traces where tenant = $1`,
+    [tenant],
+  );
+
+test("a stream cancelled after its first chunk writes one failed trace", async () => {
+  const { stream } = await withTrace(
+    { tenant: "cancelled", name: "chat" },
+    async () =>
+      traced(
+        streamOf([
+          { type: "text-start", id: "1" },
+          { type: "text-delta", id: "1", delta: "Fi" },
+        ]),
+      ).doStream({ prompt: [] }),
+  );
+  const reader = stream.getReader();
+  await reader.read();
+  await reader.cancel();
+  const rows = await rowsFor("cancelled");
+  expect(rows).toHaveLength(1);
+  expect(rows[0].ok).toBe(false);
+});
+
+test("a stream that errors writes one trace with the message", async () => {
+  const { stream } = await withTrace(
+    { tenant: "errored", name: "chat" },
+    async () =>
+      traced(
+        streamOf(
+          [{ type: "text-start", id: "1" }],
+          new Error("connection reset"),
+        ),
+      ).doStream({ prompt: [] }),
+  );
+  await stream.pipeTo(new WritableStream()).catch(() => undefined);
+  const rows = await rowsFor("errored");
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ ok: false, error: "connection reset" });
+});
+
+test("a stream that ends normally writes one trace", async () => {
+  await withTrace({ tenant: "normal", name: "chat" }, async () => {
+    const { stream } = await traced(model()).doStream({ prompt: [] });
+    await stream.pipeTo(new WritableStream());
+  });
+  const rows = await rowsFor("normal");
+  expect(rows).toHaveLength(1);
+  expect(rows[0].ok).toBe(true);
 });

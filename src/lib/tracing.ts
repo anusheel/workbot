@@ -130,20 +130,37 @@ export function traced(model: LanguageModelV4): LanguageModelV4 {
       const { stream, ...rest } = result;
       let usage: LanguageModelV4Usage | undefined;
       let failure: unknown;
+      let written = false;
+      // A trace is written once, whichever of end, error or cancel comes first.
+      const finish = (error?: unknown) => {
+        if (written) return Promise.resolve();
+        written = true;
+        return record(ctx, model.modelId, started, usage, error);
+      };
+      const reader = stream.getReader();
       return {
-        stream: stream.pipeThrough(
-          new TransformStream<
-            LanguageModelV4StreamPart,
-            LanguageModelV4StreamPart
-          >({
-            transform(part, controller) {
-              if (part.type === "finish") usage = part.usage;
-              if (part.type === "error") failure = part.error;
-              controller.enqueue(part);
-            },
-            flush: () => record(ctx, model.modelId, started, usage, failure),
-          }),
-        ),
+        stream: new ReadableStream<LanguageModelV4StreamPart>({
+          async pull(controller) {
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                await finish(failure);
+                controller.close();
+                return;
+              }
+              if (value.type === "finish") usage = value.usage;
+              if (value.type === "error") failure = value.error;
+              controller.enqueue(value);
+            } catch (error) {
+              await finish(error);
+              controller.error(error);
+            }
+          },
+          async cancel(reason) {
+            await finish(reason ?? new Error("stream cancelled"));
+            await reader.cancel(reason);
+          },
+        }),
         ...rest,
       };
     },
