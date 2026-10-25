@@ -37,6 +37,7 @@ in `mcp/` only connect them to stdio. Both read `.env.local`.
 - A schema change is one idempotent statement appended to `src/lib/schema.ts`
 - Pure models (schemas, constants, labels) live in `src/lib/<name>-model.ts` so client components can import them; queries stay in `src/lib/<name>.ts`
 - Model calls go through `src/lib/providers.ts`; model ids and prices live there and nowhere else. WorkBot's persona and rules are `src/lib/system-prompt.ts`
+- The web chat is `src/components/chat.tsx` on `useChat` from the AI SDK, against `src/app/api/chat/route.ts`; `src/lib/chat.ts` adapts the provider and the tool registry to the SDK. `CHAT_PROVIDER` and `CHAT_MODEL` choose the model
 - Tools the model can call are defined once in `src/lib/tools.ts` as a Zod schema plus a function, and say in their description when to call them; each provider turns them into its own format. Steps of a chain are plain functions in `src/lib`, one model call each
 - Product events go through `track` in `src/lib/analytics.tsx`: snake_case names, properties that identify records, never people
 - A folder with its own rules has a `CLAUDE.md` beside the files: `src/app/api/` for routes, `content/policies/` for policies
