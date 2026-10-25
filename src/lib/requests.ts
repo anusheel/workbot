@@ -50,11 +50,13 @@ export async function getRequest(id: string): Promise<WorkRequest | undefined> {
 export async function updateRequest(
   id: string,
   patch: Pick<WorkRequest, "status">,
-): Promise<void> {
-  await query(`update requests set status = $2 where id = $1`, [
-    id,
-    patch.status,
-  ]);
+): Promise<WorkRequest | undefined> {
+  if (!z.uuid().safeParse(id).success) return undefined;
+  const [row] = await query(
+    `update requests set status = $2 where id = $1 returning ${columns}`,
+    [id, patch.status],
+  );
+  return row && WorkRequest.parse(row);
 }
 
 export type RequestSummary = {

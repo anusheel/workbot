@@ -52,7 +52,7 @@ export async function submitRequest(
 
 export async function setStatus(id: string, status: string) {
   const next = z.enum(statuses).parse(status);
-  await updateRequest(id, { status: next });
+  if (!(await updateRequest(id, { status: next }))) return;
   await track("request_status_changed", { requestId: id, status: next });
   refresh();
 }
