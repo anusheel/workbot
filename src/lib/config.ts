@@ -3,6 +3,14 @@ export const config = {
   commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
   // A postgres:// URL, or a directory for an embedded PGlite database.
   database: process.env.DATABASE_URL || ".data/pg",
+  // The provider behind the web chat, and a model to use instead of its default.
+  chat: {
+    provider:
+      process.env.CHAT_PROVIDER === "openai"
+        ? ("openai" as const)
+        : ("anthropic" as const),
+    model: process.env.CHAT_MODEL,
+  },
   // Web search for the assistant; unset means the tool is not offered.
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   posthog: {

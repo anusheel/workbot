@@ -15,7 +15,13 @@ export default defineConfig({
   test: {
     include: ["src/**/*.live.test.ts"],
     alias: { "@/": new URL("./src/", import.meta.url).pathname },
-    env: { ...env, DATABASE_URL: "memory://" },
+    // The suite runs on Anthropic's small model whatever .env.local chooses for the app.
+    env: {
+      ...env,
+      DATABASE_URL: "memory://",
+      CHAT_PROVIDER: "anthropic",
+      CHAT_MODEL: "claude-haiku-5-5",
+    },
     testTimeout: 180_000,
   },
 });
