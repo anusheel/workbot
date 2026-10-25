@@ -229,3 +229,13 @@ checks. Sizes: S is under an hour, M is a few hours.
 
 - `POST /api/documents` (JSON text or address, or a file as form data) and "File it from a document" on the new-request page classify the document, extract its record and file a request for the right team: invoices to finance, complaints and questions to support, the rest to operations, with the priority from the email's urgency
 - The record is kept on the request and shown under Documents, field by field, with the doubtful fields marked Check
+
+### WB-41 Document approval workflow
+
+- A document uploaded to the inbox (`/admin/inbox`, up to 10 at once) is a run of a durable workflow on Inngest: classify, extract, validate, a reviewer when a field is doubtful, store as a request, notify; each step is checkpointed and retried up to 3 times, and the wait for the reviewer holds no server
+- The inbox shows every document's status; Approve and Reject send the event the paused run waits for; the record is filed on the request as on Day 17
+- Notifications are an outbox in the database, shown on the inbox page; a mail or chat integration would drain it
+
+### WB-42 Scheduled check-ins and reminders
+
+- A cron function runs every morning: a nudge for each review nobody has answered in a day, a check-in on each request open for a week, one step per notification; "Run the reminders now" triggers it on demand

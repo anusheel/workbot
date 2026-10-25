@@ -60,3 +60,9 @@ A document files its own request: on the new-request page, or at `POST
 image or text) is read into a typed record, filed with the right team, and
 kept on the request with its doubtful fields marked. `pnpm extract <file>`
 runs the extraction alone; `pnpm extract:eval` measures it on 18 documents.
+
+Documents can also go through the approval workflow at `/admin/inbox`: each
+upload is a durable run on [Inngest](https://www.inngest.com) that classifies,
+extracts, pauses for a reviewer when a field is doubtful, files the request
+and notifies; a morning cron nudges reviewers and checks in on old requests.
+Run `pnpm inngest` beside `pnpm dev` for the engine and its dashboard.
