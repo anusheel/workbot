@@ -83,7 +83,7 @@ async function Tickets() {
             )}
             {tickets.map((t) => (
               <TableRow key={t.id}>
-                <TableCell>
+                <TableCell className="max-w-xl whitespace-normal">
                   <a href={t.url} className="hover:underline">
                     <span className="font-mono text-xs text-muted-foreground">
                       #{t.number}
