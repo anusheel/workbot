@@ -5,7 +5,7 @@ import { MockLanguageModelV4 } from "ai/test";
 import { expect, test } from "vitest";
 import { parseRules } from "./rule-language";
 import { approve, dryRun, proposeRule } from "./rule-proposal";
-import { rulesFile } from "./rules";
+import { rulesText } from "./rules";
 import { fromIssue, upsertTicket } from "./unified";
 
 /** A model that answers the given lines in turn, and remembers what it was asked. */
@@ -111,7 +111,7 @@ test("the dry run says what the rule would change on the current copy, and nothi
 
 test("an approved rule is one more line in the file, and parses with the rest", () => {
   const file = join(mkdtempSync(join(tmpdir(), "rules-")), "rules.rules");
-  const existing = readFileSync(rulesFile, "utf8");
+  const existing = rulesText();
   writeFileSync(file, existing);
   approve(parseRules(forklifts)[0], file);
   const rules = parseRules(readFileSync(file, "utf8"));

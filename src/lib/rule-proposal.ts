@@ -1,10 +1,17 @@
-import { appendFileSync, readFileSync } from "node:fs";
+import { appendFileSync } from "node:fs";
 import { type LanguageModel, generateText } from "ai";
 import { customer } from "./customer";
 import { query } from "./db";
 import { teams } from "./requests";
 import { grammarSource, parseRules, printRule } from "./rule-language";
-import { type Applied, type Rule, Rules, applyRules, rulesFile } from "./rules";
+import {
+  type Applied,
+  type Rule,
+  Rules,
+  applyRules,
+  customerRulesFile,
+  rulesText,
+} from "./rules";
 
 const fields: Record<Rule["on"], string> = {
   contact: "name, email, phone, company",
@@ -23,7 +30,7 @@ const fields: Record<Rule["on"], string> = {
 export async function proposeRule(
   ask: string,
   model: LanguageModel,
-  existing = readFileSync(rulesFile, "utf8"),
+  existing = rulesText(),
 ): Promise<{ rule: Rule; line: string }> {
   const instructions = `You write one rule for ${customer.name}'s assistant, in the rule language below, and nothing else: no prose, no code fence, one line starting with "rule".
 
@@ -92,7 +99,7 @@ export async function dryRun(rule: Rule): Promise<DryRun> {
   return { kind: rule.on, total: rows.length, changed };
 }
 
-/** Appends the rule to the file; the next start reads it with the rest. */
-export function approve(rule: Rule, file = rulesFile) {
+/** Appends the rule to the customer's file, since a proposal is the customer's; the next start reads it with the rest. */
+export function approve(rule: Rule, file = customerRulesFile) {
   appendFileSync(file, `${printRule(rule)}\n`);
 }

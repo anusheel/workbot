@@ -1,0 +1,6 @@
+# Fieldstone Supply's rules, read after the product's: the teams here are the customer's.
+
+rule route-finance on ticket when team is missing and text matches "invoice|payment|refund|credit|statement" then set team = "finance"
+rule route-support on ticket when team is missing and text matches "customer|complaint|delivery|order" then set team = "support"
+rule route-operations on ticket when team is missing and text matches "van|truck|dock|warehouse|printer|light|facilit|vendor" then set team = "operations"
+rule route-operations-sync on ticket when team is missing and title matches "sync|webhook|reconcil" then set team = "operations"

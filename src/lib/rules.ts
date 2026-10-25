@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
+import { config } from "./config";
 import { teams } from "./requests";
 import { parseRules } from "./rule-language";
 
@@ -49,12 +50,22 @@ export const Rules = z
     { message: "a rule routes to a team the customer has" },
   );
 
-/** The rules file, read once at startup. */
+/** The product's rules, for every customer, and the customer's own, read after them; both once at startup. */
 export const rulesFile = path.join(process.cwd(), "content/rules.rules");
-
-export const rules: Rule[] = Rules.parse(
-  parseRules(readFileSync(rulesFile, "utf8")),
+export const customerRulesFile = path.join(
+  process.cwd(),
+  "content/customers",
+  `${config.customer}.rules`,
 );
+
+const read = (file: string) =>
+  existsSync(file) ? readFileSync(file, "utf8") : "";
+
+/** Both files' text, as a proposal sees what it would join. */
+export const rulesText = () =>
+  [read(rulesFile), read(customerRulesFile)].filter(Boolean).join("\n");
+
+export const rules: Rule[] = Rules.parse(parseRules(rulesText()));
 
 export type Fields = Record<string, unknown>;
 /** One rule's effect on one record: the field it changed, from what, to what. */

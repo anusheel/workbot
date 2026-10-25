@@ -2,13 +2,13 @@ import { parseArgs } from "node:util";
 import { close } from "@/lib/db";
 import { modelFor } from "@/lib/routing";
 import { approve, dryRun, proposeRule } from "@/lib/rule-proposal";
-import { rulesFile } from "@/lib/rules";
+import { customerRulesFile } from "@/lib/rules";
 
 const usage = `Usage: pnpm rule "<what the rule should do>" [--approve]
 
 The model writes one rule in the rule language; the rule is tried on the
 current copy and what it would change is listed; with --approve it is
-added to ${rulesFile}, which the next start reads.`;
+added to ${customerRulesFile}, which the next start reads.`;
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -37,6 +37,6 @@ if (run.changed.length > 10)
   console.log(`  and ${run.changed.length - 10} more`);
 if (values.approve) {
   approve(rule);
-  console.log(`\nAdded to ${rulesFile}; the next start applies it.`);
+  console.log(`\nAdded to ${customerRulesFile}; the next start applies it.`);
 } else console.log("\nRun again with --approve to add it to the rules file.");
 await close();

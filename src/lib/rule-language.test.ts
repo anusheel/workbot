@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { parseRules, printRule, printRules } from "./rule-language";
-import { type Rule, rules, rulesFile } from "./rules";
+import { type Rule, customerRulesFile, rules, rulesFile } from "./rules";
 
 const one = (source: string) => parseRules(source)[0];
 
@@ -167,14 +167,18 @@ test("the Day 28 table, printed and parsed again, is the same table", () => {
   expect(parseRules(printRules(rules))).toEqual(rules);
 });
 
-test("the rules file holds the 6 rules of Day 28 and the one the model wrote, in order", () => {
+test("the product's file holds its 3 rules and the customer's the 3 routing rules and the one the model wrote", () => {
   expect(parseRules(readFileSync(rulesFile, "utf8")).map((r) => r.id)).toEqual([
     "phone-e164",
     "company-from-domain",
+    "large-invoice",
+  ]);
+  expect(
+    parseRules(readFileSync(customerRulesFile, "utf8")).map((r) => r.id),
+  ).toEqual([
     "route-finance",
     "route-support",
     "route-operations",
-    "large-invoice",
     "route-operations-sync",
   ]);
 });

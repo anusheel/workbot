@@ -1,5 +1,6 @@
 import { expect, test, vi } from "vitest";
 import { customer } from "./customer";
+import { rules } from "./rules";
 import { teams } from "./requests";
 import { settings } from "./settings";
 import { systemPrompt } from "./system-prompt";
