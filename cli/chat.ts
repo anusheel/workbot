@@ -4,6 +4,7 @@ import { parseArgs } from "node:util";
 import { z } from "zod";
 import { close } from "@/lib/db";
 import { providerNames, providers } from "@/lib/providers";
+import { research } from "@/lib/research";
 import { Session } from "@/lib/session";
 import { tools } from "@/lib/tools";
 
@@ -28,7 +29,8 @@ const session = new Session(Provider.parse(values.provider), values.model, {
     values.temperature === undefined ? undefined : Number(values.temperature),
 });
 
-const help = `/model [provider] [model]  switch models; no arguments lists them
+const help = `/research <question>       answer from the company's sources, with citations
+/model [provider] [model]  switch models; no arguments lists them
 /system [text]             show or replace the system prompt
 /cost                      tokens and dollars spent in this session
 /exit                      leave`;
@@ -63,6 +65,15 @@ async function command(line: string): Promise<string | null> {
         )
         .join("\n  ");
       return `using ${session.provider.name} ${session.model.id}\n  ${available}`;
+    }
+    case "research": {
+      if (!args.length) return "Usage: /research <question>";
+      const { usage } = await research(args.join(" "), session.provider, {
+        step: (message) => console.log(dim(`· ${message}`)),
+        text: (text) => stdout.write(text),
+        spend: (model, usage) => session.record(model, usage),
+      });
+      return `\n${dim(`${usage.input} tokens in, ${usage.output} out`)}`;
     }
     default:
       return `Unknown command /${name}. ${help}`;
