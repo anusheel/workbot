@@ -2,6 +2,7 @@ import { simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
 import { listMemories, remember } from "@/lib/memory";
+import { allow } from "@/lib/rate-limit";
 import { POST } from "./route";
 
 let instructions = "";
@@ -16,13 +17,17 @@ const usage = {
   outputTokens: { total: 2, text: 2, reasoning: undefined },
 };
 
+const modelCalls = vi.hoisted(() => ({ count: 0 }));
+
+vi.mock("@/lib/rate-limit", () => ({ allow: vi.fn(() => true) }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
 vi.mock("@/lib/chat", () => ({
   chatTools: {},
-  chatModel: (size = "large") =>
-    new MockLanguageModelV4({
+  chatModel: (size = "large") => {
+    modelCalls.count++;
+    return new MockLanguageModelV4({
       // The small model extracts memories; the large one answers.
       doGenerate: async () => ({
         content: [
@@ -68,7 +73,8 @@ vi.mock("@/lib/chat", () => ({
           }),
         };
       },
-    }),
+    });
+  },
 }));
 
 const post = (body: unknown) =>
@@ -132,4 +138,36 @@ test("rejects a body that is not a conversation", async () => {
   expect((await post({ id: "c1", messages: [{ role: "user" }] })).status).toBe(
     400,
   );
+});
+
+test("a rate-limited caller gets 429 and no model is called", async () => {
+  vi.mocked(allow).mockReturnValueOnce(false);
+  modelCalls.count = 0;
+  const response = await post({
+    id: "c1",
+    messages: [
+      { id: "m1", role: "user", parts: [{ type: "text", text: "Hello" }] },
+    ],
+  });
+  expect(response.status).toBe(429);
+  expect(modelCalls.count).toBe(0);
+});
+
+test("rejects more than 200 messages and an empty or over-long id with field errors", async () => {
+  const message = {
+    id: "m",
+    role: "user",
+    parts: [{ type: "text", text: "Hi" }],
+  };
+  const tooMany = await post({
+    id: "c1",
+    messages: Array.from({ length: 201 }, () => message),
+  });
+  expect(tooMany.status).toBe(400);
+  expect((await tooMany.json()).error.fieldErrors.messages).toBeDefined();
+  for (const id of ["", "x".repeat(201)]) {
+    const response = await post({ id, messages: [message] });
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.id).toBeDefined();
+  }
 });
