@@ -8,7 +8,9 @@ export const Golden = z.object({
   kind: z.enum(["answer", "refusal", "escalation"]),
   question: z.string(),
   criteria: z.array(z.string()).min(1),
-  mustNotContain: z.array(z.string()).default([]),
+  mustNotContain: z
+    .array(z.string().refine((phrase) => phrase !== "", "an empty phrase"))
+    .default([]),
 });
 export type Golden = z.infer<typeof Golden>;
 
@@ -51,8 +53,9 @@ export async function judge(
   reply: string,
   model: LanguageModel,
 ): Promise<Score> {
-  const violations = golden.mustNotContain.filter((phrase) =>
-    reply.toLowerCase().includes(phrase.toLowerCase()),
+  const violations = golden.mustNotContain.filter(
+    (phrase) =>
+      phrase !== "" && reply.toLowerCase().includes(phrase.toLowerCase()),
   );
   if (violations.length)
     return {
@@ -72,8 +75,9 @@ export async function judge(
 
 /** Mean and standard deviation of a set of scores: a model's answers vary, so one run is not a result. */
 export function stats(scores: number[]) {
+  if (!scores.length) return { mean: 0, sd: 0, count: 0 };
   const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
   const variance =
     scores.reduce((a, b) => a + (b - mean) ** 2, 0) / scores.length;
-  return { mean, sd: Math.sqrt(variance) };
+  return { mean, sd: Math.sqrt(variance), count: scores.length };
 }
