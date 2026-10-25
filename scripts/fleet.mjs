@@ -8,7 +8,7 @@
 //   node scripts/fleet.mjs dispatch [--local 5] [--cloud 10]  agents for queued issues
 //   node scripts/fleet.mjs status                           the dashboard
 //   node scripts/fleet.mjs merge [--batch 6]                review, merge, check, revert
-//   node scripts/fleet.mjs report                           merged an hour, reverts, brief to merge
+//   node scripts/fleet.mjs report [--json]                  merged an hour, reverts, brief to merge
 //   node scripts/fleet.mjs reset <issue>                    forget a run so dispatch retries it
 //   node scripts/fleet.mjs run [the same flags]             dispatch, merge and report every 2 minutes until done
 import { execFile, execFileSync, spawn } from "node:child_process";
@@ -62,6 +62,7 @@ const { positionals, values } = parseArgs({
     cloud: { type: "string", default: "10" },
     batch: { type: "string", default: "6" },
     base: { type: "string", default: sh("git", ["branch", "--show-current"]) },
+    json: { type: "boolean", default: false },
   },
 });
 const base = values.base;
@@ -425,18 +426,18 @@ const review = (pr) =>
 function green() {
   const path = join(pens, `check-${Date.now()}.log`);
   const log = openSync(path, "w");
-  try {
-    execFileSync("pnpm", ["check"], { cwd: home, stdio: ["ignore", log, log] });
-  } catch {
-    return path;
+  // The check, then the smoke evals through the gate every pull request runs.
+  for (const args of [
+    ["check"],
+    ["eval", "--task", "all", "--smoke", "--runs", "2", "--gate"],
+  ]) {
+    try {
+      execFileSync("pnpm", args, { cwd: home, stdio: ["ignore", log, log] });
+    } catch {
+      return path;
+    }
   }
-  const mean = Number(
-    sh("pnpm", ["eval", "--runs", "1", "--only", "answer"]).match(
-      /Mean (\d\.\d+)/,
-    )?.[1],
-  );
-  console.log(`eval smoke: mean ${mean}`);
-  return mean >= 0.5 || path;
+  return true;
 }
 
 // Review the ready pull requests together, merge the approved ones one at a
@@ -568,6 +569,19 @@ function report() {
   const reverts = sh("git", ["log", base, "--format=%s", "--grep", "^Revert "])
     .split("\n")
     .filter(Boolean).length;
+  if (values.json)
+    return console.log(
+      JSON.stringify({
+        base,
+        at: new Date().toISOString(),
+        merged: done.length,
+        hours: Number(hours.toFixed(1)),
+        perHour: Number((done.length / hours).toFixed(1)),
+        reverted: reverts,
+        medianMinutes: Number(at(0.5)),
+        p90Minutes: Number(at(0.9)),
+      }),
+    );
   console.log(
     `${done.length} merged over ${hours.toFixed(1)} h, ${(done.length / hours).toFixed(1)} an hour; ${reverts} reverted; brief to merge: median ${at(0.5)} min, p90 ${at(0.9)} min`,
   );

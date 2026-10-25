@@ -183,6 +183,31 @@ export async function spend(ctx: Context, since: Date) {
   return { ...row, p95: Math.round(row.p95 ?? 0) };
 }
 
+/**
+ * The fallbacks of the last `hours`: how many calls failed, how many of those
+ * another model answered within 5 s under the same tenant and name, and every
+ * model's calls and failures.
+ */
+export async function failovers(hours: number) {
+  const since = `now() - make_interval(hours => $1)`;
+  const [totals] = await query<{ failed: number; recovered: number }>(
+    `with calls as (
+       select ok, at, lead(ok) over w as next_ok, lead(at) over w as next_at
+       from traces where at > ${since}
+       window w as (partition by tenant, name order by at))
+     select count(*) filter (where not ok)::int as failed,
+       count(*) filter (where not ok and next_ok and next_at - at < interval '5 seconds')::int as recovered
+     from calls`,
+    [hours],
+  );
+  const byModel = await query<{ model: string; calls: number; failed: number }>(
+    `select model, count(*)::int as calls, count(*) filter (where not ok)::int as failed
+     from traces where at > ${since} group by model order by calls desc`,
+    [hours],
+  );
+  return { ...totals, byModel };
+}
+
 export type Summary = {
   calls: number;
   errors: number;

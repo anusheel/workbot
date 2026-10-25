@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { appendFile, readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { close } from "@/lib/db";
 import { detectable, stats } from "@/lib/eval";
@@ -13,7 +13,8 @@ import {
   triageSuite,
 } from "@/lib/eval-suite";
 import { versions } from "@/lib/prompts";
-import { modelFor } from "@/lib/routing";
+import { modelFor, routes } from "@/lib/routing";
+import { type Run, recordRun, runs as recorded } from "@/lib/scoreboard";
 import { systemPrompt } from "@/lib/system-prompt";
 import { spend, withTrace } from "@/lib/tracing";
 
@@ -41,28 +42,11 @@ const tasks =
 if (!tasks.every((t) => evalTasks.includes(t)))
   throw new Error(`--task is one of ${evalTasks.join(", ")} or all`);
 const subset = values.smoke ? "smoke" : "full";
-const scoreboard = "content/eval/scoreboard.jsonl";
 // A mean under this is a broken prompt, whatever the baseline was.
 const threshold = 0.7;
 const commit =
   process.env.GITHUB_SHA?.slice(0, 7) ??
   execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim();
-
-/** One line of the scoreboard: a run of a task's subset, with what it scored and cost. */
-type Run = {
-  at: string;
-  commit: string;
-  task: EvalTask;
-  subset: "smoke" | "full";
-  prompt: string;
-  cases: number;
-  runs: number;
-  mean: number;
-  sd: number;
-  hard: number;
-  dollars: number;
-  p95: number;
-};
 
 async function promptText(): Promise<[string, string]> {
   if (!values.prompt) return ["code", systemPrompt];
@@ -86,14 +70,10 @@ async function suiteOf(task: EvalTask): Promise<[string, Case[]]> {
 }
 
 /** The last recorded run of the same task and subset, which a soft regression is measured against. */
-async function baseline(task: EvalTask): Promise<Run | undefined> {
-  const text = await readFile(scoreboard, "utf8").catch(() => "");
-  return text
-    .split("\n")
-    .filter(Boolean)
-    .map((line): Run => JSON.parse(line))
-    .findLast((run) => run.task === task && run.subset === subset);
-}
+const baseline = async (task: EvalTask) =>
+  (await recorded()).findLast(
+    (run) => run.task === task && run.subset === subset,
+  );
 
 let failed = false;
 const report: string[] = [];
@@ -161,6 +141,7 @@ for (const task of tasks) {
       commit,
       task,
       subset,
+      route: routes[task][0],
       prompt: label,
       cases: cases.length,
       runs,
@@ -170,7 +151,7 @@ for (const task of tasks) {
       dollars: Number(dollars.toFixed(4)),
       p95,
     };
-    await appendFile(scoreboard, `${JSON.stringify(run)}\n`);
+    await recordRun(run);
   }
 }
 if (values.report) await writeFile(values.report, report.join("\n"));
