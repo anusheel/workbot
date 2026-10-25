@@ -85,7 +85,9 @@ const input = (e: Entity, f: Field) => {
 /** Everything one entity becomes: its module, its route with types and a test, its page with its action. */
 export function generate(e: Entity): Generated[] {
   const Name = cap(e.name);
+  // An employee entity's page and API sit under the admin prefixes, where one access check covers both.
   const base = e.access === "employee" ? `/admin/${e.plural}` : `/${e.plural}`;
+  const api = `src/app/api${base}`;
   const choices = e.fields.filter((f) => f.type === "choice");
   const names = e.fields.map((f) => f.name);
   const columns = e.fields.map((f) =>
@@ -165,7 +167,7 @@ import { ${Name}Response } from "./types";
 
 const post = (body: unknown) =>
   POST(
-    new Request("http://workbot/api/${e.plural}", {
+    new Request("http://workbot/api${base}", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
@@ -283,9 +285,9 @@ ${e.fields.map((f) => `              <TableCell className="max-w-xs whitespace-n
 
   return [
     { path: `src/lib/entities/${e.name}.ts`, source: entityModule },
-    { path: `src/app/api/${e.plural}/types.ts`, source: types },
-    { path: `src/app/api/${e.plural}/route.ts`, source: route },
-    { path: `src/app/api/${e.plural}/route.test.ts`, source: test },
+    { path: `${api}/types.ts`, source: types },
+    { path: `${api}/route.ts`, source: route },
+    { path: `${api}/route.test.ts`, source: test },
     { path: `src/app${base}/actions.ts`, source: actions },
     { path: `src/app${base}/page.tsx`, source: page },
   ];

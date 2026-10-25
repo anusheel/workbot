@@ -5,7 +5,7 @@ import { LocationResponse } from "./types";
 
 const post = (body: unknown) =>
   POST(
-    new Request("http://workbot/api/locations", {
+    new Request("http://workbot/api/admin/locations", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),

@@ -22,15 +22,17 @@ const vendor = Entity.parse({
 test("a description becomes its module, route, types, test, action and page, under the access it names", () => {
   expect(generate(vendor).map((f) => f.path)).toEqual([
     "src/lib/entities/vendor.ts",
-    "src/app/api/vendors/types.ts",
-    "src/app/api/vendors/route.ts",
-    "src/app/api/vendors/route.test.ts",
+    "src/app/api/admin/vendors/types.ts",
+    "src/app/api/admin/vendors/route.ts",
+    "src/app/api/admin/vendors/route.test.ts",
     "src/app/admin/vendors/actions.ts",
     "src/app/admin/vendors/page.tsx",
   ]);
-  expect(generate({ ...vendor, access: "customer" }).at(-1)?.path).toBe(
-    "src/app/vendors/page.tsx",
+  const customer = generate({ ...vendor, access: "customer" }).map(
+    (f) => f.path,
   );
+  expect(customer).toContain("src/app/api/vendors/route.ts");
+  expect(customer).toContain("src/app/vendors/page.tsx");
 });
 
 test("a required field is not null, a choice carries its default, optional text defaults to empty", () => {

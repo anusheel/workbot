@@ -5,7 +5,7 @@ import { VendorResponse } from "./types";
 
 const post = (body: unknown) =>
   POST(
-    new Request("http://workbot/api/vendors", {
+    new Request("http://workbot/api/admin/vendors", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),

@@ -62,15 +62,15 @@ comment    ::= "#" to the end of the line
 
 `content/entities/<name>.json` describes an entity: its fields, each with a type (text, email, phone, number, choice), whether it is required, its length or its options and default, and who may reach it. `pnpm generate` writes what each becomes:
 
-| From one description  | Generated                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------- |
-| the table             | the create statement, in `src/lib/entities/tables.ts`, which the schema spreads               |
-| the model             | `src/lib/entities/<name>.ts`: the Zod schemas, the list and create queries                    |
-| the route             | `src/app/api/<plural>/route.ts` and `types.ts`, as the hand-written routes are shaped         |
-| its test              | `src/app/api/<plural>/route.test.ts`: a create from the required fields, a refusal naming one |
-| the page and its form | `src/app/admin/<plural>/page.tsx` and `actions.ts`, under `/admin` for an employee entity     |
+| From one description  | Generated                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| the table             | the create statement, in `src/lib/entities/tables.ts`, which the schema spreads                                                  |
+| the model             | `src/lib/entities/<name>.ts`: the Zod schemas, the list and create queries                                                       |
+| the route             | `route.ts` and `types.ts` under `src/app/api/admin/<plural>/` for an employee entity, `src/app/api/<plural>/` for a customer one |
+| its test              | `route.test.ts` beside the route: a create from the required fields, a refusal naming one                                        |
+| the page and its form | `src/app/admin/<plural>/page.tsx` and `actions.ts`, under `/admin` for an employee entity                                        |
 
-`locations` is a description of 24 lines that became 253 lines in 6 files; `vendors` the same. The Day 26 audit counted 10 files touched for a new request field; a field on a generated entity touches 1. `pnpm generate --check` runs first in `pnpm check` and fails when a generated file no longer matches its description, which is how a hand edit to generated code is caught; the generator formats what it writes with the repository's Prettier, so the check compares like with like. Two failure modes the brief names, watched for: a description that grows conditionals (there are none; irregularity belongs in the generator), and generated code edited by hand (the check).
+`locations` is a description of 24 lines that became 253 lines in 6 files; `vendors` the same. The Day 26 audit counted 10 files touched for a new request field; a field on a generated entity touches 1. `pnpm generate --check` runs first in `pnpm check` and fails when a generated file no longer matches its description or no description asks for it, which is how a hand edit to generated code is caught; `pnpm generate` removes a generated file no description asks for any more, so moving an entity's files leaves none behind; the generator formats what it writes with the repository's Prettier, so the check compares like with like. Two failure modes the brief names, watched for: a description that grows conditionals (there are none; irregularity belongs in the generator), and generated code edited by hand (the check).
 
 The table statements live in a file that imports nothing. The first version put them in the entity's module, which imports the database, which imports the schema, which imported the module: the statements were read before they existed, and the tables were never made. An import cycle in configuration code fails quietly; the generated test caught it.
 
@@ -85,4 +85,4 @@ The layout the brief describes, `apps/web`, `apps/api`, `apps/workers` and `pack
 - User preferences as a third level: no users.
 - A configuration screen: the files are the screen, and Git is the audit.
 - A remote cache for Turborepo, and the apps and packages layout, until a second app or consumer arrives.
-- A permission check behind an entity's access: placement is the permission today, under `/admin` for employees; Day 30 adds the check.
+- Authentication, for entities as for everything else: an employee entity's page and API sit under `/admin` and `/api/admin`, the prefixes Day 30 puts its check on, and until then `access` says where the files go, not who may call them.
