@@ -88,6 +88,12 @@ image. The costs at 1,000 and 100,000 monthly users, the recommendation for
 Fieldstone, and the steps for Vercel with Supabase and for Google Cloud
 ([docs/deploy.md](docs/deploy.md)) are written down.
 
+The infrastructure is Terraform in `infra/` for Google Cloud, a Kubernetes
+cluster and an Azure VM, with WorkBot as a Helm chart and `infra/release.sh`
+releasing a tag: migrate, wait, smoke, roll back. On a local cluster it scales
+on the queue's depth and is recreated from nothing in one sequence
+([docs/infrastructure.md](docs/infrastructure.md)).
+
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question
 is answered by SQL the model writes, shown under the answer with the rows it
