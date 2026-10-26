@@ -63,14 +63,15 @@ test("the sequence waits its days, stops at a reply, and stops for good at an un
 
   const link = `https://workbot.example/api/unsubscribe?token=${unsubscribeToken("orders@valleyblock.example")}`;
   expect((await GET(new Request(link))).status).toBe(200);
+  expect(await due("orders@valleyblock.example", start, 1, false, on(4))).toBe(
+    1,
+  );
+  expect((await POST(new Request(link, { method: "POST" }))).status).toBe(200);
   expect(
     await due("orders@valleyblock.example", start, 1, false, on(4)),
   ).toBeUndefined();
-  expect(
-    (
-      await GET(
-        new Request("https://workbot.example/api/unsubscribe?token=x.y"),
-      )
-    ).status,
-  ).toBe(400);
+  const forged = "https://workbot.example/api/unsubscribe?token=x.y";
+  expect((await POST(new Request(forged, { method: "POST" }))).status).toBe(
+    400,
+  );
 });
