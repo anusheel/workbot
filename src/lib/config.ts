@@ -86,6 +86,8 @@ export const config = {
   inngest: {
     eventKey: process.env.INNGEST_EVENT_KEY,
     signingKey: process.env.INNGEST_SIGNING_KEY,
+    // A self-hosted engine's address; unset with keys, Inngest Cloud.
+    baseUrl: process.env.INNGEST_BASE_URL,
   },
   posthog: {
     // The project key, for capturing events; unset means no analytics.
