@@ -76,3 +76,34 @@ test("a field a consumer does not know passes; a version it cannot read is dead-
   );
   expect((await consumerLag()).every((c) => c.behind === 0)).toBe(true);
 });
+
+test("an event that fails, then goes through, does not use up the next event's tries", async () => {
+  await query(
+    `update event_offsets set position = (select max(id) from events)`,
+  );
+  const inserted = await query<{ id: string; key: string }>(
+    `insert into events (topic, version, key, data) values
+       ('request.created', 1, 'r-flaky', '{"id": "r-flaky"}'),
+       ('request.created', 2, 'r-next', '{"id": "r-next"}')
+     returning id::text, key`,
+  );
+  const { id } = inserted.find((event) => event.key === "r-flaky")!;
+  await dispatch();
+  await dispatch();
+  // The cause is fixed before the third try: the event goes through, and the next one fails for the first time.
+  await query(
+    `update events set data = '{"id": "r-flaky", "title": "Flaky", "team": "support", "priority": "low"}' where id = $1`,
+    [id],
+  );
+  await dispatch();
+  expect(await notificationsFor("Flaky")).toHaveLength(1);
+  expect((await listDeadLetters()).filter((l) => l.owner === "r-next")).toEqual(
+    [],
+  );
+  expect(
+    (await consumerLag()).find((c) => c.name === "notifications"),
+  ).toMatchObject({
+    behind: 1,
+    failures: 1,
+  });
+});

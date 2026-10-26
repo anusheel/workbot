@@ -96,13 +96,16 @@ export async function dispatch(batch = 500) {
       `insert into event_offsets (consumer) values ($1) on conflict do nothing`,
       [consumer.name],
     );
-    const [{ position, failures }] = await query<{
+    const [current] = await query<{
       position: string;
       failures: number;
     }>(
       `select position::text, failures from event_offsets where consumer = $1`,
       [consumer.name],
     );
+    const { position } = current;
+    // Failures count against the event the consumer is stuck at; each event passed starts the count again.
+    let failures = current.failures;
     const events = await query<DomainEvent>(
       `select id::text, topic, version, key, data, created_at as "createdAt" from events
        where id > $1 and topic = any($2) order by id limit $3`,
@@ -131,6 +134,7 @@ export async function dispatch(batch = 500) {
         `update event_offsets set position = $2, failures = 0 where consumer = $1`,
         [consumer.name, event.id],
       );
+      failures = 0;
       finished[consumer.name]++;
     }
   }
