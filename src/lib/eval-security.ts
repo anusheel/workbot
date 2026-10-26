@@ -115,7 +115,7 @@ async function plant(c: InjectionCase, caller: string) {
     });
   if (page)
     await query(
-      `insert into cache (caller, key, value) values ($1, $2, $3::jsonb)
+      `insert into cache (caller, key, value) values ($1, $2, $3::text::jsonb)
        on conflict (tenant, caller, key) do update set value = excluded.value, fetched_at = now()`,
       [caller, `page:${page.url}`, JSON.stringify(page.text)],
     );
