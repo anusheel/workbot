@@ -25,13 +25,19 @@ const list = (value: string | undefined) =>
     .map((v) => v.trim())
     .filter(Boolean) ?? [];
 
+// Set by Vercel on its builds, and by the image build everywhere else.
+const commit = process.env.VERCEL_GIT_COMMIT_SHA || process.env.COMMIT_SHA;
+
 export const config = {
   // The customer this deployment serves: a file in content/customers, and the tenant every row it writes belongs to.
   customer: customerId(process.env.CUSTOMER),
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
-  commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
-  // A postgres:// URL, or a directory for an embedded PGlite database.
-  database: process.env.DATABASE_URL || ".data/pg",
+  commit: commit?.slice(0, 7) || "local",
+  // A postgres:// URL, or a directory for an embedded PGlite database. Where a
+  // platform sets a pooled and a direct URL, as Neon's integration does, the
+  // direct one: a transaction pooler drops LISTEN and session advisory locks.
+  database:
+    process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || ".data/pg",
   // A task's model instead of the routing table's first, as task=provider/size pairs:
   // "chat=anthropic/small,generate=anthropic/small".
   routes: Object.fromEntries(
@@ -60,6 +66,9 @@ export const config = {
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   // The address the app is reached at from outside: a provider signs a webhook over the URL it called, so the check needs the same one.
   appUrl: process.env.APP_URL,
+  // The domain the session cookie covers when the realtime server has a host of its
+  // own beside the app's, workbot.example.com for app. and live.; unset, the app's host only.
+  cookieDomain: process.env.COOKIE_DOMAIN,
   // Text messages through Twilio; unset, SMS and WhatsApp are off.
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
@@ -71,6 +80,8 @@ export const config = {
     // A regional API host, such as https://api.dublin.ie1.twilio.com, to keep messages in a region.
     api: process.env.TWILIO_API_URL || "https://api.twilio.com",
   },
+  // A Playwright browser server, ws://…, for machines without Chrome: a container, a function. Unset, the machine's own Chrome.
+  browser: { url: process.env.BROWSER_URL },
   // The realtime server's address, ws://…, for live calls; unset, a call is not shared with staff.
   realtime: { url: process.env.REALTIME_URL },
   // The Slack app; unset, the Slack channel is off.
@@ -86,6 +97,8 @@ export const config = {
   inngest: {
     eventKey: process.env.INNGEST_EVENT_KEY,
     signingKey: process.env.INNGEST_SIGNING_KEY,
+    // A self-hosted engine's address; unset with keys, Inngest Cloud.
+    baseUrl: process.env.INNGEST_BASE_URL,
   },
   posthog: {
     // The project key, for capturing events; unset means no analytics.

@@ -1,0 +1,83 @@
+# WorkBot as a major cloud would run it, on this machine: the web tier and two
+# realtime servers as containers, Postgres with pgvector, and a self-hosted
+# Inngest for the jobs and workflows. Secrets come from .env.local, the
+# engine's keys from .env.compose; nothing is baked into an image.
+# Usage: COMMIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env.compose up --build
+name: workbot
+
+x-app: &app
+  env_file: .env.local
+  environment: &env
+    DATABASE_URL: postgres://postgres:workbot@postgres:5432/workbot
+    INNGEST_BASE_URL: http://inngest:8288
+    INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:?}
+    INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:?}
+    APP_URL: http://localhost:3400
+    REALTIME_URL: ws://localhost:3401
+    BROWSER_URL: ws://browser:3000/
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_PASSWORD: workbot
+      POSTGRES_DB: workbot
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d workbot"]
+      interval: 2s
+      retries: 30
+
+  web:
+    <<: *app
+    build: { context: ., target: web, args: [COMMIT_SHA] }
+    image: workbot-web
+    ports: ["3400:3000"]
+
+  inngest:
+    image: inngest/inngest:v1.49.0
+    command: inngest start --sdk-url http://web:3000/api/inngest
+    environment:
+      INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:?}
+      INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:?}
+    volumes:
+      - inngest:/app/.inngest
+    ports: ["3488:8288"]
+
+  # Chrome as a service, for the investigation and the document evals; no port
+  # leaves the network, since whoever reaches it drives a browser. Its version
+  # is the playwright-core in package.json: client and server must match.
+  browser:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    init: true
+    user: pwuser
+    working_dir: /home/pwuser
+    command: npx -y playwright@1.64.1 run-server --port 3000 --host 0.0.0.0
+
+  # Two instances of the realtime server, as behind a load balancer; they meet in Postgres.
+  realtime-1:
+    <<: *app
+    build: { context: ., target: tools, args: [COMMIT_SHA] }
+    image: workbot-tools
+    environment: { <<: *env, PORT: "3001" }
+    ports: ["3401:3001"]
+  realtime-2:
+    <<: *app
+    image: workbot-tools
+    environment: { <<: *env, PORT: "3001" }
+    ports: ["3402:3001"]
+    depends_on: [realtime-1]
+
+  # The operator's commands, against the same database and engine: docker compose run --rm tools node --import tsx cli/<command>.ts
+  tools:
+    <<: *app
+    image: workbot-tools
+    profiles: [tools]
+
+volumes:
+  postgres:
+  inngest:
