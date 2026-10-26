@@ -83,7 +83,10 @@ async function Sections() {
                     <TableCell className="max-w-32 truncate">
                       {letter.owner ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-72 truncate text-muted-foreground">
+                    <TableCell
+                      className="max-w-72 truncate text-muted-foreground"
+                      title={letter.error}
+                    >
                       {letter.error}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
