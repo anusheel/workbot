@@ -368,6 +368,6 @@ checks. Sizes: S is under an hour, M is a few hours.
 
 - `src/lib/assistant.ts`, `src/lib/history.ts`: one turn for every channel, the web's included; conversations kept on the server with each message's channel, the server's copy the one a turn starts from, 90 days
 - `src/lib/channels.ts`: one shape for an inbound message, per-channel writing rules enforced on the reply, a one-time code that links a phone or a Slack account to a person and a conversation, STOP and START, the role of a linked employee
-- `src/lib/twilio.ts`, `src/lib/outbound.ts`, `src/inngest/channel-reply.ts`, `/api/webhooks/twilio`: signed webhooks, the reply as workflow steps, an outbox that never sends twice, retries on provider failures, status callbacks, WhatsApp's 24-hour window and its template
+- `src/lib/twilio.ts`, `src/lib/outbound.ts`, `src/inngest/channel-reply.ts`, `/api/webhooks/twilio`: signed webhooks, the reply as workflow steps, an outbox that does not resend what the provider accepted and it recorded, retries on provider failures, status callbacks, WhatsApp's 24-hour window and its template
 - `src/lib/bot.ts`, `src/lib/chat-state.ts`, `/api/webhooks/slack`: Slack through the Chat SDK, a thread as a conversation, tool use as a card, the SDK's state in a tenant-separated table
 - `hand_off` on every channel, `/admin/channels`, the phone link on the chat page, Slack's in settings; `docs/channels.md`; D21

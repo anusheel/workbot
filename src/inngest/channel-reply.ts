@@ -7,8 +7,8 @@ import { messageReceived } from "./events";
 /**
  * A text message answered: the assistant's turn, the reply queued, then
  * sent, each a step of its own. The send is retried with backoff when the
- * provider may recover, and never doubled, since a sent message keeps the
- * provider's id; what the exchange taught is learned after the reply is out.
+ * provider may recover, and not repeated once the provider's id is stored;
+ * what the exchange taught is learned after the reply is out.
  */
 export const channelReply = inngest.createFunction(
   {

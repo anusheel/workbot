@@ -49,8 +49,9 @@ const fail = async (id: string, reason: string, tried = false) => {
 };
 
 /**
- * Sends a queued message once. A message already handed to the provider is
- * not sent again, so a retried step cannot double it. A recipient who opted
+ * Sends a queued message. One whose provider id is stored is not sent again,
+ * so a retried step does not repeat it; the one gap is a failure between the
+ * provider accepting it and the id being stored. A recipient who opted
  * out gets nothing, and WhatsApp outside its 24-hour window gets the approved
  * template or nothing. A failure the provider may recover from is recorded
  * and thrown, for the caller to retry; any other fails the message for good.
