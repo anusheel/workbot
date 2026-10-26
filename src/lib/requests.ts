@@ -22,9 +22,16 @@ export type WorkRequest = z.infer<typeof WorkRequest>;
 
 const columns = `id, title, body, team, priority, status, created_at as "createdAt"`;
 
+/** Files a request and its `request.created` event in one statement, so neither exists without the other. */
 export async function createRequest(input: NewRequest): Promise<WorkRequest> {
   const [row] = await query(
-    `insert into requests (title, body, team, priority) values ($1, $2, $3, $4) returning ${columns}`,
+    `with request as (
+       insert into requests (title, body, team, priority) values ($1, $2, $3, $4) returning *
+     ), event as (
+       insert into events (topic, version, key, data)
+       select 'request.created', 1, id::text, jsonb_build_object('id', id, 'title', title, 'team', team, 'priority', priority) from request
+     )
+     select ${columns} from request`,
     [input.title, input.body, input.team, input.priority],
   );
   return WorkRequest.parse(row);

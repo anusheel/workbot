@@ -27,6 +27,19 @@ export async function notify(
   return row;
 }
 
+/** A notification for an event, made once: reading the event again finds it already there. */
+export async function notifyOnce(
+  eventId: string,
+  recipient: string,
+  message: string,
+  link?: string,
+) {
+  await query(
+    `insert into notifications (recipient, message, link, event_id) values ($1, $2, $3, $4) on conflict (event_id) do nothing`,
+    [recipient, message, link ?? null, eventId],
+  );
+}
+
 export async function listNotifications(limit = 10): Promise<Notification[]> {
   await io();
   return query<Notification>(

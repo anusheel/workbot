@@ -1,6 +1,7 @@
 import { serve } from "inngest/next";
 import { channelReply } from "@/inngest/channel-reply";
 import { inngest } from "@/inngest/client";
+import { dispatchEvents } from "@/inngest/dispatch-events";
 import { documentApproval } from "@/inngest/document-approval";
 import { reminders } from "@/inngest/reminders";
 import { retention } from "@/inngest/retention";
@@ -13,6 +14,7 @@ export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
     channelReply,
+    dispatchEvents,
     documentApproval,
     reminders,
     reconcile,

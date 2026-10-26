@@ -1,9 +1,9 @@
 import { eventType } from "inngest";
 import { z } from "zod";
 
-/** A document landed in the inbox; its bytes are in the database under `id`. */
+/** A document landed in the inbox; its bytes are in the database under `id`, and `owner` sent it. */
 export const documentReceived = eventType("document/received", {
-  schema: z.object({ id: z.uuid() }),
+  schema: z.object({ id: z.uuid(), owner: z.string().optional() }),
 });
 
 /** A reviewer answered: the workflow waiting on `id` goes on with the decision, and any corrected fields. */
@@ -30,6 +30,9 @@ export const messageReceived = eventType("channel/message.received", {
     sid: z.string(),
   }),
 });
+
+/** Hands the domain events to their consumers now, rather than at the next minute. */
+export const dispatchRequested = eventType("events/dispatch-requested");
 
 /** Runs the hourly checks on demand. */
 export const watchRequested = eventType("watch/requested");

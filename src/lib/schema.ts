@@ -290,6 +290,36 @@ const tables = [
     value jsonb not null,
     expires_at timestamptz
   )`,
+  // Domain events: what happened, once, in order, for every consumer to read from where it left off.
+  `create table if not exists events (
+    id bigserial primary key,
+    topic text not null,
+    version integer not null,
+    key text not null,
+    data jsonb not null,
+    created_at timestamptz not null default now()
+  )`,
+  // How far each consumer has read, and how often it has failed on the event it is stuck at.
+  `create table if not exists event_offsets (
+    consumer text primary key,
+    position bigint not null default 0,
+    failures integer not null default 0
+  )`,
+  // What could not be done after its retries, kept for a person to look at and send back.
+  `create table if not exists dead_letters (
+    id uuid primary key default gen_random_uuid(),
+    source text not null,
+    owner text,
+    payload jsonb not null,
+    error text not null,
+    attempts integer,
+    replayed_at timestamptz,
+    created_at timestamptz not null default now()
+  )`,
+  // Who sent a document in: the uploader or the integration, whose runs share a fair limit.
+  `alter table inbox add column if not exists owner text`,
+  // A notification made by an event's consumer is made once, however often the event is read.
+  `alter table notifications add column if not exists event_id bigint unique`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];
@@ -332,6 +362,7 @@ const tenancy = [
     channels: "channel, address",
     link_codes: "hash",
     chat_state: "key",
+    event_offsets: "consumer",
   }).map(
     ([table, key]) => `do $$ begin
       if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then
