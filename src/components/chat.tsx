@@ -64,8 +64,10 @@ export function Chat({
   // Follow the stream only while the reader is at the bottom; scrolling up pauses it.
   const following = useRef(true);
 
+  // Kept when a message is sent as well as when its reply is done, so a reload mid-reply finds the conversation to resume.
   useEffect(() => {
-    if (status === "ready" && messages.length) onMessages?.(messages);
+    if ((status === "ready" || status === "submitted") && messages.length)
+      onMessages?.(messages);
   }, [status, messages, onMessages]);
 
   // The server's copy holds what was said on other channels since this browser last saw the conversation.
