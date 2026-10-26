@@ -1,4 +1,5 @@
-import { type Server, createServer } from "node:http";
+import { type IncomingMessage, type Server, createServer } from "node:http";
+import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
 import { type Role, permits, sessionCookie, userBySession } from "./auth";
 import { config } from "./config";
@@ -34,9 +35,13 @@ async function staff(cookie = ""): Promise<Role | undefined> {
     .split(";")
     .map((part) => part.trim().split("="))
     .find(([name]) => name === sessionCookie)?.[1];
-  return token
-    ? (await userBySession(decodeURIComponent(token)))?.role
-    : undefined;
+  if (!token) return undefined;
+  try {
+    return (await userBySession(decodeURIComponent(token)))?.role;
+  } catch {
+    // A cookie that does not decode belongs to no one.
+    return undefined;
+  }
 }
 
 /**
@@ -67,7 +72,15 @@ export async function startRealtime(port: number): Promise<Server> {
       .writeHead(426, { "content-type": "text/plain" })
       .end("WebSocket only"),
   );
-  server.on("upgrade", async (request, socket, head) => {
+  server.on("upgrade", (request, socket, head) =>
+    // Anything that goes wrong on the way in closes this socket, never the server.
+    upgrade(request, socket, head).catch(() => socket.destroy()),
+  );
+  async function upgrade(
+    request: IncomingMessage,
+    socket: Duplex,
+    head: Buffer,
+  ) {
     const call = new URL(
       request.url ?? "/",
       "http://realtime",
@@ -86,7 +99,7 @@ export async function startRealtime(port: number): Promise<Server> {
         room.delete(ws);
         if (room.size === 0) rooms.delete(call);
       });
-      ws.on("message", async (data) => {
+      ws.on("message", (data) => {
         const parsed = read(data.toString());
         if (!parsed?.event?.type) return;
         // A caller speaks only into its own call; staff name the call they speak into, and only an agent may.
@@ -95,10 +108,14 @@ export async function startRealtime(port: number): Promise<Server> {
           : role && permits(role, "agent") && parsed.call
             ? { call: parsed.call, from: "staff", event: parsed.event }
             : undefined;
-        if (frame) await notify(channel, JSON.stringify(frame));
+        // A frame the database would not take ends this socket, which the page reopens; the server stays up.
+        if (frame)
+          notify(channel, JSON.stringify(frame)).catch(() =>
+            ws.close(1011, "unavailable"),
+          );
       });
     });
-  });
+  }
   await new Promise<void>((done) => server.listen(port, done));
   return server;
 }

@@ -66,6 +66,10 @@ test("a call on one instance is followed from the other, and an agent's note rea
 
 test("watching every call needs staff, and a viewer may watch but not speak", async () => {
   await expect(open(url(first, "*"))).rejects.toThrow("403");
+  // A cookie that does not decode is no one's, and the server stays up.
+  await expect(open(url(first, "*"), `${sessionCookie}=%`)).rejects.toThrow(
+    "403",
+  );
   const caller = await open(url(first, "call-2"));
   const viewer = await open(url(second, "*"), await staff("viewer"));
   let reached = false;
