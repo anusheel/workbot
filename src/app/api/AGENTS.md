@@ -6,5 +6,7 @@ Schemas in `types.ts` are the contract: the body schema parses input with
 codes: 201 on create, 400 with `z.flattenError(error)` on invalid input, 404
 when the resource does not exist; unexpected errors throw. Handlers call the
 functions in `src/lib`; they hold no logic of their own.
-`api/inngest` is the exception: the workflow engine's own handler, served by its SDK,
-with the functions listed in `src/inngest/`.
+`api/inngest` and `api/webhooks/slack` are the exceptions, served by their SDKs: the
+workflow engine's handler, with the functions listed in `src/inngest/`, and the Chat
+SDK's, with the bot in `src/lib/bot.ts`. A webhook checks its provider's signature
+before it parses anything.
