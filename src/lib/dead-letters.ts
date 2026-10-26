@@ -34,9 +34,11 @@ export async function deadLetter(
   );
 }
 
+/** The newest letters, each with the name of the document it carried, when it carried one. */
 export const listDeadLetters = (limit = 50) =>
-  query<DeadLetter>(
-    `select ${columns} from dead_letters order by created_at desc limit $1`,
+  query<DeadLetter & { document: string | null }>(
+    `select ${columns}, (select name from inbox where inbox.id::text = dead_letters.payload->>'id') as document
+     from dead_letters order by created_at desc limit $1`,
     [limit],
   );
 
