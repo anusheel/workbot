@@ -22,3 +22,9 @@ variable "secrets_revision" {
   type        = number
   default     = 1
 }
+
+variable "tenants" {
+  description = "A namespace each: workbot for the shared deployment, a customer's id for one kept apart."
+  type        = set(string)
+  default     = ["workbot"]
+}
