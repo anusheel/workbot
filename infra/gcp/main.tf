@@ -11,7 +11,7 @@ locals {
   labels  = { app = "workbot", env = var.environment }
   images  = "${var.region}-docker.pkg.dev/${var.project}/workbot"
   secrets = ["anthropic-api-key", "secrets-key", "inngest-event-key", "inngest-signing-key", "browser-url"]
-  apis    = ["run", "sqladmin", "secretmanager", "artifactregistry", "servicenetworking", "compute"]
+  apis    = ["run", "sqladmin", "secretmanager", "artifactregistry", "servicenetworking", "compute", "cloudkms"]
   # The environment variables each secret fills, for the web tier and the jobs.
   app_secrets = {
     DATABASE_URL        = "database-url"
@@ -27,6 +27,42 @@ resource "google_project_service" "api" {
   for_each           = toset(local.apis)
   service            = "${each.value}.googleapis.com"
   disable_on_destroy = false
+}
+
+# One key per environment, rotated every 90 days, under the database and every
+# secret: the data is encrypted with keys of its own, and those keys with this
+# one, which never leaves KMS. The Cloud SQL service agent must exist first:
+# `gcloud beta services identity create --service=sqladmin.googleapis.com`.
+data "google_project" "this" {}
+
+resource "google_kms_key_ring" "workbot" {
+  name       = "workbot-${var.environment}"
+  location   = var.region
+  depends_on = [google_project_service.api]
+}
+
+resource "google_kms_crypto_key" "data" {
+  name            = "data"
+  key_ring        = google_kms_key_ring.workbot.id
+  rotation_period = "7776000s"
+  labels          = local.labels
+}
+
+resource "google_kms_crypto_key_iam_member" "agent" {
+  for_each      = { sql = "gcp-sa-cloud-sql", secrets = "gcp-sa-secretmanager" }
+  crypto_key_id = google_kms_crypto_key.data.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member        = "serviceAccount:service-${data.google_project.this.number}@${each.value}.iam.gserviceaccount.com"
+}
+
+# Who read which secret and who used the key: data-access logs, off by default.
+resource "google_project_iam_audit_config" "reads" {
+  for_each = toset(["secretmanager.googleapis.com", "cloudkms.googleapis.com"])
+  project  = var.project
+  service  = each.value
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
 }
 
 resource "google_artifact_registry_repository" "images" {
@@ -57,6 +93,8 @@ resource "google_sql_database_instance" "workbot" {
   name                = "workbot-${var.environment}"
   database_version    = "POSTGRES_17"
   deletion_protection = var.environment == "production"
+  encryption_key_name = google_kms_crypto_key.data.id
+  depends_on          = [google_kms_crypto_key_iam_member.agent]
   settings {
     edition           = "ENTERPRISE"
     tier              = var.database_tier
@@ -99,9 +137,13 @@ resource "google_secret_manager_secret" "database_url" {
   secret_id = "database-url"
   labels    = local.labels
   replication {
-    auto {}
+    auto {
+      customer_managed_encryption {
+        kms_key_name = google_kms_crypto_key.data.id
+      }
+    }
   }
-  depends_on = [google_project_service.api]
+  depends_on = [google_kms_crypto_key_iam_member.agent]
 }
 
 resource "google_secret_manager_secret_version" "database_url" {
@@ -117,9 +159,13 @@ resource "google_secret_manager_secret" "key" {
   secret_id = each.value
   labels    = local.labels
   replication {
-    auto {}
+    auto {
+      customer_managed_encryption {
+        kms_key_name = google_kms_crypto_key.data.id
+      }
+    }
   }
-  depends_on = [google_project_service.api]
+  depends_on = [google_kms_crypto_key_iam_member.agent]
 }
 
 resource "google_service_account" "workbot" {
