@@ -158,7 +158,7 @@ module "realtime" {
   max_instances   = 4
   timeout         = 3600
   labels          = merge(local.labels, { tier = "realtime" })
-  env             = { APP_URL = "https://${var.domain}" }
+  env             = { APP_URL = "https://${var.domain}", CUSTOMER = var.customer }
   secrets         = { DATABASE_URL = "database-url" }
   depends_on      = [google_secret_manager_secret_iam_member.read, google_secret_manager_secret_version.database_url]
 }
@@ -188,6 +188,10 @@ resource "google_cloud_run_v2_job" "release" {
       containers {
         image   = "us-docker.pkg.dev/cloudrun/container/job"
         command = each.value
+        env {
+          name  = "CUSTOMER"
+          value = var.customer
+        }
         dynamic "env" {
           for_each = local.app_secrets
           content {
