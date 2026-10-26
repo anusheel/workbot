@@ -25,8 +25,8 @@ A person is linked across channels only by possession, never by a matching name 
 - **Inbound.** Twilio signs each request: HMAC-SHA1 of the full URL followed by every parameter, name then value, sorted by name, under the account's auth token. The route checks it against the public URL (`APP_URL`), since behind a proxy the server sees another, hands the message to the workflow under Twilio's message id and answers with empty TwiML at once. A redelivery of the same message is the same workflow run.
 - **The workflow** (`src/inngest/channel-reply.ts`): the turn, the reply queued in `outbound`, the send, then learning from the exchange, each a step. A step that already ran is not run again on a retry.
 - **Outbound.** One call to the Messaging API, with a status callback. A message that has the provider's id is never sent again, so a retried step cannot double it. A 429 or a 5xx is recorded and retried with backoff; anything else (an invalid number, a closed window) fails the message for good with the provider's code. Twilio's status reports (`sent`, `delivered`, `undelivered`, `failed`) update the row; the Channels page shows each message's last word.
-- **WhatsApp's rules.** A business may write freely for 24 hours after the customer's last message; after that, only an approved template (`TWILIO_WHATSAPP_TEMPLATE`, a Content SID). Without one, the message fails with that reason rather than being sent and refused.
-- **Consent.** STOP, UNSUBSCRIBE, CANCEL, END or QUIT silences an address until START; nothing is sent to it meanwhile. Twilio enforces the same for SMS on its side.
+- **WhatsApp's rules.** A business may write freely for 24 hours after the customer's last message; after that, only an approved template (`TWILIO_WHATSAPP_TEMPLATE`, a Content SID, sent without variables). Without one, the message fails with that reason rather than being sent and refused. Writing first needs the customer's opt-in, which nothing here collects: WorkBot only answers people who wrote.
+- **Consent.** STOP, UNSUBSCRIBE, CANCEL, END or QUIT silences an address until START; nothing is sent to it meanwhile. It silences that address, not every channel of a linked person. Twilio enforces the same for SMS on its side.
 
 ## Slack through the Chat SDK
 
@@ -79,7 +79,8 @@ No Twilio account and no Slack workspace were available, so no message left the 
 
 ## What is not here
 
-- iMessage. Business messaging runs through Apple Messages for Business and an approved provider; SMS is the fallback to every phone.
+- iMessage. Business messaging runs through Apple Messages for Business and an approved provider; SMS is the fallback, with sender rules that vary by country and number type.
+- Template variables, opt-in collection for WhatsApp, and a page or alert when a hand-off arrives: it waits in the team's requests.
 - Quiet hours, typing indicators, and attachments (photos of damaged goods would be the first to add).
 - Teams, Google Chat and Discord: each is an adapter in the same bot, with its own app to register.
 - A person replying from WorkBot to the channel a hand-off came from; today they reply in the channel's own console.
