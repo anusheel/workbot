@@ -21,5 +21,15 @@ export const remindersRequested = eventType("reminders/requested");
 /** Pulls what changed into the one shape, on demand. */
 export const syncRequested = eventType("sync/requested");
 
+/** A message came in on a text channel; the event's id is the provider's, so a redelivery is one run. */
+export const messageReceived = eventType("channel/message.received", {
+  schema: z.object({
+    channel: z.enum(["sms", "whatsapp"]),
+    address: z.string(),
+    text: z.string(),
+    sid: z.string(),
+  }),
+});
+
 /** Runs the hourly checks on demand. */
 export const watchRequested = eventType("watch/requested");
