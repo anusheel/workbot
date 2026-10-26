@@ -2,10 +2,6 @@
 # cost, and the same checks on every pull request.
 mock_provider "google" {}
 
-variables {
-  tag = "5307a60"
-}
-
 run "staging" {
   command = plan
   variables {

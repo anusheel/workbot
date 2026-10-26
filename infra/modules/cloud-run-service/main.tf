@@ -1,6 +1,7 @@
-# One Cloud Run service: an image by tag, on the project's network so it
-# reaches the database's private address, its secrets read from Secret Manager,
-# and traffic only from the load balancer.
+# One Cloud Run service on the project's network, so it reaches the database's
+# private address, with its secrets read from Secret Manager and traffic only
+# from the load balancer. It starts on Google's placeholder image; a release
+# (infra/gcp/release.sh) puts WorkBot's image and command on it.
 resource "google_cloud_run_v2_service" "this" {
   name                 = var.name
   location             = var.region
@@ -24,8 +25,7 @@ resource "google_cloud_run_v2_service" "this" {
       }
     }
     containers {
-      image   = var.image
-      command = var.command
+      image = "us-docker.pkg.dev/cloudrun/container/hello"
       ports {
         container_port = var.port
       }
@@ -51,8 +51,8 @@ resource "google_cloud_run_v2_service" "this" {
     }
   }
 
-  # A release changes the image with `gcloud run deploy`; Terraform owns the rest.
+  # The image and the command are the release's; Terraform owns the rest.
   lifecycle {
-    ignore_changes = [template[0].containers[0].image, client, client_version]
+    ignore_changes = [template[0].containers[0].image, template[0].containers[0].command, template[0].containers[0].args, client, client_version]
   }
 }

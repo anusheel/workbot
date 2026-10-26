@@ -23,11 +23,6 @@ variable "customer" {
   default = "fieldstone"
 }
 
-variable "tag" {
-  description = "The images' tag at creation; releases change it afterwards."
-  type        = string
-}
-
 variable "database_tier" {
   type    = string
   default = "db-custom-1-3840"

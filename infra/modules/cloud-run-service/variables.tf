@@ -1,17 +1,10 @@
 variable "name" { type = string }
 variable "region" { type = string }
-variable "image" { type = string }
 variable "service_account" { type = string }
 
 variable "port" {
   type    = number
   default = 3000
-}
-
-variable "command" {
-  description = "The command, when it is not the image's own."
-  type        = list(string)
-  default     = null
 }
 
 variable "env" {

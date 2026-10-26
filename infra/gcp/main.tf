@@ -12,6 +12,15 @@ locals {
   images  = "${var.region}-docker.pkg.dev/${var.project}/workbot"
   secrets = ["anthropic-api-key", "secrets-key", "inngest-event-key", "inngest-signing-key", "browser-url"]
   apis    = ["run", "sqladmin", "secretmanager", "artifactregistry", "servicenetworking", "compute"]
+  # The environment variables each secret fills, for the web tier and the jobs.
+  app_secrets = {
+    DATABASE_URL        = "database-url"
+    ANTHROPIC_API_KEY   = "anthropic-api-key"
+    SECRETS_KEY         = "secrets-key"
+    INNGEST_EVENT_KEY   = "inngest-event-key"
+    INNGEST_SIGNING_KEY = "inngest-signing-key"
+    BROWSER_URL         = "browser-url"
+  }
 }
 
 resource "google_project_service" "api" {
@@ -127,7 +136,6 @@ module "web" {
   source          = "../modules/cloud-run-service"
   name            = "workbot-web"
   region          = var.region
-  image           = "${local.images}/web:${var.tag}"
   service_account = google_service_account.workbot.email
   min_instances   = var.min_instances
   labels          = merge(local.labels, { tier = "web" })
@@ -136,14 +144,7 @@ module "web" {
     APP_URL      = "https://${var.domain}"
     REALTIME_URL = "wss://${var.domain}/realtime"
   }
-  secrets = {
-    DATABASE_URL        = google_secret_manager_secret.database_url.secret_id
-    ANTHROPIC_API_KEY   = "anthropic-api-key"
-    SECRETS_KEY         = "secrets-key"
-    INNGEST_EVENT_KEY   = "inngest-event-key"
-    INNGEST_SIGNING_KEY = "inngest-signing-key"
-    BROWSER_URL         = "browser-url"
-  }
+  secrets    = local.app_secrets
   depends_on = [google_secret_manager_secret_iam_member.read, google_secret_manager_secret_version.database_url]
 }
 
@@ -151,8 +152,6 @@ module "realtime" {
   source          = "../modules/cloud-run-service"
   name            = "workbot-realtime"
   region          = var.region
-  image           = "${local.images}/tools:${var.tag}"
-  command         = ["node", "--import", "tsx", "realtime/server.ts"]
   port            = 8080
   service_account = google_service_account.workbot.email
   min_instances   = 1
@@ -160,8 +159,54 @@ module "realtime" {
   timeout         = 3600
   labels          = merge(local.labels, { tier = "realtime" })
   env             = { APP_URL = "https://${var.domain}" }
-  secrets         = { DATABASE_URL = google_secret_manager_secret.database_url.secret_id }
+  secrets         = { DATABASE_URL = "database-url" }
   depends_on      = [google_secret_manager_secret_iam_member.read, google_secret_manager_secret_version.database_url]
+}
+
+# What a release runs with the new tools image before any traffic moves: the
+# schema and the knowledge base, then the eval smoke suite.
+resource "google_cloud_run_v2_job" "release" {
+  for_each = {
+    migrate = ["node", "--import", "tsx", "cli/index-knowledge.ts"]
+    smoke   = ["node", "--import", "tsx", "cli/eval.ts", "--task", "all", "--smoke", "--runs", "2", "--gate"]
+  }
+  name                = "workbot-${each.key}"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.labels
+  template {
+    template {
+      service_account = google_service_account.workbot.email
+      max_retries     = 0
+      vpc_access {
+        egress = "PRIVATE_RANGES_ONLY"
+        network_interfaces {
+          network    = "default"
+          subnetwork = "default"
+        }
+      }
+      containers {
+        image   = "us-docker.pkg.dev/cloudrun/container/job"
+        command = each.value
+        dynamic "env" {
+          for_each = local.app_secrets
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image, client, client_version]
+  }
+  depends_on = [google_secret_manager_secret_iam_member.read]
 }
 
 # One host for both services: /realtime to the realtime server, the rest to the
