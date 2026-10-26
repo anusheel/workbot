@@ -9,3 +9,9 @@ test("a database that is down when the server starts is tried again on the next 
   config.database = database;
   expect(await query("select 1 as one")).toEqual([{ one: 1 }]);
 });
+
+test("the schema is recorded by its version, so the next server to start runs none of it", async () => {
+  expect(
+    await query("select count(*)::int as versions from schema_version"),
+  ).toEqual([{ versions: 1 }]);
+});

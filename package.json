@@ -14,6 +14,7 @@
     "extract": "node --env-file-if-exists=.env.local --import tsx cli/extract.ts",
     "formats": "node --env-file-if-exists=.env.local --import tsx cli/formats.ts",
     "load": "node --env-file-if-exists=.env.local --import tsx cli/load.ts",
+    "bench": "node --import tsx cli/bench.ts",
     "realtime": "node --env-file-if-exists=.env.local --import tsx realtime/server.ts",
     "eval": "node --env-file-if-exists=.env.local --import tsx cli/eval.ts",
     "eval:generate": "node --env-file-if-exists=.env.local --import tsx cli/eval-generate.ts",

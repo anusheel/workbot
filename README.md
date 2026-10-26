@@ -92,7 +92,10 @@ The infrastructure is Terraform in `infra/` for Google Cloud, a Kubernetes
 cluster and an Azure VM, with WorkBot as a Helm chart and `infra/release.sh`
 releasing a tag: migrate, wait, smoke, roll back. On a local cluster it scales
 on the queue's depth and is recreated from nothing in one sequence
-([docs/infrastructure.md](docs/infrastructure.md)).
+([docs/infrastructure.md](docs/infrastructure.md)). Isolation, keys, the
+single-tenant option, the load test's bottlenecks and the runbooks are in
+[docs/isolation.md](docs/isolation.md); a vendor review's 20 questions are
+answered in [docs/questionnaire.md](docs/questionnaire.md).
 
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question

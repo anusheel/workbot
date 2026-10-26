@@ -20,7 +20,7 @@ test("a new request is open, and the list is newest first", async () => {
   const second = await request("Refund order 4411", "finance", "high");
   expect(first.status).toBe("open");
   expect(first.createdAt).toBeInstanceOf(Date);
-  expect((await listRequests()).slice(0, 2)).toEqual([second, first]);
+  expect(await listRequests({}, 2)).toEqual([second, first]);
 });
 
 test("requests are filtered by team and status, and found by id", async () => {

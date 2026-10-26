@@ -5,7 +5,9 @@ registry: ""
 tag: latest
 
 # The address people reach the app at; the realtime server is under /realtime.
+# A tenant kept apart gets a host of its own on the shared gateway.
 appUrl: http://localhost:3500
+host: ""
 
 env:
   CUSTOMER: fieldstone
@@ -23,6 +25,7 @@ autoscaling:
   min: 1
   max: 4
   documentsPerReplica: 20
+  cpuPercent: 70
 
 # Each service: its image (ours by name, others with their tag), how it starts,
 # the port it listens on, and whether it reads the secrets.

@@ -22,3 +22,15 @@ variable "secrets_revision" {
   type        = number
   default     = 1
 }
+
+variable "tenants" {
+  description = "A namespace each: workbot for the shared deployment, a customer's id for one kept apart."
+  type        = set(string)
+  default     = ["workbot"]
+}
+
+variable "metrics_server" {
+  description = "Install metrics-server for CPU scaling; a managed cluster has its own."
+  type        = bool
+  default     = true
+}

@@ -50,6 +50,18 @@ resource "helm_release" "traefik" {
   depends_on = [kubernetes_manifest.gateway_api]
 }
 
+# CPU readings for the autoscaler. A managed cluster has its own; kind's
+# kubelet serves a certificate metrics-server cannot verify.
+resource "helm_release" "metrics_server" {
+  count      = var.metrics_server ? 1 : 0
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = "3.14.0"
+  namespace  = "kube-system"
+  set        = [{ name = "args", value = "{--kubelet-insecure-tls}" }]
+}
+
 resource "helm_release" "keda" {
   name             = "keda"
   repository       = "https://kedacore.github.io/charts"
@@ -59,40 +71,86 @@ resource "helm_release" "keda" {
   create_namespace = true
 }
 
-resource "kubernetes_namespace_v1" "workbot" {
-  metadata { name = "workbot" }
+# A namespace per tenant: "workbot" for the shared deployment, and one for each
+# customer who must be kept apart, each with its own secrets, database and
+# password, and a policy that admits traffic only from inside it, the gateway
+# and KEDA.
+resource "kubernetes_namespace_v1" "tenant" {
+  for_each = var.tenants
+  metadata { name = each.key }
+}
+
+resource "kubernetes_network_policy_v1" "tenant" {
+  for_each = kubernetes_namespace_v1.tenant
+  metadata {
+    name      = "isolate"
+    namespace = each.key
+  }
+  spec {
+    pod_selector {}
+    policy_types = ["Ingress"]
+    ingress {
+      from {
+        pod_selector {}
+      }
+      from {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "traefik" }
+        }
+      }
+      from {
+        namespace_selector {
+          match_labels = { "kubernetes.io/metadata.name" = "keda" }
+        }
+      }
+    }
+  }
 }
 
 resource "kubernetes_secret_v1" "workbot" {
+  for_each = kubernetes_namespace_v1.tenant
   metadata {
     name      = "workbot"
-    namespace = kubernetes_namespace_v1.workbot.metadata[0].name
+    namespace = each.key
   }
   data_wo          = var.secrets
   data_wo_revision = var.secrets_revision
 }
 
-# The database's password exists only while Terraform runs: it is written into
+# Each database's password exists only while Terraform runs: it is written into
 # the secret once, when the secret is made, and kept nowhere else.
 ephemeral "random_password" "postgres" {
-  length  = 32
-  special = false
+  for_each = var.tenants
+  length   = 32
+  special  = false
 }
 
 # By the service's full name, since KEDA reads the queue's depth from its own namespace.
-locals {
-  postgres = "postgres://postgres:${ephemeral.random_password.postgres.result}@postgres.workbot.svc.cluster.local:5432"
-}
-
 resource "kubernetes_secret_v1" "postgres" {
+  for_each = kubernetes_namespace_v1.tenant
   metadata {
     name      = "postgres"
-    namespace = kubernetes_namespace_v1.workbot.metadata[0].name
+    namespace = each.key
   }
   data_wo = {
-    POSTGRES_PASSWORD    = ephemeral.random_password.postgres.result
-    DATABASE_URL         = "${local.postgres}/workbot?sslmode=disable"
-    INNGEST_POSTGRES_URI = "${local.postgres}/inngest?sslmode=disable"
+    POSTGRES_PASSWORD    = ephemeral.random_password.postgres[each.key].result
+    DATABASE_URL         = "postgres://postgres:${ephemeral.random_password.postgres[each.key].result}@postgres.${each.key}.svc.cluster.local:5432/workbot?sslmode=disable"
+    INNGEST_POSTGRES_URI = "postgres://postgres:${ephemeral.random_password.postgres[each.key].result}@postgres.${each.key}.svc.cluster.local:5432/inngest?sslmode=disable"
   }
   data_wo_revision = 1
+}
+
+moved {
+  from = kubernetes_namespace_v1.workbot
+  to   = kubernetes_namespace_v1.tenant["workbot"]
+}
+
+moved {
+  from = kubernetes_secret_v1.workbot
+  to   = kubernetes_secret_v1.workbot["workbot"]
+}
+
+moved {
+  from = kubernetes_secret_v1.postgres
+  to   = kubernetes_secret_v1.postgres["workbot"]
 }

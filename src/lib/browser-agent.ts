@@ -1,6 +1,7 @@
 import { type LanguageModel, Output, generateText } from "ai";
 import { z } from "zod";
 import { chrome } from "./chrome";
+import { config } from "./config";
 import type { Usage } from "./providers";
 import { isPublic } from "./web";
 
@@ -163,6 +164,7 @@ export async function chromeBrowser(start: string): Promise<Browser> {
   const context = await instance.newContext({
     viewport,
     serviceWorkers: "block",
+    ...(config.proxy && { proxy: { server: config.proxy } }),
   });
   await context.route("**/*", (route) =>
     allowed(route.request().url())

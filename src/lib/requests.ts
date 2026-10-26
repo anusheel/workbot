@@ -37,15 +37,17 @@ export async function createRequest(input: NewRequest): Promise<WorkRequest> {
   return WorkRequest.parse(row);
 }
 
+/** The newest requests first, `limit` of them when given: a list without one grows with the table. */
 export async function listRequests(
   filter: RequestFilter = {},
+  limit?: number,
 ): Promise<WorkRequest[]> {
   await io();
   const rows = await query(
     `select ${columns} from requests
      where ($1::text is null or team = $1) and ($2::text is null or status = $2)
-     order by created_at desc`,
-    [filter.team ?? null, filter.status ?? null],
+     order by created_at desc limit $3`,
+    [filter.team ?? null, filter.status ?? null, limit ?? null],
   );
   return WorkRequest.array().parse(rows);
 }
@@ -100,6 +102,6 @@ export async function requestSummary(): Promise<RequestSummary> {
     byStatus: by(statuses, (r) => r.status),
     byTeam: by(teams, (r) => r.team),
     byPriority: by(priorities, (r) => r.priority),
-    latest: (await listRequests()).slice(0, 10),
+    latest: await listRequests({}, 10),
   };
 }

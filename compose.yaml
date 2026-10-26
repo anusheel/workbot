@@ -15,6 +15,11 @@ x-app: &app
     APP_URL: http://localhost:3400
     REALTIME_URL: ws://localhost:3401
     BROWSER_URL: ws://browser:3000/
+    # Every outbound call through the egress proxy; the services here are reached directly.
+    HTTPS_PROXY: http://egress:3128
+    HTTP_PROXY: http://egress:3128
+    NO_PROXY: postgres,inngest,browser,web,localhost,127.0.0.1
+    NODE_USE_ENV_PROXY: "1"
   depends_on:
     postgres:
       condition: service_healthy
@@ -57,6 +62,13 @@ services:
     user: pwuser
     working_dir: /home/pwuser
     command: npx -y playwright@1.64.1 run-server --port 3000 --host 0.0.0.0
+
+  # The egress proxy: an allowlist of hosts and a log line for every request.
+  egress:
+    image: ubuntu/squid:6.6-24.04_beta
+    volumes:
+      - ./infra/egress/squid.conf:/etc/squid/squid.conf:ro
+      - ./infra/egress/allowlist:/etc/squid/allowlist:ro
 
   # Two instances of the realtime server, as behind a load balancer; they meet in Postgres.
   realtime-1:

@@ -1,0 +1,10 @@
+# The services WorkBot calls. A page the agent may read is added here, by host,
+# for the customer who wants it read; everything else is refused.
+.anthropic.com
+.voyageai.com
+api.search.brave.com
+api.twilio.com
+.slack.com
+api.github.com
+.posthog.com
+.inngest.com

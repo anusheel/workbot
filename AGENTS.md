@@ -13,6 +13,7 @@ site is a second app in `site/`, with its own AGENTS.md.
 - `pnpm formats [--only pdf|docx|xlsx] [--save <dir>]`: 10 invoices by each path to the model (text layer, file, scan), 10 contracts with tracked changes, 5 questions of a 50,000-row export, with accuracy and cost per document; `--save` writes the files it built
 - `docker compose --env-file .env.compose up --build`: the stack in containers as a cloud runs it (keys for its Inngest in `.env.compose`); `docker compose --env-file .env.compose run --rm tools node --import tsx cli/<command>.ts` runs a command against it
 - `infra/release.sh <tag>`: releases a tag to the cluster of the current kube context (migrate, wait, smoke, roll back); `terraform -chdir=infra/<target> test` plans a target against mocked providers
+- `BENCH_KEY=<key> pnpm bench [--url] [--workers n] [--seconds n]`: creates and lists requests on a running deployment, with throughput, p50, p95 and errors
 - `pnpm load [--noisy n] [--broken n] [--each n]`: documents through the queue on the running engine, one noisy sender first, with fairness, dead letters and losses counted; `PORT=3301 pnpm realtime`: one instance of the realtime server for live calls
 - `pnpm knowledge:index`: rebuild the knowledge base index; `pnpm compare:retrieval`: 10 questions by top-5 retrieval and by the agent, side by side
 - `pnpm test`: Vitest, once; `pnpm test -- --watch` while working

@@ -1,5 +1,6 @@
-# The web tier on the queue's depth: one replica for each so many documents
-# waiting to be read, counted in the database each time the autoscaler asks.
+# The web tier on the queue's depth, one replica for each so many documents
+# waiting to be read, and on CPU for the requests people make: whichever asks
+# for more replicas wins.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -14,6 +15,10 @@ spec:
         query: select count(*) from inbox where status = 'received'
         targetQueryValue: {{ .Values.autoscaling.documentsPerReplica | quote }}
       authenticationRef: { name: postgres }
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: {{ .Values.autoscaling.cpuPercent | quote }}
 ---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
