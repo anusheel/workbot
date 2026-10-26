@@ -82,6 +82,8 @@ export const config = {
   },
   // A Playwright browser server, ws://…, for machines without Chrome: a container, a function. Unset, the machine's own Chrome.
   browser: { url: process.env.BROWSER_URL },
+  // The egress proxy every outbound call goes through, where one is set; the agent's browser uses it too.
+  proxy: process.env.HTTPS_PROXY,
   // The realtime server's address, ws://…, for live calls; unset, a call is not shared with staff.
   realtime: { url: process.env.REALTIME_URL },
   // The Slack app; unset, the Slack channel is off.
