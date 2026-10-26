@@ -136,10 +136,9 @@ test("streams the reply, tells the model what it knows, and remembers what it le
   expect(instructions).toContain("The person works in finance.");
   // Extraction runs after the response has gone out.
   await vi.waitFor(async () =>
-    expect((await listMemories("visitor-1")).map((m) => m.text)).toEqual([
-      "The person wants short answers.",
-      "The person works in finance.",
-    ]),
+    expect((await listMemories("visitor-1")).map((m) => m.text).sort()).toEqual(
+      ["The person wants short answers.", "The person works in finance."],
+    ),
   );
 });
 

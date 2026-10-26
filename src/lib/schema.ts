@@ -318,6 +318,20 @@ const tables = [
   )`,
   // Who sent a document in: the uploader or the integration, whose runs share a fair limit.
   `alter table inbox add column if not exists owner text`,
+  // A chat reply as it streams out, kept in parts so a reader who lost it can read it again.
+  `create table if not exists streams (
+    id text primary key,
+    conversation_id text not null,
+    person text not null,
+    done boolean not null default false,
+    created_at timestamptz not null default now()
+  )`,
+  `create table if not exists stream_parts (
+    stream_id text not null references streams(id) on delete cascade,
+    seq integer not null,
+    data text not null,
+    primary key (stream_id, seq)
+  )`,
   // A notification made by an event's consumer is made once, however often the event is read.
   `alter table notifications add column if not exists event_id bigint unique`,
   // The entities content/entities describes; pnpm generate writes their statements.
@@ -363,6 +377,7 @@ const tenancy = [
     link_codes: "hash",
     chat_state: "key",
     event_offsets: "consumer",
+    stream_parts: "stream_id, seq",
   }).map(
     ([table, key]) => `do $$ begin
       if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then

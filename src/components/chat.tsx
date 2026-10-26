@@ -55,6 +55,8 @@ export function Chat({
   } = useChat({
     id,
     messages: initialMessages,
+    // A reply that was still streaming when the page closed comes back from where the server kept it.
+    resume: true,
     transport: new DefaultChatTransport({ api: "/api/chat" }),
   });
   const [input, setInput] = useState("");
