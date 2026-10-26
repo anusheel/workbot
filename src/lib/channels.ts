@@ -10,6 +10,7 @@ import type { Access } from "./auth-model";
 import { toolSet } from "./chat";
 import { query } from "./db";
 import { textOf } from "./context";
+import { handOff } from "./handoff";
 import { historyOf, saveHistory } from "./history";
 import { listMemories } from "./memory";
 import { promptOf } from "./prompts";
@@ -213,7 +214,10 @@ export async function respond(
         model,
         instructions: turn.instructions,
         messages: turn.messages,
-        tools: toolSet(toolsFor(role)),
+        tools: toolSet([
+          ...toolsFor(role),
+          handOff(() => history, { channel, address }),
+        ]),
         stopWhen: isStepCount(8),
       });
       const reply = render(result.text, channel);

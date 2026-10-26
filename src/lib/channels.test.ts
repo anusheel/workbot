@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { scripted } from "@/test/model";
 import { createUser } from "./auth";
 import { linkCode, render, respond } from "./channels";
+import { query } from "./db";
 import { historyOf, saveHistory } from "./history";
 
 const web = (id: string, role: "user" | "assistant", text: string) => ({
@@ -104,4 +105,35 @@ test("a reply is fitted to its channel", () => {
   );
   expect(render(text, "slack")).toBe(text);
   expect(render("x".repeat(2000), "sms")).toHaveLength(1600);
+});
+
+test("a customer who needs a person is handed to the team, with the conversation and where to reply", async () => {
+  const { model } = scripted([
+    { calls: [{ name: "hand_off", input: { reason: "damaged delivery" } }] },
+    { text: "A person from support will reply here." },
+  ]);
+  const reply = await respond(
+    {
+      channel: "whatsapp",
+      address: "+15105550166",
+      text: "Two bags arrived split open. I want to talk to a person.",
+    },
+    model,
+  );
+  expect(reply?.tools).toEqual(["hand_off"]);
+  const [request] = await query<{
+    title: string;
+    body: string;
+    team: string;
+    priority: string;
+  }>(
+    `select title, body, team, priority from requests order by created_at desc limit 1`,
+  );
+  expect(request).toMatchObject({
+    title: "Hand-off from WhatsApp: damaged delivery",
+    team: "support",
+    priority: "high",
+  });
+  expect(request.body).toContain("Reply on WhatsApp to +15105550166.");
+  expect(request.body).toContain("Customer: Two bags arrived split open.");
 });

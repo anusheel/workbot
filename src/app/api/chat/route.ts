@@ -11,7 +11,9 @@ import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { userOf } from "@/lib/auth";
-import { chatToolsFor } from "@/lib/chat";
+import { toolSet } from "@/lib/chat";
+import { handOff } from "@/lib/handoff";
+import { toolsFor } from "@/lib/tools";
 import { modelFor } from "@/lib/routing";
 import { learn, prepare } from "@/lib/assistant";
 import { textOf } from "@/lib/context";
@@ -46,10 +48,13 @@ export async function POST(request: Request) {
       { error: z.flattenError(body.error) },
       { status: 400 },
     );
-  // A signed-in employee gets the tools their role reaches; anyone else, the customer set.
+  // A signed-in employee gets the tools their role reaches, anyone else the customer set; everyone can be handed to a person.
   const user = await userOf(request.headers);
   const role = user?.role ?? "public";
-  const tools = chatToolsFor(role);
+  const tools = toolSet([
+    ...toolsFor(role),
+    handOff(() => history, { channel: "web" }),
+  ]);
   const validated = await safeValidateUIMessages({
     messages: body.data.messages,
     tools,
