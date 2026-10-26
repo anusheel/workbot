@@ -1,0 +1,398 @@
+{
+  "maintenance": {
+    "author": "R. Okafor, Golden Gate Forklift Repair",
+    "text": [
+      "EQUIPMENT MAINTENANCE AGREEMENT",
+      "This Equipment Maintenance Agreement is made between Fieldstone Supply, 400 Dock Rd, Oakland, California (the Customer), and Golden Gate Forklift Repair, 77 Market Ave, San Leandro, California (the Provider).",
+      "1. Term. This Agreement takes effect on November 1, 2026 and ends on October 31, 2027. It renews automatically for further periods of 1 year unless either party gives written notice of non-renewal at least 60 days before the end of the current period.",
+      "2. Services. The Provider shall carry out preventive maintenance on the Customer's 6 forklifts once a quarter and shall respond to a breakdown within [-8-][+4+] business hours of the Customer's call.",
+      "3. Payment. The Customer shall pay each invoice within 30 days and shall give the Provider's technicians access to the warehouse during business hours.",
+      "4. Termination. Either party may terminate this Agreement on [-30-][+45+] days' written notice. Either party may terminate it at once if the other commits a material breach not cured within 15 days of notice, or becomes insolvent.",
+      "5. Governing law. This Agreement is governed by the laws of the State of California."
+    ],
+    "want": {
+      "title": "maintenance",
+      "parties": [
+        {
+          "name": "Fieldstone Supply"
+        },
+        {
+          "name": "Golden Gate Forklift Repair"
+        }
+      ],
+      "effective": "2026-11-01",
+      "ends": "2027-10-31",
+      "renewal": "1 year",
+      "termination": {
+        "notice": "45 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "8"
+        },
+        {
+          "kind": "insertion",
+          "text": "4"
+        },
+        {
+          "kind": "deletion",
+          "text": "30"
+        },
+        {
+          "kind": "insertion",
+          "text": "45"
+        }
+      ]
+    }
+  },
+  "lease": {
+    "author": "Port Street Properties counsel",
+    "text": [
+      "WAREHOUSE LEASE",
+      "Landlord: Port Street Properties LLC. Tenant: Fieldstone Supply. Premises: Building C, 16 Ferro Street, Oakland, California, about 42,000 square feet.",
+      "Term. The lease term begins on January 1, 2027 and expires on December 31, 2031. Tenant has one option to renew for a further 5 years, exercised by written notice at least 180 days before expiry.",
+      "Rent. Tenant shall pay base rent of $38,500 per month in advance on the first day of each month, increasing by 3% on each anniversary of the commencement date.",
+      "Use and care. Tenant shall use the Premises for warehousing and distribution only and shall keep the loading docks in good repair. Landlord shall maintain the roof, structure and parking areas.",
+      "[+Subletting. Tenant may sublet up to 20% of the floor area with Landlord's consent, which shall not be unreasonably withheld.+]",
+      "Default. If Tenant fails to pay rent when due and does not cure within 10 days of written notice, Landlord may end this lease on 30 days' written notice.",
+      "This lease is governed by California law."
+    ],
+    "want": {
+      "title": "lease",
+      "parties": [
+        {
+          "name": "Port Street Properties"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2027-01-01",
+      "ends": "2031-12-31",
+      "renewal": "5 years",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "insertion",
+          "text": "sublet up to 20%"
+        }
+      ]
+    }
+  },
+  "cleaning": {
+    "author": "BrightPath Facility Services",
+    "text": [
+      "Commercial Cleaning Services Agreement",
+      "BrightPath Facility Services Inc. (Contractor) agrees to provide cleaning services to Fieldstone Supply (Client) at its Oakland warehouse and showroom.",
+      "Start and duration. Services begin on 15 October 2026 and continue from month to month until ended by either party.",
+      "Scope. Contractor shall clean the showroom, offices and restrooms every evening[-, including weekends-], and shall sweep the warehouse floor twice a week. Client shall provide water, power and a locked storage room for supplies.",
+      "Fees. Client shall pay $4,200 per month, invoiced on the first business day of the month.",
+      "[+Insurance. Contractor shall carry general liability insurance of not less than $2,000,000 per occurrence.+]",
+      "Ending the agreement. Either party may end this agreement by giving the other 30 days' written notice.",
+      "This agreement is governed by the laws of California."
+    ],
+    "want": {
+      "title": "cleaning",
+      "parties": [
+        {
+          "name": "BrightPath Facility Services"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-10-15",
+      "ends": null,
+      "renewal": "month to month",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "including weekends"
+        },
+        {
+          "kind": "insertion",
+          "text": "general liability insurance"
+        }
+      ]
+    }
+  },
+  "telematics": {
+    "author": "Routewise legal",
+    "text": [
+      "SOFTWARE SUBSCRIPTION AGREEMENT",
+      "This Software Subscription Agreement is between Routewise Telematics, Inc. (Routewise) and Fieldstone Supply (Subscriber).",
+      "Subscription. Routewise grants Subscriber access to its fleet tracking service for up to 6 vehicles, with live location, driver logs and maintenance alerts.",
+      "Initial term. The initial term runs from November 1, 2026 to October 31, 2028. After the initial term, this Agreement renews automatically for successive 12-month terms unless either party gives notice of non-renewal at least 90 days before the renewal date.",
+      "Fees. Subscriber shall pay $54 per vehicle per month, billed annually in advance. Routewise shall keep the service available 99.5% of each month and credit 10% of the monthly fee for each full point below that.",
+      "Termination for cause. Either party may terminate this Agreement on 30 days' written notice if the other party materially breaches it and fails to cure the breach within that period.",
+      "Governing law. This Agreement is governed by the laws of the State of [-Delaware-][+California+]."
+    ],
+    "want": {
+      "title": "subscription",
+      "parties": [
+        {
+          "name": "Routewise Telematics"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-11-01",
+      "ends": "2028-10-31",
+      "renewal": "12-month",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "Delaware"
+        },
+        {
+          "kind": "insertion",
+          "text": "California"
+        }
+      ]
+    }
+  },
+  "staffing": {
+    "author": "Baylight Staffing Group",
+    "text": [
+      "STAFFING SERVICES AGREEMENT",
+      "Baylight Staffing Group (the Agency) will supply temporary warehouse workers to Fieldstone Supply (the Client).",
+      "Term. This Agreement is effective September 1, 2026 and remains in force until August 31, 2027, when it ends without renewal.",
+      "Agency duties. The Agency shall recruit, screen and pay the workers, withhold their taxes, and carry workers' compensation insurance for them.",
+      "Client duties. The Client shall supervise the workers' daily tasks, provide safety equipment and training, and approve timesheets each Monday.",
+      "Rates. The Client shall pay each worker's hourly wage plus a markup of [-32%-][+28%+], invoiced weekly and due within 15 days.",
+      "Termination. Either party may terminate this Agreement on 14 days' written notice.",
+      "Governing law. The laws of the State of California govern this Agreement."
+    ],
+    "want": {
+      "title": "staffing",
+      "parties": [
+        {
+          "name": "Baylight Staffing Group"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-09-01",
+      "ends": "2027-08-31",
+      "termination": {
+        "notice": "14 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "32%"
+        },
+        {
+          "kind": "insertion",
+          "text": "28%"
+        }
+      ]
+    }
+  },
+  "freight": {
+    "author": "Sierra Line Freight",
+    "text": [
+      "Freight Carrier Agreement",
+      "Parties: Sierra Line Freight LLC, a motor carrier (Carrier), and Fieldstone Supply, a shipper (Shipper).",
+      "Term. This Agreement starts on December 1, 2026 and ends on November 30, 2027, and renews automatically for 1-year periods unless ended as set out below.",
+      "Carrier obligations. Carrier shall pick up each shipment within 24 hours of tender, deliver within the transit times in Schedule A, and keep cargo insurance of at least $[-100,000-][+250,000+] per shipment.",
+      "Shipper obligations. Shipper shall tender freight properly packaged and labeled, and shall pay each freight bill within 21 days.",
+      "Termination. Either party may end this Agreement on 30 days' written notice. Shipper may end it at once if Carrier loses its operating authority or fails to keep the required insurance.",
+      "Governing law. California law governs this Agreement."
+    ],
+    "want": {
+      "title": "carrier",
+      "parties": [
+        {
+          "name": "Sierra Line Freight"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-12-01",
+      "ends": "2027-11-30",
+      "renewal": "1-year",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "100,000"
+        },
+        {
+          "kind": "insertion",
+          "text": "250,000"
+        }
+      ]
+    }
+  },
+  "lumber": {
+    "author": "Cascade Lumber sales",
+    "text": [
+      "SUPPLY AGREEMENT",
+      "This Supply Agreement is entered into by Cascade Lumber Co. of Eugene, Oregon (Supplier) and Fieldstone Supply of Oakland, California (Buyer).",
+      "Term. From January 1, 2027 through December 31, 2027. The parties may renew it by mutual written agreement.",
+      "Supply. Supplier shall be Buyer's [-exclusive-] supplier of kiln-dried 2x4 and 2x6 studs and shall deliver at least 3 truckloads a month to Buyer's Oakland yard.",
+      "Price. Prices are those in Exhibit 1. [+Prices are fixed for the first 6 months and may then change once, on 30 days' notice.+]",
+      "Buyer shall pay within 45 days of delivery and shall inspect each load within 2 business days.",
+      "Termination. Either party may terminate on 60 days' written notice to the other.",
+      "Law. This Agreement is governed by the laws of the State of Oregon."
+    ],
+    "want": {
+      "title": "supply",
+      "parties": [
+        {
+          "name": "Cascade Lumber"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2027-01-01",
+      "ends": "2027-12-31",
+      "renewal": "mutual",
+      "termination": {
+        "notice": "60 days"
+      },
+      "governingLaw": "Oregon",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "exclusive"
+        },
+        {
+          "kind": "insertion",
+          "text": "fixed for the first 6 months"
+        }
+      ]
+    }
+  },
+  "security": {
+    "author": "Pacific Shield Security",
+    "text": [
+      "SECURITY SERVICES AGREEMENT",
+      "Pacific Shield Security, Inc. (Provider) shall provide guard services to Fieldstone Supply (Client) at 400 Dock Rd, Oakland.",
+      "Term. The term is October 15, 2026 to October 14, 2027. After that, this Agreement continues month to month until either party ends it.",
+      "Services. Provider shall post one licensed, uniformed guard at the yard gate from [-10 p.m. to 6 a.m.-][+9 p.m. to 7 a.m.+] every night and shall file an incident report by 8 a.m. after any incident.",
+      "Client duties. Client shall provide a heated gatehouse, lighting at the gate and a list of authorized drivers.",
+      "Fees. Client shall pay $31.50 per guard hour, invoiced every two weeks.",
+      "Termination. Either party may terminate this Agreement on 30 days' written notice.",
+      "Governing law. The laws of the State of California apply."
+    ],
+    "want": {
+      "title": "security",
+      "parties": [
+        {
+          "name": "Pacific Shield Security"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-10-15",
+      "ends": "2027-10-14",
+      "renewal": "month to month",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "10 p.m. to 6 a.m."
+        },
+        {
+          "kind": "insertion",
+          "text": "9 p.m. to 7 a.m."
+        }
+      ]
+    }
+  },
+  "waste": {
+    "author": "Fieldstone operations",
+    "text": [
+      "WASTE HAULING AGREEMENT",
+      "Between East Bay Recycling & Disposal (Hauler) and Fieldstone Supply (Customer).",
+      "Term and renewal. This Agreement begins on November 15, 2026 and ends on November 14, 2029. It renews automatically for further 3-year terms unless either party gives written notice at least 120 days before the end of a term.",
+      "Service. Hauler shall supply two 40-yard roll-off containers and empty each one weekly, and shall recycle all clean wood and cardboard. [-Customer shall not use any other hauler during the term.-]",
+      "Customer shall keep the containers clear of hazardous waste and pay each monthly invoice within 30 days.",
+      "Termination for cause. A party may terminate this Agreement if the other fails to cure a material breach within 10 days of written notice.",
+      "This Agreement is governed by the laws of the State of California."
+    ],
+    "want": {
+      "title": "hauling",
+      "parties": [
+        {
+          "name": "East Bay Recycling"
+        },
+        {
+          "name": "Fieldstone Supply"
+        }
+      ],
+      "effective": "2026-11-15",
+      "ends": "2029-11-14",
+      "renewal": "3-year",
+      "governingLaw": "California",
+      "changes": [
+        {
+          "kind": "deletion",
+          "text": "any other hauler"
+        }
+      ]
+    }
+  },
+  "nda": {
+    "author": "Northwind Builders legal",
+    "text": [
+      "MUTUAL NON-DISCLOSURE AGREEMENT",
+      "Fieldstone Supply and Northwind Builders Inc. each agree to keep confidential the information the other shares in evaluating a joint bid for the Alameda Point housing project.",
+      "Effective date and term. This Agreement is effective as of October 20, 2026 and ends on October 19, 2028.",
+      "Obligations. Each party shall use the other's confidential information only to evaluate the joint bid, shall share it only with employees who need it, and shall return or destroy it on request.",
+      "Exclusions. Confidential information does not include information that is public or was already known to the receiving party. [+Nor does it include information the receiving party develops independently.+]",
+      "Termination. Either party may end this Agreement on 30 days' written notice; obligations for information already shared survive for 2 years.",
+      "Governing law. This Agreement is governed by the laws of the State of Washington."
+    ],
+    "want": {
+      "title": "non-disclosure",
+      "parties": [
+        {
+          "name": "Fieldstone Supply"
+        },
+        {
+          "name": "Northwind Builders"
+        }
+      ],
+      "effective": "2026-10-20",
+      "ends": "2028-10-19",
+      "termination": {
+        "notice": "30 days"
+      },
+      "governingLaw": "Washington",
+      "changes": [
+        {
+          "kind": "insertion",
+          "text": "develops independently"
+        }
+      ]
+    }
+  }
+}

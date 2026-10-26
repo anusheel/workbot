@@ -117,7 +117,7 @@ export const Contract = z.object({
       z.object({ kind: z.enum(["insertion", "deletion"]), text: z.string() }),
     )
     .describe(
-      "each tracked change the document carries, marked [+inserted+] or [-deleted-] in its text; empty when it has none",
+      "each tracked change the document carries, marked [+inserted+] or [-deleted-] in its text; empty when it has none. The other fields read the document with its changes accepted",
     ),
 });
 

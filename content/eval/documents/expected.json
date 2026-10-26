@@ -472,6 +472,70 @@
       "total": 953.99
     }
   },
+  "invoice-9": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Bayside Electrical Wholesale",
+      "number": "BEW-55120",
+      "date": "2026-09-30",
+      "due": "2026-10-30",
+      "currency": "USD",
+      "subtotal": 2184,
+      "tax": 202.02,
+      "total": 2386.02,
+      "lines": [
+        {
+          "description": "LED high-bay fixture",
+          "quantity": 12,
+          "unitPrice": 142,
+          "amount": 1704
+        },
+        {
+          "description": "Motion sensor",
+          "quantity": 12,
+          "unitPrice": 28.5,
+          "amount": 342
+        },
+        {
+          "description": "12 AWG",
+          "quantity": 1,
+          "unitPrice": 138,
+          "amount": 138
+        }
+      ]
+    }
+  },
+  "invoice-10": {
+    "type": "invoice",
+    "data": {
+      "vendor": "Delta Concrete & Masonry Supply",
+      "number": "DCM-2026-4471",
+      "date": "2026-10-14",
+      "due": "2026-11-13",
+      "currency": "USD",
+      "subtotal": 5092.2,
+      "tax": 521.95,
+      "total": 5614.15,
+      "lines": [
+        {
+          "description": "Portland cement",
+          "quantity": 40,
+          "unitPrice": 15.25,
+          "amount": 610
+        },
+        {
+          "description": "Credit",
+          "amount": -61
+        },
+        {
+          "description": "Delivery, flatbed",
+          "quantity": 1,
+          "unitPrice": 145,
+          "amount": 145
+        }
+      ]
+    }
+  },
   "email-8": {
     "type": "email",
     "data": {
