@@ -23,3 +23,20 @@ test("shows a record field by field, lists on lines, and marks the fields to che
   expect(show([])).toBe("—");
   expect(show(["a", "b"])).toBe("a\nb");
 });
+
+test("tracked changes read as they do in the document", () => {
+  const html = renderToStaticMarkup(
+    <DocumentFields
+      data={{
+        changes: [
+          { kind: "deletion", text: "Delaware" },
+          { kind: "insertion", text: "California" },
+        ],
+      }}
+      order={["changes"]}
+      review={[]}
+    />,
+  );
+  expect(html).toContain("Delaware</del>");
+  expect(html).toContain("California</ins>");
+});
