@@ -1,0 +1,9 @@
+# A local cluster standing in for a clean account: one node, and the gateway's
+# port on this machine at 3500.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: workbot
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - { containerPort: 30080, hostPort: 3500 }

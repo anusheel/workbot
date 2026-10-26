@@ -50,3 +50,8 @@ next-env.d.ts
 # Generated cases wait here for review; the reviewed ones move into the sets.
 content/eval/candidates/
 .turbo
+
+# terraform: providers and modules fetched by init; state lives in its backend
+.terraform/
+*.tfstate
+*.tfstate.*
