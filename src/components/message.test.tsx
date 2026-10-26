@@ -53,3 +53,18 @@ test("an assistant message renders markdown and its tool calls by state", () => 
   expect(html).toContain("x.example answered 404");
   expect(html).toContain("<strong>42</strong>");
 });
+
+test("a message that came by another channel says which", () => {
+  const html = renderToStaticMarkup(
+    <Message
+      message={{
+        id: "w1",
+        role: "user",
+        parts: [{ type: "text", text: "Still on for Friday?" }],
+        metadata: { channel: "whatsapp" },
+      }}
+    />,
+  );
+  expect(html).toContain("Still on for Friday?");
+  expect(html).toContain("via WhatsApp");
+});

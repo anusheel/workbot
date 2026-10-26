@@ -3,10 +3,12 @@ import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
 import { listMemories, remember } from "@/lib/memory";
 import { allow } from "@/lib/rate-limit";
+import { historyOf, saveHistory } from "@/lib/history";
 import { POST } from "./route";
 
 let instructions = "";
 let systemBlocks: string[] = [];
+let conversation: unknown[] = [];
 const usage = {
   inputTokens: {
     total: 3,
@@ -25,7 +27,7 @@ vi.mock("@/lib/rate-limit", () => ({ allow: vi.fn(() => true) }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/visitor", () => ({ visitorId: async () => "visitor-1" }));
 vi.mock("next/server", () => ({ after: (fn: () => Promise<void>) => fn() }));
-vi.mock("@/lib/chat", () => ({ chatToolsFor: () => ({}) }));
+vi.mock("@/lib/chat", () => ({ toolSet: () => ({}) }));
 vi.mock("@/lib/routing", () => ({
   modelFor: (task: string) => {
     modelCalls.count++;
@@ -63,6 +65,7 @@ vi.mock("@/lib/routing", () => ({
           .filter((m) => m.role === "system")
           .map((m) => String(m.content));
         instructions = systemBlocks.join("\n");
+        conversation = prompt.filter((m) => m.role !== "system");
         return {
           stream: simulateReadableStream({
             chunks: [
@@ -214,4 +217,65 @@ test("a conversation past the budget whose summary cannot be written still gets 
   summaryDown.on = false;
   expect(body).toContain("Finance.");
   expect(instructions).not.toContain("Earlier in this conversation");
+});
+
+test("a conversation continued on another channel reaches the model as the server keeps it, and is kept with the reply", async () => {
+  const text = (
+    id: string,
+    role: "user" | "assistant",
+    words: string,
+    channel?: string,
+  ) => ({
+    id,
+    role,
+    parts: [{ type: "text" as const, text: words }],
+    ...(channel && { metadata: { channel } }),
+  });
+  await saveHistory("c-phone", "visitor-1", [
+    text("w1", "user", "Can you deliver on Friday?"),
+    text("w2", "user", "Make it 40 bags.", "whatsapp"),
+    text("w3", "assistant", "40 bags, Friday.", "whatsapp"),
+  ]);
+  // The browser saw only the first message, and adds a new one.
+  const response = await post({
+    id: "c-phone",
+    messages: [
+      text("w1", "user", "Can you deliver on Friday?"),
+      text("m9", "user", "What time?"),
+    ],
+  });
+  await response.text();
+  expect(JSON.stringify(conversation)).toContain("Make it 40 bags.");
+  const kept = await historyOf("c-phone", "visitor-1");
+  expect(kept?.messages.map((m) => m.id).slice(0, 4)).toEqual([
+    "w1",
+    "w2",
+    "w3",
+    "m9",
+  ]);
+  expect(kept?.messages).toHaveLength(5);
+});
+
+test("a turn whose save has not landed yet is kept from the browser's copy", async () => {
+  const text = (id: string, role: "user" | "assistant", words: string) => ({
+    id,
+    role,
+    parts: [{ type: "text" as const, text: words }],
+  });
+  await saveHistory("c-lag", "visitor-1", [text("l1", "user", "Hello")]);
+  const response = await post({
+    id: "c-lag",
+    messages: [
+      text("l1", "user", "Hello"),
+      text("l2", "assistant", "Hi, how can I help?"),
+      text("l3", "user", "Where is my order?"),
+    ],
+  });
+  await response.text();
+  const kept = await historyOf("c-lag", "visitor-1");
+  expect(kept?.messages.map((m) => m.id).slice(0, 3)).toEqual([
+    "l1",
+    "l2",
+    "l3",
+  ]);
 });

@@ -3,7 +3,9 @@ import { settings } from "./settings";
 
 /**
  * Deletes what has outlived its window: traces, measurements, expired
- * sessions, the bytes of documents whose run has ended, and spreadsheets.
+ * sessions, the bytes of documents whose run has ended, spreadsheets,
+ * conversations and the messages sent in them, expired link codes and the
+ * chat bot's expired state.
  * Each deletion runs under the deployment's tenant, so it touches only its
  * own rows. Returns how many rows each step removed.
  */
@@ -42,5 +44,16 @@ export async function applyRetention(
       `delete from sheets where created_at < now() - make_interval(days => $1)`,
       [windows.sheetsDays],
     ),
+    conversations: await counts(
+      `delete from conversations where updated_at < now() - make_interval(days => $1)`,
+      [windows.conversationsDays],
+    ),
+    outbound: await counts(
+      `delete from outbound where created_at < now() - make_interval(days => $1)`,
+      [windows.conversationsDays],
+    ),
+    expired:
+      (await counts(`delete from link_codes where expires_at < now()`)) +
+      (await counts(`delete from chat_state where expires_at < now()`)),
   };
 }

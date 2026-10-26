@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Unplug } from "lucide-react";
+import { MessageSquare, Unplug } from "lucide-react";
 import { MemoryList } from "@/components/memory-list";
 import { PendingButton } from "@/components/pending-button";
 import { currentUser } from "@/lib/auth";
@@ -9,7 +9,14 @@ import { customer } from "@/lib/customer";
 import { when } from "@/lib/format";
 import { listMemories } from "@/lib/memory";
 import { memoryOwner } from "@/lib/visitor";
-import { disconnect, forgetEverything, forgetMemory } from "./actions";
+import { LinkCode } from "@/components/link-code";
+import { config } from "@/lib/config";
+import {
+  disconnect,
+  forgetEverything,
+  forgetMemory,
+  linkSlack,
+} from "./actions";
 import { ConnectGitHub } from "./connect-form";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -84,6 +91,21 @@ async function Connections() {
           <ConnectGitHub />
         )}
       </div>
+      {config.slack.botToken && (
+        <div className="mt-4 rounded-xl border p-4">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Link your Slack account, and {customer.assistant} answers you there
+            with what your role allows, not as a stranger.
+          </p>
+          <LinkCode
+            label="Link Slack"
+            icon={<MessageSquare />}
+            instruction={`Within 10 minutes, mention ${customer.assistant} in Slack with:`}
+            targets={[]}
+            action={linkSlack}
+          />
+        </div>
+      )}
     </section>
   );
 }

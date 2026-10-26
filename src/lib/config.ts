@@ -58,6 +58,26 @@ export const config = {
     previous: process.env.SECRETS_KEY_PREVIOUS,
   },
   brave: { key: process.env.BRAVE_SEARCH_KEY },
+  // The address the app is reached at from outside: a provider signs a webhook over the URL it called, so the check needs the same one.
+  appUrl: process.env.APP_URL,
+  // Text messages through Twilio; unset, SMS and WhatsApp are off.
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    smsFrom: process.env.TWILIO_SMS_FROM,
+    whatsappFrom: process.env.TWILIO_WHATSAPP_FROM,
+    // An approved WhatsApp template (a Content SID), for a message outside the 24-hour window.
+    whatsappTemplate: process.env.TWILIO_WHATSAPP_TEMPLATE,
+    // A regional API host, such as https://api.dublin.ie1.twilio.com, to keep messages in a region.
+    api: process.env.TWILIO_API_URL || "https://api.twilio.com",
+  },
+  // The Slack app; unset, the Slack channel is off.
+  slack: {
+    botToken: process.env.SLACK_BOT_TOKEN,
+    signingSecret: process.env.SLACK_SIGNING_SECRET,
+    // The bot's own user id (U…); with it, a cold start skips asking Slack who the bot is.
+    botUserId: process.env.SLACK_BOT_USER_ID,
+  },
   // The spend in a day that raises an alert.
   alerts: { dailyDollars: dailyDollars(process.env.ALERT_DAILY_DOLLARS) },
   // The workflow engine's keys for Inngest Cloud; unset, the app talks to the dev server.

@@ -245,6 +245,51 @@ const tables = [
     totals jsonb not null,
     created_at timestamptz not null default now()
   )`,
+  // Every conversation on the server, whichever channels it ran on, as the messages the web renders.
+  `create table if not exists conversations (
+    id text primary key,
+    person text not null,
+    messages jsonb not null,
+    updated_at timestamptz not null default now()
+  )`,
+  // A sender on a channel: who they are once linked, the conversation they continue, when they last wrote, and whether they asked to hear nothing more.
+  `create table if not exists channels (
+    channel text not null,
+    address text not null,
+    person text not null,
+    conversation_id text not null,
+    verified_at timestamptz,
+    last_inbound_at timestamptz,
+    opted_out_at timestamptz,
+    primary key (channel, address)
+  )`,
+  // A one-time code that links a channel to a person and a conversation, kept as its hash until it is used or expires.
+  `create table if not exists link_codes (
+    hash text primary key,
+    person text not null,
+    conversation_id text,
+    expires_at timestamptz not null
+  )`,
+  // A message sent on a channel: one per message it answers, and the provider's id and status come back by callback.
+  `create table if not exists outbound (
+    id uuid primary key default gen_random_uuid(),
+    inbound text unique,
+    channel text not null,
+    address text not null,
+    body text not null,
+    status text not null default 'queued',
+    sid text unique,
+    attempts integer not null default 0,
+    error text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+  )`,
+  // The chat bot's state: which threads it follows, locks, dedupe and queues, as keys with an expiry.
+  `create table if not exists chat_state (
+    key text primary key,
+    value jsonb not null,
+    expires_at timestamptz
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];
@@ -283,6 +328,10 @@ const tenancy = [
     cache: "caller, key",
     syncs: "source",
     filings: "kind, key",
+    conversations: "id",
+    channels: "channel, address",
+    link_codes: "hash",
+    chat_state: "key",
   }).map(
     ([table, key]) => `do $$ begin
       if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then

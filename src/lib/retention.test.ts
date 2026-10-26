@@ -56,12 +56,22 @@ test("what has outlived its window goes, and what has not stays", async () => {
     `insert into sheets (name, bytes, columns, rows, totals, created_at) values ('old.xlsx', '', '[]', 0, '[]', now() - interval '31 days'), ('new.xlsx', '', '[]', 0, '[]', now())`,
   );
 
+  await query(
+    `insert into conversations (id, person, messages, updated_at) values ('old', 'v', '[]', now() - interval '91 days'), ('new', 'v', '[]', now())`,
+  );
+  await query(
+    `insert into link_codes (hash, person, expires_at) values ('h1', 'v', now() - interval '1 minute'), ('h2', 'v', now() + interval '5 minutes')`,
+  );
+
   expect(await applyRetention()).toMatchObject({
     traces: 1,
     sessions: 1,
     documentBytes: 1,
     sheets: 1,
+    conversations: 1,
+    expired: 1,
   });
+  expect(await query(`select id from conversations`)).toEqual([{ id: "new" }]);
   expect(await query(`select name from sheets`)).toEqual([
     { name: "new.xlsx" },
   ]);
@@ -77,5 +87,7 @@ test("what has outlived its window goes, and what has not stays", async () => {
     sessions: 0,
     documentBytes: 0,
     sheets: 0,
+    conversations: 0,
+    expired: 0,
   });
 });

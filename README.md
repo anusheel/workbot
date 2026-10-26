@@ -64,6 +64,14 @@ file, and a Word contract with its tracked changes kept and listed.
 measures it on the eval documents, and `pnpm formats` compares the paths
 ([docs/documents.md](docs/documents.md)).
 
+The same assistant answers by SMS, WhatsApp and Slack, with one store of
+conversations: "Continue on your phone" on the chat page gives a code, and
+sending it from WhatsApp carries the conversation on there; an employee links
+Slack from settings and is answered there with their role. Any channel can
+hand a conversation to a person, as a request with the transcript and where to
+reply. `/admin/channels` shows the channels, who has linked, and every message
+sent ([docs/channels.md](docs/channels.md)).
+
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question
 is answered by SQL the model writes, shown under the answer with the rows it

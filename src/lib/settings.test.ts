@@ -25,6 +25,7 @@ const defaults: Settings = {
     measurementsDays: 30,
     documentBytesDays: 30,
     sheetsDays: 30,
+    conversationsDays: 90,
   },
 };
 
@@ -52,6 +53,7 @@ test("a customer's value replaces the default's, task by task and field by field
     measurementsDays: 30,
     documentBytesDays: 30,
     sheetsDays: 30,
+    conversationsDays: 90,
   });
 });
 

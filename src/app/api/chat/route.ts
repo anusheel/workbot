@@ -1,7 +1,6 @@
 import {
   type ToolSet,
   type UIMessage,
-  convertToModelMessages,
   createUIMessageStreamResponse,
   isStepCount,
   safeValidateUIMessages,
@@ -12,15 +11,13 @@ import { after } from "next/server";
 import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { userOf } from "@/lib/auth";
-import { chatToolsFor } from "@/lib/chat";
+import { toolSet } from "@/lib/chat";
+import { handOff } from "@/lib/handoff";
+import { toolsFor } from "@/lib/tools";
 import { modelFor } from "@/lib/routing";
-import { compact, textOf } from "@/lib/context";
-import {
-  extractMemories,
-  listMemories,
-  memoryNote,
-  remember,
-} from "@/lib/memory";
+import { learn, prepare } from "@/lib/assistant";
+import { textOf } from "@/lib/context";
+import { historyOf, saveHistory } from "@/lib/history";
 import { promptOf } from "@/lib/prompts";
 import { allow } from "@/lib/rate-limit";
 import { systemPrompt } from "@/lib/system-prompt";
@@ -51,17 +48,27 @@ export async function POST(request: Request) {
       { error: z.flattenError(body.error) },
       { status: 400 },
     );
-  // A signed-in employee gets the tools their role reaches; anyone else, the customer set.
+  // A signed-in employee gets the tools their role reaches, anyone else the customer set; everyone can be handed to a person.
   const user = await userOf(request.headers);
   const role = user?.role ?? "public";
-  const tools = chatToolsFor(role);
+  const tools = toolSet([
+    ...toolsFor(role),
+    handOff(() => history, { channel: "web" }),
+  ]);
   const validated = await safeValidateUIMessages({
     messages: body.data.messages,
     tools,
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const caller = user?.id ?? visitor ?? "web";
+  const person = user?.id ?? visitor;
+  const caller = person ?? "web";
+  // The server's copy holds what was said on other channels since this browser last saw it; the browser's holds a turn whose save has not landed yet. The conversation is both.
+  const stored = person ? await historyOf(body.data.id, person) : undefined;
+  const saved = new Set(stored?.messages.map((m) => m.id));
+  const history = stored
+    ? [...stored.messages, ...validated.data.filter((m) => !saved.has(m.id))]
+    : validated.data;
   const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(
     {
@@ -72,72 +79,59 @@ export async function POST(request: Request) {
       prompt: `workbot/system@${prompt.version}`,
     },
     () =>
-      reply(
-        body.data.id,
-        validated.data,
-        user?.id ?? visitor,
-        prompt.text,
+      reply({
+        conversationId: body.data.id,
+        history,
+        person,
+        prompt: prompt.text,
         tools,
-      ),
+      }),
   );
 }
 
-async function reply(
-  conversationId: string,
-  input: UIMessage[],
-  visitor: string | undefined,
-  prompt: string,
-  tools: ToolSet,
-) {
-  const [memories, { messages, summary }] = await Promise.all([
-    visitor ? listMemories(visitor) : [],
-    // A summary the model could not write is left out; the answer still goes, and the trace holds why.
-    compact(input, modelFor("summarize")).catch(() => compact(input)),
-  ]);
-
+async function reply({
+  conversationId,
+  history,
+  person,
+  prompt,
+  tools,
+}: {
+  conversationId: string;
+  history: UIMessage[];
+  person?: string;
+  prompt: string;
+  tools: ToolSet;
+}) {
+  const { instructions, messages, memories, question } = await prepare({
+    history,
+    person,
+    prompt,
+  });
   await track("question_asked", { conversationId });
-  // What is known about this person and this conversation; empty on a first message, and an empty block is rejected.
-  const known = [
-    memoryNote(memories),
-    summary && `Earlier in this conversation: ${summary}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
   const result = streamText({
     model: modelFor("chat"),
-    // The prompt is the same for everyone and goes first, so the provider can serve it from its cache.
-    instructions: [
-      {
-        role: "system",
-        content: prompt,
-        providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
-      },
-      ...(known ? [{ role: "system" as const, content: known }] : []),
-    ],
-    messages: await convertToModelMessages(messages),
+    instructions,
+    messages,
     tools,
     stopWhen: isStepCount(8),
   });
 
-  const question = textOf(messages.at(-1)!);
   return createUIMessageStreamResponse({
     stream: toUIMessageStream({
       stream: result.stream,
       tools,
       onError: () => unavailable,
-      // Once the reply is out, keep what this exchange taught about the person.
+      // Once the reply is out, keep the conversation where every channel can continue it, and what it taught about the person.
       onEnd: ({ responseMessage }) => {
         const reply = textOf(responseMessage);
         // A turn that failed taught nothing.
-        if (!visitor || !reply) return;
+        if (!person || !reply) return;
         after(async () => {
-          const found = await extractMemories(
-            modelFor("extract"),
-            { user: question, assistant: reply },
-            memories,
-          );
-          for (const { kind, text } of found)
-            await remember(visitor, kind, text);
+          await saveHistory(conversationId, person, [
+            ...history,
+            responseMessage,
+          ]);
+          await learn(person, { user: question, assistant: reply }, memories);
         });
       },
     }),

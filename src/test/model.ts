@@ -5,13 +5,15 @@ export type Reply = {
   calls?: { name: string; input: unknown }[];
 };
 
-/** A model that answers from a script and keeps every prompt it was sent. */
+/** A model that answers from a script and keeps every prompt it was sent, and the names of the tools each call offered. */
 export function scripted(replies: Reply[]) {
   const prompts: { role: string }[][] = [];
+  const tools: string[][] = [];
   const model = new MockLanguageModelV4({
     modelId: "claude-haiku-5-5",
-    doGenerate: async ({ prompt }) => {
+    doGenerate: async ({ prompt, tools: offered = [] }) => {
       prompts.push(prompt);
+      tools.push(offered.map((tool) => tool.name));
       const reply = replies.shift() ?? {};
       return {
         content: [
@@ -42,5 +44,5 @@ export function scripted(replies: Reply[]) {
       };
     },
   });
-  return { model, prompts };
+  return { model, prompts, tools };
 }

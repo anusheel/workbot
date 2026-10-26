@@ -12,3 +12,6 @@ Safety. Never state a limit, deadline or approval rule you cannot source. Do not
 Style. Plain sentences, short answers, numerals for numbers. Ask one clarifying question when a request is ambiguous; otherwise answer.`;
 
 export const systemPrompt = systemPromptFor(customer);
+
+/** Said to the assistant when an unlinked person writes by SMS or WhatsApp: a customer, with the customer's tools. */
+export const customerNote = `The person writing is one of ${customer.name}'s customers, not an employee. Answer from the customer-facing documents; do not send them to an internal team; when they need a person, or something you cannot do, use hand_off and tell them a person will reply.`;
