@@ -1,5 +1,6 @@
 import { analyst, failingTests, report, withAnalytics } from "@/lib/analysis";
 import { modelFor } from "@/lib/routing";
+import { asOperator } from "@/lib/tracing";
 
 // The analytics from the terminal: the weekly report, the data tests, a
 // question for the analyst, or the analyst checked on questions whose answers
@@ -12,6 +13,14 @@ if (command === "report") {
     console.log(`\n## ${m.title}\n${m.result.columns.join("\t")}`);
     for (const row of m.result.rows) console.log(row.join("\t"));
   }
+  // The analyst's summary heads the report; a person reads both before it goes out.
+  const { answer, dollars } = await asOperator("analyst", () =>
+    analyst(
+      "Write this week's usage report in four sentences: active people this week and last, retention of the newest full cohorts, what people use WorkBot for, and spend per person. Figures only from queries.",
+      modelFor("chat"),
+    ),
+  );
+  console.log(`\n## Summary, for review\n${answer}\n($${dollars.toFixed(4)})`);
 } else if (command === "test") {
   const failing = await failingTests();
   console.log(
@@ -45,7 +54,9 @@ if (command === "report") {
   ];
   for (const { question, sql } of known) {
     const [[expected]] = (await withAnalytics((db) => db.query(sql))).rows;
-    const { answer, queries } = await analyst(question, modelFor("chat"));
+    const { answer, queries } = await asOperator("analyst", () =>
+      analyst(question, modelFor("chat")),
+    );
     const matches = answer.replaceAll(",", "").includes(String(expected));
     console.log(
       `${matches ? "match" : "MISMATCH"}  ${question}\n  expected ${expected}; answered: ${answer}\n  sql: ${queries.at(-1)?.sql}`,
