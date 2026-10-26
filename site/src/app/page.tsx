@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { questions, site } from "../site";
+
 const features = [
   {
     title: "Requests, from intake to done",
@@ -13,9 +16,26 @@ const features = [
   },
 ];
 
+// What WorkBot is, as structured data for answer engines.
+const structured = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: site.name,
+  applicationCategory: "BusinessApplication",
+  description:
+    "An AI assistant and workflow engine for operations, finance and support teams.",
+  url: site.url,
+  author: { "@type": "Person", name: site.author },
+  dateModified: site.updated,
+};
+
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-20 px-6 py-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structured) }}
+      />
       <section className="max-w-2xl">
         <p className="text-sm font-medium text-neutral-500">WorkBot</p>
         <h1 className="mt-4 text-5xl font-semibold tracking-tight text-balance">
@@ -36,6 +56,18 @@ export default function Home() {
             </p>
           </div>
         ))}
+      </section>
+      <section className="border-t border-neutral-200 pt-12">
+        <h2 className="font-medium">Questions buyers ask</h2>
+        <ul className="mt-4 space-y-2 text-sm">
+          {questions.map((q) => (
+            <li key={q.slug}>
+              <Link href={`/questions/${q.slug}`} className="underline">
+                {q.question}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );

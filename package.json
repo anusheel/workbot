@@ -15,6 +15,7 @@
     "formats": "node --env-file-if-exists=.env.local --import tsx cli/formats.ts",
     "load": "node --env-file-if-exists=.env.local --import tsx cli/load.ts",
     "bench": "node --import tsx cli/bench.ts",
+    "aeo": "node --env-file-if-exists=.env.local --import tsx cli/aeo.ts",
     "realtime": "node --env-file-if-exists=.env.local --import tsx realtime/server.ts",
     "eval": "node --env-file-if-exists=.env.local --import tsx cli/eval.ts",
     "eval:generate": "node --env-file-if-exists=.env.local --import tsx cli/eval-generate.ts",
@@ -34,6 +35,7 @@
     "format": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "check:aeo": "vitest run site/src/aeo.test.tsx",
     "test:live": "vitest run --config vitest.live.config.ts",
     "check": "turbo run generate:check lint typecheck test build"
   },
