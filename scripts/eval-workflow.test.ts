@@ -172,6 +172,7 @@ test("a pull request runs the smoke evals when a prompt, tool, model, eval or th
     ".github/workflows/eval.yml",
     "src/lib/intake.ts",
     "src/lib/extract.ts",
+    "src/lib/files.ts",
     "src/lib/documents.ts",
     "src/lib/document-model.ts",
     "src/lib/request-model.ts",

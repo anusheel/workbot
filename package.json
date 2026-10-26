@@ -12,6 +12,7 @@
     "browse": "node --env-file-if-exists=.env.local --import tsx cli/browse.ts",
     "video": "node --env-file-if-exists=.env.local --import tsx cli/video.ts",
     "extract": "node --env-file-if-exists=.env.local --import tsx cli/extract.ts",
+    "formats": "node --env-file-if-exists=.env.local --import tsx cli/formats.ts",
     "eval": "node --env-file-if-exists=.env.local --import tsx cli/eval.ts",
     "eval:generate": "node --env-file-if-exists=.env.local --import tsx cli/eval-generate.ts",
     "eval:calibrate": "node --env-file-if-exists=.env.local --import tsx cli/eval-calibrate.ts",
@@ -40,6 +41,7 @@
     "@ai-sdk/react": "^4.0.157",
     "@anthropic-ai/claude-agent-sdk": "^0.3.310",
     "@anthropic-ai/sdk": "^1.3.0",
+    "@duckdb/node-api": "1.5.6-r.1",
     "@electric-sql/pglite": "^0.5.11",
     "@electric-sql/pglite-pgvector": "^0.0.12",
     "@json-render/core": "^0.21.3",
@@ -54,6 +56,8 @@
     "ai": "^7.0.153",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
+    "exceljs": "4.4.0",
+    "fflate": "0.8.3",
     "inngest": "^4.26.0",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
@@ -66,6 +70,7 @@
     "react-dom": "19.3.0",
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
+    "unpdf": "1.8.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

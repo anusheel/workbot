@@ -14,6 +14,7 @@ export const tasks = [
   "extract",
   "triage",
   "read",
+  "analyze",
   "judge",
 ] as const;
 export type Task = (typeof tasks)[number];
@@ -43,6 +44,7 @@ export const Settings = z.object({
     tracesDays: z.number().int().positive(),
     measurementsDays: z.number().int().positive(),
     documentBytesDays: z.number().int().positive(),
+    sheetsDays: z.number().int().positive(),
   }),
 });
 export type Settings = z.infer<typeof Settings>;

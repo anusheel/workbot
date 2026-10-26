@@ -9,7 +9,7 @@ import { z } from "zod";
 import { track } from "@/lib/analytics";
 import { modelFor } from "@/lib/routing";
 import { ingest } from "@/lib/documents";
-import { type MediaType, mediaTypes } from "@/lib/extract";
+import { mediaTypeOf } from "@/lib/extract";
 import { investigate } from "@/lib/investigate";
 import { getRecording, saveRecording } from "@/lib/recordings";
 import { saveReport } from "@/lib/reports";
@@ -126,25 +126,18 @@ export async function askAboutRecording(
   return { question, answer };
 }
 
-const media = new Set<string>(Object.values(mediaTypes));
-
 /** Files a request from an uploaded document: an invoice, an email, a letter or a form, as PDF or image. */
 export async function submitDocument(formData: FormData) {
   const user = await requireUser("agent");
   const file = formData.get("document");
-  if (!(file instanceof File) || !media.has(file.type)) return;
+  if (!(file instanceof File)) return;
+  const data = new Uint8Array(await file.arrayBuffer());
+  const mediaType = mediaTypeOf(data);
+  if (!mediaType) return;
   const { request } = await withTrace(
     { caller: user.id, role: user.role, user: user.id, name: "document" },
-    async () =>
-      ingest(
-        {
-          kind: "file",
-          data: new Uint8Array(await file.arrayBuffer()),
-          mediaType: file.type as MediaType,
-        },
-        file.name,
-        modelFor("extract"),
-      ),
+    () =>
+      ingest({ kind: "file", data, mediaType }, file.name, modelFor("extract")),
   );
   await track("request_submitted", {
     requestId: request.id,

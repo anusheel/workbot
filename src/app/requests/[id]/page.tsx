@@ -206,7 +206,12 @@ async function Documents({ requestId }: { requestId: string }) {
               {document.name}
             </h3>
             <span className="text-xs text-muted-foreground">
-              read{" "}
+              {document.path === "native"
+                ? "read from the file itself"
+                : document.path === "text"
+                  ? "read from its text"
+                  : "read"}
+              ,{" "}
               {document.createdAt.toLocaleString("en-GB", {
                 dateStyle: "medium",
                 timeStyle: "short",

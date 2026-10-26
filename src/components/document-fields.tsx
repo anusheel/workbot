@@ -18,10 +18,38 @@ export function DocumentFields({ data, order, review }: Props) {
             {label(field)}
             {review.includes(field) && <Badge variant="outline">Check</Badge>}
           </dt>
-          <dd className="whitespace-pre-wrap">{show(data[field])}</dd>
+          <dd className="whitespace-pre-wrap">
+            <Value value={data[field]} />
+          </dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+type Change = { kind: "insertion" | "deletion"; text: string };
+const isChanges = (value: unknown): value is Change[] =>
+  Array.isArray(value) &&
+  value.length > 0 &&
+  value.every((v) => v && typeof v === "object" && "kind" in v && "text" in v);
+
+/** A value as text, except tracked changes, which read as they do in the document: inserted text underlined, deleted text struck through. */
+function Value({ value }: { value: unknown }) {
+  if (!isChanges(value)) return show(value);
+  return (
+    <ul className="flex flex-col gap-1">
+      {value.map((change, i) => (
+        <li key={i}>
+          {change.kind === "insertion" ? (
+            <ins className="text-emerald-700 dark:text-emerald-400">
+              {change.text}
+            </ins>
+          ) : (
+            <del className="text-destructive">{change.text}</del>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -10,7 +10,14 @@ import {
   documentTypes,
   schemas,
 } from "./document-model";
-import { type Extraction, type Source, content, extract } from "./extract";
+import {
+  type Extraction,
+  type Path,
+  type Source,
+  content,
+  extract,
+  route,
+} from "./extract";
 import { NewRequest, type WorkRequest } from "./requests";
 import { createRequest } from "./requests";
 
@@ -23,6 +30,8 @@ export type DocumentRecord = {
   confidence: Record<string, number>;
   review: string[];
   applied: Applied[];
+  // How it reached the model: as text, or as the file; null for a record filed before the paths were recorded.
+  path: Path | null;
   createdAt: Date;
 };
 
@@ -30,7 +39,7 @@ const Kind = z.object({
   type: z
     .enum(documentTypes)
     .describe(
-      "invoice: a bill for goods or services; email: a message with a sender and recipients; job: a job posting; letter: a letter or a filled form",
+      "invoice: a bill for goods or services; email: a message with a sender and recipients; job: a job posting; letter: a letter or a filled form; contract: an agreement between parties, with its terms",
     ),
 });
 
@@ -121,6 +130,20 @@ export function toRequest(document: Extracted): NewRequest {
         priority: "normal",
       });
     }
+    case "contract": {
+      const { title, parties, ends, termination, changes } = document.data;
+      return NewRequest.parse({
+        title: fitTitle(
+          `Review ${title} with ${parties.map((p) => p.name).join(" and ")}`,
+        ),
+        body: fitBody(
+          `${ends ? `Ends ${ends}. ` : ""}${termination.notice ? `Notice: ${termination.notice}. ` : ""}${changes.length ? `${changes.length} tracked changes to review:\n\n${list(changes.map((c) => `${c.kind}: ${c.text}`))}` : "No tracked changes."}`,
+        ),
+        team: customer.filing.other,
+        // A contract with changes still open waits on someone.
+        priority: changes.length ? "high" : "normal",
+      });
+    }
     case "job": {
       const { title, company, location, workplace } = document.data;
       return NewRequest.parse({
@@ -133,14 +156,14 @@ export function toRequest(document: Extracted): NewRequest {
   }
 }
 
-const columns = `id, request_id as "requestId", type, name, data, confidence, review, applied, created_at as "createdAt"`;
+const columns = `id, request_id as "requestId", type, name, data, confidence, review, applied, path, created_at as "createdAt"`;
 
 export async function saveDocument(
   requestId: string,
   document: Pick<
     DocumentRecord,
     "type" | "name" | "data" | "confidence" | "review"
-  >,
+  > & { path?: Path },
 ): Promise<DocumentRecord> {
   // The rules run before anyone sees the record: an invoice over the threshold is flagged for review here.
   const { record, applied } =
@@ -149,7 +172,7 @@ export async function saveDocument(
       : { record: {}, applied: [] };
   const flags = Array.isArray(record.flags) ? (record.flags as string[]) : [];
   const [row] = await query<DocumentRecord>(
-    `insert into documents (request_id, type, name, data, confidence, review, applied) values ($1, $2, $3, $4, $5, $6, $7) returning ${columns}`,
+    `insert into documents (request_id, type, name, data, confidence, review, applied, path) values ($1, $2, $3, $4, $5, $6, $7, $8) returning ${columns}`,
     [
       requestId,
       document.type,
@@ -158,6 +181,7 @@ export async function saveDocument(
       document.confidence,
       [...document.review, ...flags],
       applied,
+      document.path ?? null,
     ],
   );
   return row;
@@ -174,17 +198,20 @@ export async function listDocuments(
 }
 
 /**
- * Document intake: a document of any of the 4 kinds becomes a request for
- * the right team, with the extracted record filed on it for review.
+ * Document intake: a document of any of the 5 kinds becomes a request for
+ * the right team, with the extracted record filed on it for review, and the
+ * path it went to the model by, its text or the file itself.
  */
 export async function ingest(
   source: Source,
   name: string,
   model: LanguageModel,
+  force?: Path,
 ): Promise<{ request: WorkRequest; document: DocumentRecord }> {
-  const type = await classify(source, model);
+  const { source: routed, path } = await route(source, force);
+  const type = await classify(routed, model);
   const extraction: Extraction<Extracted["data"]> = await extract(
-    source,
+    routed,
     schemas[type],
     model,
   );
@@ -196,6 +223,7 @@ export async function ingest(
     data: extraction.data,
     confidence: extraction.confidence,
     review: extraction.review,
+    path,
   });
   return { request, document };
 }

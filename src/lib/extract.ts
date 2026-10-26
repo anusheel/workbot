@@ -9,10 +9,13 @@ import {
   generateText,
 } from "ai";
 import { z } from "zod";
+import { docxText, formatOf, pdfPages, scanned } from "./files";
 import { fetchPage, textOf } from "./web";
 
 export const mediaTypes = {
   ".pdf": "application/pdf",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -25,6 +28,14 @@ export const fileSizeError = (size: number) =>
     ? `document must not be empty or larger than ${maxFileBytes / 1024 / 1024} MB`
     : null;
 export type MediaType = (typeof mediaTypes)[keyof typeof mediaTypes];
+
+/** A document's media type from its bytes, whatever the browser declared; nothing for a file WorkBot does not read. */
+export function mediaTypeOf(bytes: Uint8Array): MediaType | undefined {
+  const format = formatOf(bytes);
+  return format && format !== "xlsx"
+    ? mediaTypes[`.${format === "jpeg" ? "jpg" : format}`]
+    : undefined;
+}
 
 /** Where a document comes from: its text, a page, or the file itself for a PDF or an image. */
 export type Source =
@@ -56,7 +67,43 @@ export async function fromPath(path: string): Promise<Source> {
   return { kind: "text", text: extension === ".html" ? textOf(text) : text };
 }
 
-/** The document as the parts of a message: its text, or the file itself for a PDF or an image. */
+/** How a document reaches the model: as text, or natively as the file, which the model reads as page images. */
+export type Path = "text" | "native";
+
+const docx = mediaTypes[".docx"];
+
+/**
+ * Chooses the path: a PDF with a text layer goes as its text, which costs a
+ * fraction of its page images; a scan or an image goes as the file; a Word
+ * document goes as its text with its tracked changes marked. `native`
+ * forces the file for a PDF, to compare the two paths on one document.
+ */
+export async function route(
+  source: Source,
+  force?: Path,
+): Promise<{ source: Source; path: Path }> {
+  if (source.kind !== "file") return { source, path: "text" };
+  if (source.mediaType === docx)
+    return {
+      source: { kind: "text", text: docxText(source.data) },
+      path: "text",
+    };
+  if (source.mediaType !== "application/pdf" || force === "native")
+    return { source, path: "native" };
+  // A PDF whose text layer cannot be read goes as the file, for the model to try.
+  const pages = await pdfPages(source.data).catch(() => undefined);
+  return !pages || scanned(pages)
+    ? { source, path: "native" }
+    : {
+        source: {
+          kind: "text",
+          text: pages.map((page, i) => `Page ${i + 1}\n${page}`).join("\n\n"),
+        },
+        path: "text",
+      };
+}
+
+/** The document as the parts of a message: its text, or the file itself for a PDF or an image. A Word document is always its text, since the model takes no Word files. */
 export async function content(source: Source): Promise<UserContent> {
   switch (source.kind) {
     case "text":
@@ -71,10 +118,12 @@ export async function content(source: Source): Promise<UserContent> {
       ];
     }
     case "file":
-      return [
-        { type: "text", text: "The document:" },
-        { type: "file", data: source.data, mediaType: source.mediaType },
-      ];
+      return source.mediaType === docx
+        ? [{ type: "text", text: docxText(source.data).slice(0, limit) }]
+        : [
+            { type: "text", text: "The document:" },
+            { type: "file", data: source.data, mediaType: source.mediaType },
+          ];
   }
 }
 

@@ -8,30 +8,31 @@ import {
   documentReviewed,
   remindersRequested,
 } from "@/inngest/events";
-import { type MediaType, fileSizeError, mediaTypes } from "@/lib/extract";
+import { fileSizeError, mediaTypeOf } from "@/lib/extract";
 import { discard, receive } from "@/lib/inbox";
 import { requireUser } from "@/lib/auth";
-
-const media = new Set<string>(Object.values(mediaTypes));
 
 /** Each file lands in the inbox and starts its own run of the approval workflow. */
 export async function uploadDocuments(formData: FormData) {
   await requireUser("agent");
   const files = formData
     .getAll("documents")
-    .filter((f): f is File => f instanceof File && media.has(f.type))
+    .filter((f): f is File => f instanceof File)
     .slice(0, 10);
   for (const file of files) {
     const tooBig = fileSizeError(file.size);
     if (tooBig) throw new Error(`${file.name}: ${tooBig}`);
   }
+  // A file is what its bytes say, not what the browser declared; one WorkBot does not read is left out.
+  const read = await Promise.all(
+    files.map(async (file) => {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      return { name: file.name, bytes, type: mediaTypeOf(bytes) };
+    }),
+  );
   const items = await Promise.all(
-    files.map(async (file) =>
-      receive(
-        file.name,
-        file.type as MediaType,
-        new Uint8Array(await file.arrayBuffer()),
-      ),
+    read.flatMap(({ name, bytes, type }) =>
+      type ? [receive(name, type, bytes)] : [],
     ),
   );
   if (items.length === 0) return;

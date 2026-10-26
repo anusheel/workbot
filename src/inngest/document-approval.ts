@@ -2,7 +2,7 @@ import { NonRetriableError } from "inngest";
 import { modelFor } from "@/lib/routing";
 import { type Extracted, schemas } from "@/lib/document-model";
 import { classify, saveDocument, toRequest } from "@/lib/documents";
-import { type Source, extract } from "@/lib/extract";
+import { type Source, extract, route } from "@/lib/extract";
 import { fileOf, getItem, markFailed, updateItem } from "@/lib/inbox";
 import { notify } from "@/lib/notify";
 import { createRequest, getRequest } from "@/lib/requests";
@@ -28,10 +28,11 @@ export const documentApproval = inngest.createFunction(
   async ({ event, step }) => {
     const { id } = event.data;
     const model = modelFor("extract");
+    // Each step reads the file again and takes the same path: a PDF's text when it has a text layer, the file when it is scanned.
     const source = async (): Promise<Source> => {
       const file = await fileOf(id);
       if (!file) throw new NonRetriableError(`No document ${id} in the inbox.`);
-      return { kind: "file", ...file };
+      return (await route({ kind: "file", ...file })).source;
     };
 
     const ctx = { caller: "workflow", name: "document" };

@@ -16,10 +16,16 @@ const defaults: Settings = {
     extract: ["anthropic/small", "anthropic/large"],
     triage: ["anthropic/small", "anthropic/large"],
     read: ["anthropic/small", "anthropic/large"],
+    analyze: ["anthropic/small", "anthropic/large"],
     judge: ["anthropic/large"],
   },
   pages: { maxAgeMinutes: 60 },
-  retention: { tracesDays: 90, measurementsDays: 30, documentBytesDays: 30 },
+  retention: {
+    tracesDays: 90,
+    measurementsDays: 30,
+    documentBytesDays: 30,
+    sheetsDays: 30,
+  },
 };
 
 test("the defaults file parses and the running settings come from it", () => {
@@ -45,6 +51,7 @@ test("a customer's value replaces the default's, task by task and field by field
     tracesDays: 7,
     measurementsDays: 30,
     documentBytesDays: 30,
+    sheetsDays: 30,
   });
 });
 

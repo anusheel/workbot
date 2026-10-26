@@ -98,7 +98,9 @@ test("a short text, a bad or private address, an empty body and a file of the wr
     }),
   );
   expect(upload.status).toBe(400);
-  expect(JSON.stringify(await upload.json())).toContain("application/pdf");
+  expect(JSON.stringify(await upload.json())).toContain(
+    "a PDF, a Word document or an image",
+  );
 });
 
 const upload = (file: File) => {
@@ -113,7 +115,7 @@ const upload = (file: File) => {
   );
 };
 
-test("an empty file, a file over the limit and a malformed multipart body answer 400 before any model call", async () => {
+test("an empty file, a file over the limit, a broken zip and a malformed multipart body answer 400 before any model call", async () => {
   generated.calls = 0;
   const empty = await upload(
     new File([], "empty.pdf", { type: "application/pdf" }),
@@ -126,6 +128,12 @@ test("an empty file, a file over the limit and a malformed multipart body answer
   );
   expect(big.status).toBe(400);
   expect(JSON.stringify(await big.json())).toContain("10 MB");
+  const broken = await upload(
+    new File(["PK but no archive"], "contract.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }),
+  );
+  expect(broken.status).toBe(400);
   const garbage = await POST(
     new Request("http://workbot/api/documents", {
       method: "POST",

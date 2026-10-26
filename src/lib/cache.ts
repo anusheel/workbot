@@ -33,7 +33,8 @@ export async function cached<T>(
   const store = async () => {
     const value = await fetch();
     await query(
-      `insert into cache (caller, key, value) values ($1, $2, $3::jsonb)
+      // JSON goes in as text and is cast: the Postgres driver would encode a string a second time.
+      `insert into cache (caller, key, value) values ($1, $2, $3::text::jsonb)
        on conflict (tenant, caller, key) do update set value = excluded.value, fetched_at = now()`,
       [caller, key, JSON.stringify(value)],
     );
