@@ -39,10 +39,10 @@ export async function queue(
 /** A send that could not go and will not go on retrying: the row says why. */
 export class Undeliverable extends Error {}
 
-const fail = async (id: string, reason: string) => {
+const fail = async (id: string, reason: string, tried = false) => {
   await query(
-    `update outbound set status = 'failed', error = $2, updated_at = now() where id = $1`,
-    [id, reason],
+    `update outbound set status = 'failed', error = $2, attempts = attempts + $3, updated_at = now() where id = $1`,
+    [id, reason, tried ? 1 : 0],
   );
   return new Undeliverable(reason);
 };
@@ -103,7 +103,7 @@ export async function deliver(id: string) {
       );
       throw error;
     }
-    throw await fail(id, reason);
+    throw await fail(id, reason, true);
   }
 }
 

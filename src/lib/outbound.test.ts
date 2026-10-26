@@ -65,6 +65,7 @@ test("a provider failure is retried and reported; a bad number fails for good", 
   await expect(deliver(bad)).rejects.toBeInstanceOf(Undeliverable);
   expect(await status(bad)).toMatchObject({
     status: "failed",
+    attempts: 1,
     error: "Twilio 21211: Invalid 'To' Phone Number",
   });
 });
