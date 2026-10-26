@@ -30,9 +30,8 @@ if (command === "report") {
   );
   process.exitCode = failing.length ? 1 : 0;
 } else if (command === "ask") {
-  const { answer, queries, dollars } = await analyst(
-    words.join(" "),
-    modelFor("chat"),
+  const { answer, queries, dollars } = await asOperator("analyst", () =>
+    analyst(words.join(" "), modelFor("chat")),
   );
   for (const q of queries) console.log(`> ${q.sql}`);
   console.log(`\n${answer}\n($${dollars.toFixed(4)})`);
