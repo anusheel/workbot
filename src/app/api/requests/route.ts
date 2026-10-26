@@ -6,7 +6,7 @@ import { RequestBody } from "./types";
 export async function GET(request: Request) {
   const user = await authorized(request, "viewer");
   if (user instanceof Response) return user;
-  return Response.json(await listRequests());
+  return Response.json(await listRequests({}, 100));
 }
 
 export async function POST(request: Request) {
