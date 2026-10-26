@@ -38,6 +38,8 @@ export function connect(
 ): Connection {
   if (database.startsWith("postgres")) {
     const client = postgres(database, {
+      // The owner works on one session, so the lock it takes holds for every statement it runs.
+      ...(owner && { max: 1 }),
       connection: {
         options: [`-c app.tenant=${tenant}`, owner ? "" : `-c role=${appRole}`]
           .join(" ")
@@ -90,7 +92,13 @@ export function connect(
  */
 async function prepare(database: string): Promise<Connection> {
   const owner = connect(database, { owner: true });
-  for (const statement of schema) await owner.query(statement);
+  // Instances that start together take turns: `create table if not exists` is not safe against itself.
+  await owner.query(`select pg_advisory_lock(hashtext('workbot schema'))`);
+  try {
+    for (const statement of schema) await owner.query(statement);
+  } finally {
+    await owner.query(`select pg_advisory_unlock(hashtext('workbot schema'))`);
+  }
   if (!database.startsWith("postgres")) {
     await owner.query(`set role ${appRole}`);
     return owner;
