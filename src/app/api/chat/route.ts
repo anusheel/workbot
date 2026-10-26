@@ -1,7 +1,6 @@
 import {
   type ToolSet,
   type UIMessage,
-  convertToModelMessages,
   createUIMessageStreamResponse,
   isStepCount,
   safeValidateUIMessages,
@@ -14,13 +13,9 @@ import { track } from "@/lib/analytics";
 import { userOf } from "@/lib/auth";
 import { chatToolsFor } from "@/lib/chat";
 import { modelFor } from "@/lib/routing";
-import { compact, textOf } from "@/lib/context";
-import {
-  extractMemories,
-  listMemories,
-  memoryNote,
-  remember,
-} from "@/lib/memory";
+import { learn, prepare } from "@/lib/assistant";
+import { textOf } from "@/lib/context";
+import { historyOf, saveHistory } from "@/lib/history";
 import { promptOf } from "@/lib/prompts";
 import { allow } from "@/lib/rate-limit";
 import { systemPrompt } from "@/lib/system-prompt";
@@ -61,7 +56,13 @@ export async function POST(request: Request) {
   });
   if (!validated.success)
     return Response.json({ error: validated.error.message }, { status: 400 });
-  const caller = user?.id ?? visitor ?? "web";
+  const person = user?.id ?? visitor;
+  const caller = person ?? "web";
+  // The server's copy is the conversation: it holds what was said on other channels since this browser last saw it.
+  const stored = person ? await historyOf(body.data.id, person) : undefined;
+  const history = stored
+    ? [...stored.messages, validated.data.at(-1)!]
+    : validated.data;
   const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(
     {
@@ -71,73 +72,47 @@ export async function POST(request: Request) {
       user: user?.id,
       prompt: `workbot/system@${prompt.version}`,
     },
-    () =>
-      reply(
-        body.data.id,
-        validated.data,
-        user?.id ?? visitor,
-        prompt.text,
-        tools,
-      ),
+    () => reply(body.data.id, history, person, prompt.text, tools),
   );
 }
 
 async function reply(
   conversationId: string,
-  input: UIMessage[],
-  visitor: string | undefined,
+  history: UIMessage[],
+  person: string | undefined,
   prompt: string,
   tools: ToolSet,
 ) {
-  const [memories, { messages, summary }] = await Promise.all([
-    visitor ? listMemories(visitor) : [],
-    // A summary the model could not write is left out; the answer still goes, and the trace holds why.
-    compact(input, modelFor("summarize")).catch(() => compact(input)),
-  ]);
-
+  const { instructions, messages, memories, question } = await prepare({
+    history,
+    person,
+    prompt,
+  });
   await track("question_asked", { conversationId });
-  // What is known about this person and this conversation; empty on a first message, and an empty block is rejected.
-  const known = [
-    memoryNote(memories),
-    summary && `Earlier in this conversation: ${summary}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
   const result = streamText({
     model: modelFor("chat"),
-    // The prompt is the same for everyone and goes first, so the provider can serve it from its cache.
-    instructions: [
-      {
-        role: "system",
-        content: prompt,
-        providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
-      },
-      ...(known ? [{ role: "system" as const, content: known }] : []),
-    ],
-    messages: await convertToModelMessages(messages),
+    instructions,
+    messages,
     tools,
     stopWhen: isStepCount(8),
   });
 
-  const question = textOf(messages.at(-1)!);
   return createUIMessageStreamResponse({
     stream: toUIMessageStream({
       stream: result.stream,
       tools,
       onError: () => unavailable,
-      // Once the reply is out, keep what this exchange taught about the person.
+      // Once the reply is out, keep the conversation where every channel can continue it, and what it taught about the person.
       onEnd: ({ responseMessage }) => {
         const reply = textOf(responseMessage);
         // A turn that failed taught nothing.
-        if (!visitor || !reply) return;
+        if (!person || !reply) return;
         after(async () => {
-          const found = await extractMemories(
-            modelFor("extract"),
-            { user: question, assistant: reply },
-            memories,
-          );
-          for (const { kind, text } of found)
-            await remember(visitor, kind, text);
+          await saveHistory(conversationId, person, [
+            ...history,
+            responseMessage,
+          ]);
+          await learn(person, { user: question, assistant: reply }, memories);
         });
       },
     }),

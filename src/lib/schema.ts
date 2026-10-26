@@ -245,6 +245,13 @@ const tables = [
     totals jsonb not null,
     created_at timestamptz not null default now()
   )`,
+  // Every conversation on the server, whichever channels it ran on, as the messages the web renders.
+  `create table if not exists conversations (
+    id text primary key,
+    person text not null,
+    messages jsonb not null,
+    updated_at timestamptz not null default now()
+  )`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];
@@ -283,6 +290,7 @@ const tenancy = [
     cache: "caller, key",
     syncs: "source",
     filings: "kind, key",
+    conversations: "id",
   }).map(
     ([table, key]) => `do $$ begin
       if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then
