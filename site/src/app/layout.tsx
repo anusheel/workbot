@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { site } from "../site";
 import "./globals.css";
 
 const sans = Geist({ variable: "--font-sans", subsets: ["latin"] });
@@ -8,6 +9,8 @@ const description =
   "An AI assistant and workflow engine for operations, finance and support teams.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(site.url),
+  authors: [{ name: site.author }],
   title: { default: "WorkBot", template: "%s · WorkBot" },
   description,
   openGraph: { title: "WorkBot", description, type: "website" },
@@ -19,6 +22,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         {children}
         <footer className="flex flex-wrap gap-x-6 gap-y-2 px-6 py-8 text-sm">
+          <span className="text-neutral-500">
+            By {site.author} · Updated{" "}
+            <time dateTime={site.updated}>{site.updated}</time>
+          </span>
           <a href="https://joinplank.com/ai-fde-course" className="underline">
             Plank AI FDE Course
           </a>

@@ -5,17 +5,18 @@ vi.mock("next/font/google", () => ({
   Geist: () => ({ variable: "--font-sans" }),
 }));
 
+import { site } from "../site";
 import RootLayout, { metadata } from "./layout";
 
 describe("site layout", () => {
-  it("sets a title template and Open Graph without a metadataBase", () => {
+  it("sets a title template, Open Graph, and the site's address and author", () => {
     expect(metadata.title).toEqual({
       default: "WorkBot",
       template: "%s · WorkBot",
     });
     expect(metadata.openGraph).toMatchObject({ title: "WorkBot" });
-    expect(metadata.metadataBase).toBeUndefined();
-    expect(metadata.openGraph?.url).toBeUndefined();
+    expect(String(metadata.metadataBase)).toBe(new URL(site.url).href);
+    expect(metadata.authors).toEqual([{ name: site.author }]);
   });
 
   it("links both README pages from the footer", () => {
