@@ -7,19 +7,36 @@ import {
 } from "ai";
 import { Markdown } from "./markdown";
 
+const channelNames: Record<string, string> = {
+  sms: "SMS",
+  whatsapp: "WhatsApp",
+  slack: "Slack",
+};
+
 export function Message({ message }: { message: UIMessage }) {
+  // A message that came by another channel says which.
+  const { channel } = (message.metadata ?? {}) as { channel?: string };
+  const via = channel && (
+    <span className="text-xs text-muted-foreground">
+      via {channelNames[channel] ?? channel}
+    </span>
+  );
   if (message.role === "user") {
     const text = message.parts
       .map((part) => (part.type === "text" ? part.text : ""))
       .join("");
     return (
-      <div className="ml-auto max-w-[85%] rounded-2xl bg-muted px-4 py-2.5 text-sm whitespace-pre-wrap">
-        {text}
+      <div className="ml-auto flex max-w-[85%] flex-col items-end gap-1">
+        <div className="rounded-2xl bg-muted px-4 py-2.5 text-sm whitespace-pre-wrap">
+          {text}
+        </div>
+        {via}
       </div>
     );
   }
   return (
     <div className="flex flex-col gap-3 text-sm">
+      {via}
       {message.parts.map((part, index) =>
         part.type === "text" ? (
           <Markdown key={index}>{part.text}</Markdown>

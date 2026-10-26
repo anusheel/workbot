@@ -15,11 +15,17 @@ import {
   subscribe,
   upsert,
 } from "@/lib/conversations";
-import { Chat } from "./chat";
+import { Chat, type Phone } from "./chat";
 import { ConversationList } from "./conversation-list";
 
 /** The chat page: conversations kept in this browser, one open at a time. */
-export function Conversations({ assistant }: { assistant: string }) {
+export function Conversations({
+  assistant,
+  phone,
+}: {
+  assistant: string;
+  phone?: Phone;
+}) {
   // The fresh id below is random, which must not be baked into the prerender.
   use(io());
   const conversations = useSyncExternalStore(
@@ -84,6 +90,7 @@ export function Conversations({ assistant }: { assistant: string }) {
             id={activeId}
             initialMessages={active?.messages}
             onMessages={save}
+            phone={phone}
           />
         </div>
       </main>

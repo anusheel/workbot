@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { linkCode } from "@/lib/channels";
 import { revokeCredential, saveCredential } from "@/lib/credentials";
 import { forget, forgetAll } from "@/lib/memory";
 import { memoryOwner } from "@/lib/visitor";
@@ -32,4 +33,10 @@ export async function disconnect() {
   const user = await requireUser("viewer");
   await revokeCredential(user.id, "github");
   refresh();
+}
+
+/** A code that links the Slack account it is sent from to the signed-in user, so WorkBot answers there with their role. */
+export async function linkSlack() {
+  const user = await requireUser("viewer");
+  return linkCode(user.id);
 }

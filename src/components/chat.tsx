@@ -2,10 +2,18 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
+import { Smartphone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { LinkCode, type LinkTarget } from "./link-code";
 import { Message } from "./message";
+
+/** The numbers a conversation can continue on, and the action that issues a code for it. */
+export type Phone = {
+  targets: LinkTarget[];
+  link: (conversationId: string) => Promise<string>;
+};
 
 type Props = {
   /** The assistant's name, from the customer; a client component cannot read the file. */
@@ -14,6 +22,7 @@ type Props = {
   initialMessages?: UIMessage[];
   /** Called with the whole conversation whenever a reply completes. */
   onMessages?: (messages: UIMessage[]) => void;
+  phone?: Phone;
 };
 
 /** The AI SDK puts the raw response body in the message; show the sentence the route sent. */
@@ -28,8 +37,22 @@ export function errorText(error: Error): string {
   return error.message;
 }
 
-export function Chat({ id, assistant, initialMessages, onMessages }: Props) {
-  const { messages, sendMessage, regenerate, status, error, stop } = useChat({
+export function Chat({
+  id,
+  assistant,
+  initialMessages,
+  onMessages,
+  phone,
+}: Props) {
+  const {
+    messages,
+    sendMessage,
+    regenerate,
+    setMessages,
+    status,
+    error,
+    stop,
+  } = useChat({
     id,
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -42,6 +65,23 @@ export function Chat({ id, assistant, initialMessages, onMessages }: Props) {
   useEffect(() => {
     if (status === "ready" && messages.length) onMessages?.(messages);
   }, [status, messages, onMessages]);
+
+  // The server's copy holds what was said on other channels since this browser last saw the conversation.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/conversations/${encodeURIComponent(id)}`, {
+      signal: controller.signal,
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((body?: { messages: UIMessage[] }) => {
+        if (body)
+          setMessages((current) =>
+            body.messages.length > current.length ? body.messages : current,
+          );
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [id, setMessages]);
 
   useEffect(() => {
     if (following.current)
@@ -77,6 +117,15 @@ export function Chat({ id, assistant, initialMessages, onMessages }: Props) {
           {messages.map((message) => (
             <Message key={message.id} message={message} />
           ))}
+          {phone && messages.length > 0 && status === "ready" && (
+            <LinkCode
+              label="Continue on your phone"
+              icon={<Smartphone />}
+              instruction="Send this from your phone within 10 minutes, and the conversation carries on there:"
+              targets={phone.targets}
+              action={() => phone.link(id)}
+            />
+          )}
           {status === "submitted" && (
             <span
               className="size-2 animate-pulse rounded-full bg-foreground/40"
