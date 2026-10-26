@@ -1,0 +1,1032 @@
+{
+  "question": "How do independent building-supply dealers in the United States (lumber yards, masonry, roofing, landscape and plumbing/electrical supply houses, roughly 20 to 500 employees) take contractor orders and handle supplier invoices today, what software do they use for it, and what do they spend on it?",
+  "summary": [
+    "Independent LBM dealers mostly run an LBM-specific ERP/POS, led by Epicor BisTrack (larger, multi-branch), ECI Spruce (up to roughly 200 employees) and DMSi Agility, with Epicor Eagle and RockSolid MAX at the small end and Epicor Eclipse or Prophet 21 in plumbing and electrical supply [high that these are the named platforms; no independent market-share data exists].",
+    "Contractor orders still arrive by phone, text, email, PDF, spreadsheet and photo and are keyed into the ERP by staff; a 2021 survey of 750 contractors found 22% text orders, and dealer e-commerce is small (one executive's 'under 1%' figure), though national chains report faster digital growth [medium].",
+    "Supplier invoices arrive as emailed PDFs, paper with deliveries and co-op statements and are keyed and matched to receipts by AP staff; capture tools exist (Epicor AP Assist, Spruce scanning and EDI, GenetiQ EDI) but no adoption data or measured savings were found [medium].",
+    "Software spend is not published: vendors quote by users, locations and modules, and the only figures are third-party estimates of roughly $20k-$75k a year at 20-100 employees and $75k-$200k at 100-500, plus separate implementation of about 3-6 months [low].",
+    "A new AI order-intake layer (Toolbx, Rundoo, Canals, Proton.ai, WizCommerce, Conexiom) targets order entry, but every performance figure is a vendor claim, while a Dec 2025 survey of 233 distribution executives shows 27% scaling AI with order automation the top use case [high on existence, low on effect sizes].",
+    "No survey quantifies dealer-specific IT spend or the share of manual order and invoice entry (generic distributor benchmarks put manual invoices at about $10-$22 each) [medium]; LBM Journal, HBSDealer, Epicor, Capterra and G2 pages blocked direct fetch, so some claims rest on search excerpts, flagged in each note."
+  ],
+  "claims": [
+    {
+      "claim": "Epicor BisTrack, ECI Spruce and DMSi Agility are the LBM-specific ERPs most often named for dealers; Epicor Eagle and RockSolid MAX serve smaller stores; GenetiQ, Flitch and Rundoo are newer cloud entrants.",
+      "confidence": "high",
+      "sources": [
+        "https://rundoo.ai/insights/best-pos-for-lumber-yards/",
+        "https://softwareconnect.com/roundups/best-building-materials-software/",
+        "https://www.cleverence.com/articles/erp-reviews/top-10-erps-lumber-building-materials-3941/",
+        "https://wizcommerce.com/blog/erp-integration-building-materials/",
+        "https://distributionstrategy.com/2026/09/toolbx-launches-ai-order-entry-for-building-supply-distributors/",
+        "https://softwareconnect.com/reviews/epicor-bistrack/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Presence, not share: sources are review sites and vendors; none gives installed-base share."
+    },
+    {
+      "claim": "BisTrack suits larger multi-branch dealers, Spruce yards up to about 200 employees needing full ERP, Agility dealers with production or millwork; generalist tools (QuickBooks, Square, Shopify) are outgrown once contractor accounts matter.",
+      "confidence": "medium",
+      "sources": [
+        "https://rundoo.ai/insights/best-pos-for-lumber-yards/",
+        "https://softwareconnect.com/roundups/best-building-materials-software/",
+        "https://www.cleverence.com/articles/erp-reviews/top-10-erps-lumber-building-materials-3941/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Two commercial guides agree on fit by size; neither is a survey. Rundoo competes with the others."
+    },
+    {
+      "claim": "DMSi advertises 400+ customers, 2,200+ locations and 18,000+ users (undated trade-show profile); GenetiQ claims 1,700+ companies worldwide. Vendor-reported counts, not independent installed-base data.",
+      "confidence": "low",
+      "sources": [
+        "https://buildersshow.com/assets/docs/ibs/pressReleases/ExhibitorProductLit_43836_CompanyProfile_AgilityCore3pg.pdf",
+        "https://www.genetiqsoftware.com/hubfs/2026_GenetiQ%20USA%20Factsheet_Proven%20Results.pdf"
+      ],
+      "crossCheck": "single source",
+      "note": "Each figure comes only from its own vendor; GenetiQ's base is worldwide, not US dealers."
+    },
+    {
+      "claim": "ERP systems that tie together dealer financials, supply chain, operations and commerce are described as commonplace in LBM Journal's technology coverage.",
+      "confidence": "low",
+      "sources": [
+        "https://www.lbmjournal.com/features/in-depth/news/15777340/in-depth-technology-tools",
+        "https://rundoo.ai/insights/best-pos-for-lumber-yards/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Search excerpt only (page blocked to fetch, undated); wording unconfirmed on re-search. Rundoo guide separately shows small yards on generalist tools."
+    },
+    {
+      "claim": "Many independent suppliers still run legacy or decades-old systems; cloud migrations (Frederick Block, Warshauer, a GenetiQ-sponsored NRLA piece, Rundoo investors) are framed around replacing them.",
+      "confidence": "medium",
+      "sources": [
+        "https://pulse2.com/rundoo-raises-30-million-series-b-bringing-total-funding-to-48-million-as-ai-platform-reaches-500-supply-stores/",
+        "https://distributionstrategy.com/2026/09/ai-moves-into-the-distributor-order-desk-as-new-tools-target-manual-work/",
+        "https://nrla.org/genetiq-rede%EF%AC%81nes-erp-for-lbm-with-modern-cloud-solutions/",
+        "https://www.acumatica.com/success-stories/erp-system-for-frederick-block-brick-stone/",
+        "https://newsroom.epicor.com/warshauer-electric-supply-invests-in-future-with-epicor-eclipse/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Consistent narrative but anecdotal and vendor-framed; no measured share of dealers on legacy systems."
+    },
+    {
+      "claim": "Contractors send orders by phone, text, email, PDF, spreadsheet, photo and at the counter; staff then enter SKUs, quantities and units by hand.",
+      "confidence": "high",
+      "sources": [
+        "https://www.prokeep.com/blog/customer-experience/contractor-survey-results-revealed-how-to-build-stronger-relationships-and-fight-channel-erosion",
+        "https://distributionstrategy.com/2026/09/toolbx-launches-ai-order-entry-for-building-supply-distributors/",
+        "https://www.canals.ai/sales-order-entry-for-lbm",
+        "https://distributionstrategy.com/2026/09/ai-moves-into-the-distributor-order-desk-as-new-tools-target-manual-work/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Channel mix backed by a 750-contractor survey (2021, vendor co-sponsored); manual keying is described by vendors and press, with no measured share."
+    },
+    {
+      "claim": "A 2021 survey of 750 contractors found 22% use texting to place orders, 75% use an e-commerce tool for some purchases and nearly 45% engage distributors by email and phone.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.prokeep.com/blog/customer-experience/contractor-survey-results-revealed-how-to-build-stronger-relationships-and-fight-channel-erosion",
+        "https://www.bigcommerce.com/blog/building-materials-ecommerce-buyer-expectations/",
+        "https://www.prokeep.com/features/business-texting"
+      ],
+      "crossCheck": "agrees",
+      "note": "Stated n and trades, but format and timing not described; 2021. BigCommerce cites 24.4% of (industrial) buyers ordering by SMS in 2025. Prokeep's own site claims 90% want to text."
+    },
+    {
+      "claim": "Average LBM dealer e-commerce penetration is 'less than 1%', according to Specialty Building Products' CEO, reported in January 2024.",
+      "confidence": "low",
+      "sources": [
+        "https://www.digitalcommerce360.com/2024/01/22/a-building-products-distributor-builds-out-an-ecommerce-strategy/"
+      ],
+      "crossCheck": "single source",
+      "note": "One executive's statement with no method; used to justify a Toolbx partnership."
+    },
+    {
+      "claim": "Builders FirstSource reported $1 billion of orders and $134 million incremental sales through its contractor digital platform in 2024; its CEO said adoption was slower than wanted.",
+      "confidence": "medium",
+      "sources": ["https://www.digitalcommerce360.com/?p=1336098"],
+      "crossCheck": "single source",
+      "note": "Company-reported, national chain, not an independent dealer."
+    },
+    {
+      "claim": "Beacon Roofing management said digital sales reached about 22% in fiscal Q3 2023, up from 2.4% in 2018; the company does not break out ecommerce sales.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.digitalcommerce360.com/2024/01/15/roofing-ecommerce-distributor-50-percent-of-all-sales/"
+      ],
+      "crossCheck": "single source",
+      "note": "Management comment on an earnings call; the article blurs residential versus total share. National distributor."
+    },
+    {
+      "claim": "Roofing distributors let contractors order inside their own software, with orders flowing straight to the distributor: AccuLynx with ABC Supply (since 2010), ServiceTitan with SRS (2024), Roofr with QXO (June 2025).",
+      "confidence": "high",
+      "sources": [
+        "https://www.constructiondive.com/press-release/20190618-acculynx-announces-record-number-of-material-orders-placed-through-integrat/",
+        "https://www.businesswire.com/news/home/20241113992247/en",
+        "https://distributionstrategy.com/2025/06/roofr-qxo-launch-integration-to-streamline-roofing-material-orders/"
+      ],
+      "crossCheck": "agrees",
+      "note": "National distributors; adoption by independent roofing suppliers not documented. SRS item from search excerpt only."
+    },
+    {
+      "claim": "Do it Best offers dealers exclusive Toolbx pricing (Aug 2025) and Specialty Building Products gave its dealer network Toolbx access (2024 coverage), so buying groups and suppliers are subsidizing contractor portals.",
+      "confidence": "medium",
+      "sources": [
+        "https://hardwareretailing.com/do-it-best-teams-up-with-toolbx-to-power-pro-platform/",
+        "https://www.digitalcommerce360.com/2024/01/22/a-building-products-distributor-builds-out-an-ecommerce-strategy/",
+        "https://hbsdealer.com/sbp-enters-e-commerce-partnership-toolbx",
+        "https://www.woodworkingnetwork.com/news/woodworking-industry-news/specialty-building-products-and-toolbx-drive-ecommerce-growth-lbm"
+      ],
+      "crossCheck": "agrees",
+      "note": "HBSDealer and Woodworking Network items seen in search excerpts only."
+    },
+    {
+      "claim": "Toolbx and Do it Best say portals connect to each yard's ERP so account customers see invoices, statements and order history and can pay by ACH or card.",
+      "confidence": "low",
+      "sources": [
+        "https://hardwareretailing.com/do-it-best-teams-up-with-toolbx-to-power-pro-platform/",
+        "https://www.digitalcommerce360.com/2024/01/22/a-building-products-distributor-builds-out-an-ecommerce-strategy/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor feature description; no usage data."
+    },
+    {
+      "claim": "Do it Best states pros are over 60% of sales at independent lumberyards and that Toolbx 'can cut days-sales-outstanding by roughly 25%'; both are promotional statements without supporting data.",
+      "confidence": "low",
+      "sources": [
+        "https://hardwareretailing.com/do-it-best-teams-up-with-toolbx-to-power-pro-platform/"
+      ],
+      "crossCheck": "single source",
+      "note": "Co-op marketing coverage, Aug 2025."
+    },
+    {
+      "claim": "Several vendors now sell AI order intake that reads emailed or PDF orders and drafts ERP orders for staff review: Toolbx (generally available Sept 2026), Canals, Proton.ai, WizCommerce, Conexiom and Rundoo.",
+      "confidence": "high",
+      "sources": [
+        "https://distributionstrategy.com/2026/09/toolbx-launches-ai-order-entry-for-building-supply-distributors/",
+        "https://distributionstrategy.com/2026/09/ai-moves-into-the-distributor-order-desk-as-new-tools-target-manual-work/",
+        "https://distributionstrategy.com/2026/07/proton-ai-launches-ai-platform-to-automate-order-and-quote-entry-for-distributors/",
+        "https://www.canals.ai/sales-order-entry-for-lbm",
+        "https://wizcommerce.com/blog/erp-integration-building-materials/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Establishes that the products exist; says nothing about dealer uptake. Rundoo raised $30M Series B in Aug 2026 (Pulse 2)."
+    },
+    {
+      "claim": "Vendor-reported AI order-entry results: Toolbx '95%+ match' and drafts in under a minute; Canals '90% time savings'; Proton.ai '75% less list-prep time' at an unnamed distributor. None independently verified.",
+      "confidence": "low",
+      "sources": [
+        "https://distributionstrategy.com/2026/09/toolbx-launches-ai-order-entry-for-building-supply-distributors/",
+        "https://www.canals.ai/sales-order-entry-for-lbm",
+        "https://distributionstrategy.com/2026/07/proton-ai-launches-ai-platform-to-automate-order-and-quote-entry-for-distributors/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Directionally consistent but all self-reported; Toolbx's 95% depends on complete product data."
+    },
+    {
+      "claim": "In a December 2025 survey of 233 distribution executives (skewed to tech-focused firms), 63% were piloting or exploring AI and 27% implementing at scale; among implementers, order automation was the top use at 62%.",
+      "confidence": "high",
+      "sources": [
+        "https://distributionstrategy.com/2026/02/distributors-reach-an-ai-inflection-point/",
+        "https://distributionstrategy.com/wp-content/uploads/2025/04/DSG-Report-The-2025-State-of-Distributor-Technology.pdf"
+      ],
+      "crossCheck": "agrees",
+      "note": "Stated n and method with an admitted sample skew; wholesale distribution broadly, not LBM. DSG's 2025 report estimates AI order/quote automation adoption at 25%."
+    },
+    {
+      "claim": "DSG's Q1 2026 survey of 233 North American wholesale distribution executives found 55% have invested in ERP, CRM, ecommerce and analytics without integrating them.",
+      "confidence": "high",
+      "sources": [
+        "https://distributionstrategy.com/report/state-of-distributor-technology-2026/"
+      ],
+      "crossCheck": "single source",
+      "note": "Primary survey with stated method. Same n=233 as the Dec 2025 survey, so the two may share a panel."
+    },
+    {
+      "claim": "MDM/NAW research on 400+ distributors reportedly shows nearly 90% pursuing AI, versus DSG's 63% piloting or exploring and 27% at scale; definitions and samples differ.",
+      "confidence": "low",
+      "sources": [
+        "https://www.naw.org/in-pursuit-of-value-where-400-distributors-are-investing-in-ai-today/",
+        "https://distributionstrategy.com/2026/02/distributors-reach-an-ai-inflection-point/"
+      ],
+      "crossCheck": "disagrees",
+      "note": "MDM figures come from webinar promotion in a search excerpt; full report is gated."
+    },
+    {
+      "claim": "ERP-embedded AI is mostly future-tense for dealers: ECI announced an eCommerce AI agent in Nov 2025, BisTrack's AI is tied to cloud migration, and its desktop client reaches a final release in Dec 2026.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.webb-analytics.com/post/for-lbm-the-ai-model-race-is-over-the-workflow-race-just-started",
+        "https://www.airdev.co/erp/bistrack/invoice-automation"
+      ],
+      "crossCheck": "agrees",
+      "note": "Webb-linked commentary cites ERP Today; Airdev sells BisTrack AI work and so has an interest."
+    },
+    {
+      "claim": "A manufacturer blog citing LBM Journal says 68% of Construction Supply 150 respondents are working with AI, up from 45% the prior year.",
+      "confidence": "low",
+      "sources": [
+        "https://www.westlakeroyalbuildingproducts.com/pros-blog/whats-trending-lbm-industry"
+      ],
+      "crossCheck": "single source",
+      "note": "Secondhand, search excerpt only (blocked to fetch); original survey not seen."
+    },
+    {
+      "claim": "Supplier invoices reach dealers as emailed PDFs, paper with deliveries and co-op statements; AP staff key them and match to POs and receipts. Clean invoices take minutes; partial shipments and price changes take longer.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.airdev.co/erp/bistrack/invoice-automation",
+        "https://www.ecisolutions.com/resources/video/spruce-accounts-payable-software-demo/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Both are vendor-authored; Airdev sells custom BisTrack AP work. No measured volumes or error rates."
+    },
+    {
+      "claim": "Epicor sells AP Assist for BisTrack (AI OCR, 2- or 3-way matching, price unpublished); Spruce attaches scanned paper invoices and supports EDI with major vendors and co-ops; GenetiQ markets EDI for purchase ledgers.",
+      "confidence": "high",
+      "sources": [
+        "https://www.epicor.com/en-gb/products/enterprise-resource-planning-erp/bistrack/ap-assist/",
+        "https://www.airdev.co/erp/bistrack/invoice-automation",
+        "https://www.ecisolutions.com/resources/video/spruce-accounts-payable-software-demo/",
+        "https://www.genetiqsoftware.com/hubfs/2026_GenetiQ%20USA%20Factsheet_Proven%20Results.pdf"
+      ],
+      "crossCheck": "agrees",
+      "note": "Product-capability facts confirmed by vendor pages plus Airdev; Epicor page seen via search excerpt only."
+    },
+    {
+      "claim": "EDI is available for supplier documents: TrueCommerce markets Weyerhaeuser EDI for POs, ASNs and invoices, and ECI supports Orgill EDI for POs, price changes and catalogs; ECI's Orgill page does not mention invoices.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.truecommerce.com/trading-partner/weyerhaeuser/",
+        "https://www.ecisolutions.com/industries/building-supply/edi/software-for-orgill-dealers/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor pages only; share of dealer invoices arriving by EDI not found."
+    },
+    {
+      "claim": "Vendor-reported AP results: GenetiQ cites an unnamed dealer saving 100+ purchase-ledger hours a month via EDI; ECI cites a dealer cutting 8-10 weekly hours of Orgill order entry to under five minutes.",
+      "confidence": "low",
+      "sources": [
+        "https://www.genetiqsoftware.com/hubfs/2026_GenetiQ%20USA%20Factsheet_Proven%20Results.pdf",
+        "https://www.ecisolutions.com/industries/building-supply/edi/software-for-orgill-dealers/"
+      ],
+      "crossCheck": "single source",
+      "note": "Unverified testimonials; the ECI figure is credited to RockSolid MAX, not EDI alone."
+    },
+    {
+      "claim": "Generic distributor benchmarks put manual invoice processing near $10-$22 per invoice: DSG says $10-$12 with 49% of invoices on paper and 25%+ exceptions; Lido cites APQC median $21.40, top quartile $10.18.",
+      "confidence": "medium",
+      "sources": [
+        "https://distributionstrategy.com/wp-content/uploads/2025/04/DSG-Report-The-2025-State-of-Distributor-Technology.pdf",
+        "https://www.lido.app/blog/invoice-processing-cost-benchmarks",
+        "https://www.apqc.org/resource-library/resource-listing/accounts-payable-practices-report-retail-and-wholesale-industry",
+        "https://www.constructiondive.com/press-release/20230928-field-materials-launches-ai-powered-invoices-module-to-save-contractors-5-1"
+      ],
+      "crossCheck": "agrees",
+      "note": "Not LBM-specific; cost bases differ. APQC report is members-only (not opened). Field Materials (contractor-side vendor) claims ~25% of material invoices have errors, echoing DSG."
+    },
+    {
+      "claim": "NAW's affiliate page for Rossum claims up to 85% touchless and 90% faster invoice processing for distributors.",
+      "confidence": "low",
+      "sources": ["https://www.naw.org/affiliate/rossum/"],
+      "crossCheck": "single source",
+      "note": "Vendor claim hosted on NAW's site; search excerpt only (blocked to fetch)."
+    },
+    {
+      "claim": "Two Acumatica case studies show AP re-keying pain: Boulder Creek Stone (250-500 employees) re-keyed about 700 AP bills a month between systems; Frederick Block (25-50 employees, masonry) moved data by CSV and Excel.",
+      "confidence": "low",
+      "sources": [
+        "https://cdn.acumatica.com/success-stories/erp-system-for-boulder-creek-stone/",
+        "https://www.acumatica.com/success-stories/erp-system-for-frederick-block-brick-stone/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor-published; Boulder Creek is partly a manufacturer; dates inferred from file names (Feb 2024)."
+    },
+    {
+      "claim": "ERP and POS vendors for this segment mostly do not publish prices: ECI quotes Spruce by yards, registers and add-ons; BisTrack, Agility, Flitch and Rundoo publish no list prices; implementation is billed separately.",
+      "confidence": "high",
+      "sources": [
+        "https://www.ecisolutions.com/en-gb/products/spruce/pricing/",
+        "https://rundoo.ai/insights/best-pos-for-lumber-yards/",
+        "https://softwareconnect.com/roundups/best-building-materials-software/",
+        "https://saasrat.com/products/agility-erp",
+        "https://www.g2.com/products/epicor-bistrack/pricing"
+      ],
+      "crossCheck": "agrees",
+      "note": "ECI page read directly; G2 via search excerpt."
+    },
+    {
+      "claim": "A review-site guide estimates ERP/POS spend of $20k-$75k a year for 20-100 employee dealers and $75k-$200k for 100-500 employees, placing BisTrack in the higher tier. Generic estimates, not quotes.",
+      "confidence": "low",
+      "sources": [
+        "https://softwareconnect.com/roundups/best-building-materials-software/",
+        "https://saasrat.com/products/agility-erp"
+      ],
+      "crossCheck": "agrees",
+      "note": "Loosely consistent with SaaSRat's per-user estimates (our arithmetic); both are third-party estimates."
+    },
+    {
+      "claim": "SaaSRat lists DMSi Agility at 'industry-typical' $2,000, $3,500 or $5,000 per user per year by tier, with implementation priced separately; these are not DMSi's published rates.",
+      "confidence": "low",
+      "sources": ["https://saasrat.com/products/agility-erp"],
+      "crossCheck": "single source",
+      "note": "Third-party estimate, dated July 2026."
+    },
+    {
+      "claim": "Entry-level POS prices conflict: Capterra lists Spruce from US$10,000 and RockSolid MAX from US$3,000, while SoftwareConnect lists RockSolid MAX from about $5,000 a year.",
+      "confidence": "low",
+      "sources": [
+        "https://www.capterra.co.uk/software/218534/spruce",
+        "https://www.capterra.co.uk/software/218533/rocksolid-max",
+        "https://softwareconnect.com/point-of-sale/eci-rocksolid"
+      ],
+      "crossCheck": "disagrees",
+      "note": "Search excerpts only; billing units unclear."
+    },
+    {
+      "claim": "ITQlick estimates Epicor Eagle at roughly $200-$500 a month for one user and $1,500-$4,000 for ten, plus $5,000+ implementation; Epicor publishes no price. Method unstated.",
+      "confidence": "low",
+      "sources": ["https://www.itqlick.com/epicor-eagle"],
+      "crossCheck": "single source",
+      "note": "Search excerpt only (blocked to fetch)."
+    },
+    {
+      "claim": "Toolbx lists Commerce Pro (ecommerce, catalog, onboarding) from $1,299 a month as of January 2024 coverage; the tier that syncs orders, prices, invoices and payments with the ERP is unpublished.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.digitalcommerce360.com/2024/01/22/a-building-products-distributor-builds-out-an-ecommerce-strategy/"
+      ],
+      "crossCheck": "single source",
+      "note": "Vendor price relayed by Digital Commerce 360; may have changed."
+    },
+    {
+      "claim": "BisTrack implementations take about six months per G2 reviewer data, and a Cleverence guide says phased rollouts often span 3-6 months; G2 rates BisTrack's perceived cost at its top tier.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.g2.com/products/epicor-bistrack/pricing",
+        "https://www.cleverence.com/articles/erp-reviews/top-10-erps-lumber-building-materials-3941/"
+      ],
+      "crossCheck": "agrees",
+      "note": "G2 via search excerpt; Cleverence sells a mobile warehouse layer."
+    },
+    {
+      "claim": "No public benchmark of IT or software spend as a share of revenue for LBM dealers was found; the nearest, Avasant's wholesale-distribution chapter (53 respondents, $50M+ revenue), is paywalled.",
+      "confidence": "medium",
+      "sources": [
+        "https://avasant.com/report/it-spending-and-staffing-benchmarks-2025-2026-chapter-9-wholesale-distribution/"
+      ],
+      "crossCheck": "single source",
+      "note": "NRHA's Cost of Doing Business Study covers independent lumberyards, but public pages show no software-spend ratio."
+    },
+    {
+      "claim": "NRHA's annual Cost of Doing Business Study benchmarks independent hardware stores, home centers and lumberyards (1,000+ stores in 2020), but public pages show no software figures; full data is member-only.",
+      "confidence": "medium",
+      "sources": [
+        "https://hardwareretailing.com/evaluate-your-business-with-help-from-the-cost-of-doing-business-study"
+      ],
+      "crossCheck": "single source",
+      "note": "2020 article; later editions not opened."
+    },
+    {
+      "claim": "Webb Analytics' Construction Supply 150 found 2024 sales up 1.3% (0.7% excluding Home Depot and Lowe's); its 2026 edition found ~71% of 144 reporting firms were lumberyards but only 12% of revenue, with most lumberyards shrinking in 2025.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.lmc.net/News/Webb-Analytics-2025-Construction-Supply-150-Reveal",
+        "https://www.einpresswire.com/article/910320172/webb-analytics-says-construction-supply-sales-hid-sharp-split-in-2025?promo=4400",
+        "https://www.naw.org/news/top-distributor-sectors/building-materials-construction/webb-analytics-releases-2025-construction-supply-150/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Two editions of one report, so not fully independent. NAW page seen via search excerpt only."
+    },
+    {
+      "claim": "ECI's summary of the 2024 CS150 says 61% of dealer respondents offered online bill pay and 26% planned to, and fewer than half had CRM and warehouse software; sample size is not stated.",
+      "confidence": "low",
+      "sources": [
+        "https://www.ecisolutions.com/blog/building-supply/breaking-down-the-construction-supply-150-report/"
+      ],
+      "crossCheck": "single source",
+      "note": "Vendor summary of a third-party report; original not opened."
+    },
+    {
+      "claim": "Estimates of US building-material dealer counts diverge: IBISWorld shows about 34,400 lumber and building material store businesses (2026), First Research about 57,000 establishments, and NLBMDA is described as having 6,000+ members.",
+      "confidence": "low",
+      "sources": [
+        "https://www.ibisworld.com/united-states/number-of-businesses/lumber-building-material-stores/1034",
+        "https://www.bvresources.com/articles/first-research-us-industry-profile/building-material-dealers",
+        "https://justfacts.votesmart.org/interest-group/1788/national-lumber-and-building-material-dealers-association",
+        "https://nrla.org/about-us/",
+        "https://www.lbmjournal.com/page/top-100-dealers",
+        "https://www.hbsdealer.com/lumberyards/hbsdealers-top-00-pro-dealer-industry-scoreboard-0"
+      ],
+      "crossCheck": "disagrees",
+      "note": "Search excerpts only. NRLA (Northeast) lists 1,089 members. LBM Journal's Top 100 is voluntary, not a census."
+    },
+    {
+      "claim": "Independent plumbing and electrical supply houses typically run Epicor Eclipse or Prophet 21 (Yesco, Warshauer, Shepherd, Erb), often with an ERP-linked web store; Canals lists electrical and plumbing distributors as customers.",
+      "confidence": "medium",
+      "sources": [
+        "https://www.techtarget.com/searcherp/feature/Epicor-Eclipse-distribution-ERP-helps-Yesco-through-COVID-19",
+        "https://www.epicor.com/en-us/industries/distribution/plumbing-wholesaler",
+        "https://newsroom.epicor.com/warshauer-electric-supply-invests-in-future-with-epicor-eclipse/",
+        "https://www.epicor.com/en-us/resources/success-stories/distribution/shepherd-electric-supply/",
+        "https://epicor.com/en-us/newsroom/news-releases/erb-company-inc-modernizes-business-processes-with-epicor-prophet-21",
+        "https://www.canals.ai/sales-order-entry-for-lbm"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor-selected case studies, some 2018-2020; only the TechTarget piece was read in full."
+    },
+    {
+      "claim": "Landscape and nursery yards are served by Spruce features for bulk units of measure and contractor-account signers, and SiteOne offers contractors an online estimate tool.",
+      "confidence": "low",
+      "sources": [
+        "https://ecisolutions.com/industries/building-supply/landscape-and-nursery-supply",
+        "https://www.landscapemanagement.net/siteone-launches-online-estimate-tool/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor and trade-press excerpts only; no landscape-supply spend or survey data found."
+    },
+    {
+      "claim": "Masonry and stone suppliers in the two examples found ran Acumatica (Frederick Block: 25-50 employees, three locations), not an LBM-specific ERP, so general distribution ERPs compete in niche trades.",
+      "confidence": "low",
+      "sources": [
+        "https://www.acumatica.com/success-stories/erp-system-for-frederick-block-brick-stone/",
+        "https://cdn.acumatica.com/success-stories/erp-system-for-boulder-creek-stone/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Two vendor case studies; not representative."
+    },
+    {
+      "claim": "Paladin POS supports special orders, yard orders and job accounts, and exchanges supplier quotes and orders through SaberisConnect; DMSi case studies describe Agility running sales, purchasing and accounting across branches with EDI.",
+      "confidence": "low",
+      "sources": [
+        "https://paladinpos.com/lumber-point-of-sale",
+        "https://dmsi.com/?p=3386",
+        "https://dmsi.com/?p=9415",
+        "https://www.dmsi.com/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Vendor materials seen in search excerpts only."
+    },
+    {
+      "claim": "Digital forecasts and observations conflict: Simon-Kucher projects nearly half of building-material purchases digital by 2030 and 80%+ of builders buying online occasionally, but Builder reports most pro contractors keep digital under 25% of wallet.",
+      "confidence": "low",
+      "sources": [
+        "https://www.simon-kucher.com/en/insights/new-research-whats-next-building-material-suppliers",
+        "https://www.builderonline.com/?p=174705"
+      ],
+      "crossCheck": "disagrees",
+      "note": "Simon-Kucher gives no sample, geography or date on the page; Builder via search excerpt only."
+    },
+    {
+      "claim": "Review sites show mixed sentiment: Capterra lists Spruce at 3.3/5 from 33 reviews (support 2.9/5), and Rundoo says some yards want to leave Spruce over support speed, cost and licensing.",
+      "confidence": "low",
+      "sources": [
+        "https://www.capterra.co.uk/software/218534/spruce",
+        "https://rundoo.ai/insights/best-pos-for-lumber-yards/"
+      ],
+      "crossCheck": "agrees",
+      "note": "Capterra figures from a search excerpt; Rundoo is a competitor."
+    },
+    {
+      "claim": "The '92% of wholesale distributors use ERP' statistic traces to vendor blogs and a 2012 press release with no stated method; it should not be used as a dealer-level adoption figure.",
+      "confidence": "low",
+      "sources": [
+        "https://anchorgroup.tech/blog/wholesale-distribution-erp-statistics"
+      ],
+      "crossCheck": "single source",
+      "note": "Tracing as reported by search results; original Castellina/Aberdeen report not seen."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://distributionstrategy.com/2026/09/toolbx-launches-ai-order-entry-for-building-supply-distributors/",
+      "title": "Toolbx Launches AI Order Entry for Building Supply Distributors",
+      "publisher": "Distribution Strategy Group",
+      "year": 2026,
+      "kind": "news"
+    },
+    {
+      "url": "https://distributionstrategy.com/2026/09/ai-moves-into-the-distributor-order-desk-as-new-tools-target-manual-work/",
+      "title": "AI Moves into the Distributor Order Desk as New Tools Target Manual Work",
+      "publisher": "Distribution Strategy Group",
+      "year": 2026,
+      "kind": "news"
+    },
+    {
+      "url": "https://distributionstrategy.com/2026/07/proton-ai-launches-ai-platform-to-automate-order-and-quote-entry-for-distributors/",
+      "title": "Proton.ai Launches AI Platform to Automate Order and Quote Entry for Distributors",
+      "publisher": "Distribution Strategy Group",
+      "year": 2026,
+      "kind": "news"
+    },
+    {
+      "url": "https://rundoo.ai/insights/best-pos-for-lumber-yards/",
+      "title": "The best POS systems for lumber yards in 2026",
+      "publisher": "Rundoo",
+      "year": 2026,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.cleverence.com/articles/erp-reviews/top-10-erps-lumber-building-materials-3941/",
+      "title": "Top 10 ERP Systems for Lumber & Building Materials Dealers (2025)",
+      "publisher": "Cleverence",
+      "year": 2025,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.ecisolutions.com/en-gb/products/spruce/pricing/",
+      "title": "Spruce pricing",
+      "publisher": "ECI Solutions",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.dmsi.com/",
+      "title": "DMSi Software home (Agility ERP)",
+      "publisher": "DMSi Software",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.digitalcommerce360.com/2024/01/22/a-building-products-distributor-builds-out-an-ecommerce-strategy/",
+      "title": "A building products distributor builds out an ecommerce strategy",
+      "publisher": "Digital Commerce 360",
+      "year": 2024,
+      "kind": "news"
+    },
+    {
+      "url": "https://pulse2.com/rundoo-raises-30-million-series-b-bringing-total-funding-to-48-million-as-ai-platform-reaches-500-supply-stores/",
+      "title": "Rundoo Raises $30 Million Series B, Bringing Total Funding To $48 Million",
+      "publisher": "Pulse 2",
+      "year": 2026,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.canals.ai/sales-order-entry-for-lbm",
+      "title": "Order Entry Built for the Way Lumber Dealers Price and Sell",
+      "publisher": "Canals",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.airdev.co/erp/bistrack/invoice-automation",
+      "title": "BisTrack invoice automation guide",
+      "publisher": "Airdev",
+      "year": 2026,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://nrla.org/genetiq-rede%EF%AC%81nes-erp-for-lbm-with-modern-cloud-solutions/",
+      "title": "GenetiQ redefines ERP for LBM with modern cloud solutions (sponsored content)",
+      "publisher": "Northeastern Retail Lumber Association",
+      "year": 2025,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.lido.app/blog/invoice-processing-cost-benchmarks",
+      "title": "How Much Does Invoice Processing Cost? Benchmarks for 2026",
+      "publisher": "Lido",
+      "year": 2026,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://avasant.com/report/it-spending-and-staffing-benchmarks-2025-2026-chapter-9-wholesale-distribution/",
+      "title": "IT Spending and Staffing Benchmarks 2025/2026: Chapter 9: Wholesale Distribution",
+      "publisher": "Avasant (Computer Economics)",
+      "year": 2025,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://softwareconnect.com/roundups/best-building-materials-software/",
+      "title": "Best Building Materials Software",
+      "publisher": "SoftwareConnect",
+      "year": 2026,
+      "kind": "other"
+    },
+    {
+      "url": "https://hardwareretailing.com/evaluate-your-business-with-help-from-the-cost-of-doing-business-study",
+      "title": "Evaluate your business with help from the Cost of Doing Business Study",
+      "publisher": "Hardware Retailing (NRHA)",
+      "year": 2020,
+      "kind": "association"
+    },
+    {
+      "url": "https://distributionstrategy.com/2025/06/roofr-qxo-launch-integration-to-streamline-roofing-material-orders/",
+      "title": "Roofr, QXO Launch Integration to Streamline Roofing Material Orders",
+      "publisher": "Distribution Strategy Group",
+      "year": 2025,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.constructiondive.com/press-release/20190618-acculynx-announces-record-number-of-material-orders-placed-through-integrat/",
+      "title": "AccuLynx announces record number of material orders placed through integration with ABC Supply",
+      "publisher": "AccuLynx via Construction Dive",
+      "year": 2019,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.ecisolutions.com/industries/building-supply/edi/software-for-orgill-dealers/",
+      "title": "EDI software for Orgill dealers",
+      "publisher": "ECI Solutions",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.ecisolutions.com/resources/video/spruce-accounts-payable-software-demo/",
+      "title": "Spruce accounts payable software demo",
+      "publisher": "ECI Solutions",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://nrla.org/about-us/",
+      "title": "About NRLA",
+      "publisher": "Northeastern Retail Lumber Association",
+      "year": null,
+      "kind": "association"
+    },
+    {
+      "url": "https://www.prokeep.com/blog/customer-experience/contractor-survey-results-revealed-how-to-build-stronger-relationships-and-fight-channel-erosion",
+      "title": "Contractor survey results revealed (Contractors Speak Out, n=750)",
+      "publisher": "Prokeep / HMI / SproutLoud",
+      "year": 2021,
+      "kind": "survey"
+    },
+    {
+      "url": "https://www.ecisolutions.com/blog/building-supply/breaking-down-the-construction-supply-150-report/",
+      "title": "Breaking down the Construction Supply 150 report",
+      "publisher": "ECI Solutions",
+      "year": 2025,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.digitalcommerce360.com/?p=1336098",
+      "title": "Builders FirstSource hits $1 billion in digital sales for 2024",
+      "publisher": "Digital Commerce 360",
+      "year": 2025,
+      "kind": "news"
+    },
+    {
+      "url": "https://hardwareretailing.com/do-it-best-teams-up-with-toolbx-to-power-pro-platform/",
+      "title": "Do it Best teams up with Toolbx to power pro platform",
+      "publisher": "Hardware Retailing",
+      "year": 2025,
+      "kind": "news"
+    },
+    {
+      "url": "https://saasrat.com/products/agility-erp",
+      "title": "DMSi Agility ERP Review 2026: Pricing, Pros, Cons & Alternatives",
+      "publisher": "SaaSRat",
+      "year": 2026,
+      "kind": "other"
+    },
+    {
+      "url": "https://wizcommerce.com/blog/erp-integration-building-materials/",
+      "title": "ERP Integration for Building Materials Distributors: The 2026 Guide",
+      "publisher": "WizCommerce",
+      "year": 2026,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.lmc.net/News/Webb-Analytics-2025-Construction-Supply-150-Reveal",
+      "title": "Webb Analytics 2025 Construction Supply 150 Reveal",
+      "publisher": "LMC",
+      "year": 2025,
+      "kind": "association"
+    },
+    {
+      "url": "https://www.einpresswire.com/article/910320172/webb-analytics-says-construction-supply-sales-hid-sharp-split-in-2025?promo=4400",
+      "title": "Webb Analytics says construction supply sales hid sharp split in 2025",
+      "publisher": "Webb Analytics via EIN Presswire",
+      "year": 2026,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://www.simon-kucher.com/en/insights/new-research-whats-next-building-material-suppliers",
+      "title": "New research: What's next for building material suppliers",
+      "publisher": "Simon-Kucher",
+      "year": null,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://distributionstrategy.com/wp-content/uploads/2025/04/DSG-Report-The-2025-State-of-Distributor-Technology.pdf",
+      "title": "2025 State of Distribution Technology: A Turning Point",
+      "publisher": "Distribution Strategy Group",
+      "year": 2025,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://distributionstrategy.com/report/state-of-distributor-technology-2026/",
+      "title": "State of Distributor Technology 2026",
+      "publisher": "Distribution Strategy Group",
+      "year": 2026,
+      "kind": "survey"
+    },
+    {
+      "url": "https://distributionstrategy.com/2026/02/distributors-reach-an-ai-inflection-point/",
+      "title": "Distributors Reach an AI Inflection Point",
+      "publisher": "Distribution Strategy Group",
+      "year": 2026,
+      "kind": "survey"
+    },
+    {
+      "url": "https://www.bigcommerce.com/blog/building-materials-ecommerce-buyer-expectations/",
+      "title": "What Building Materials Buyers Actually Expect from Your Digital Experience",
+      "publisher": "BigCommerce",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.digitalcommerce360.com/2024/01/15/roofing-ecommerce-distributor-50-percent-of-all-sales/",
+      "title": "Roofing ecommerce distributor aims for 50% of all sales",
+      "publisher": "Digital Commerce 360",
+      "year": 2024,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.acumatica.com/success-stories/erp-system-for-frederick-block-brick-stone/",
+      "title": "Frederick Block, Brick & Stone",
+      "publisher": "Acumatica",
+      "year": 2024,
+      "kind": "case study"
+    },
+    {
+      "url": "https://cdn.acumatica.com/success-stories/erp-system-for-boulder-creek-stone/",
+      "title": "Boulder Creek Stone",
+      "publisher": "Acumatica",
+      "year": 2024,
+      "kind": "case study"
+    },
+    {
+      "url": "https://www.techtarget.com/searcherp/feature/Epicor-Eclipse-distribution-ERP-helps-Yesco-through-COVID-19",
+      "title": "Epicor Eclipse distribution ERP helps Yesco through COVID-19",
+      "publisher": "TechTarget",
+      "year": 2020,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.webb-analytics.com/post/for-lbm-the-ai-model-race-is-over-the-workflow-race-just-started",
+      "title": "For LBM, the AI Model Race Is Over. The Workflow Race Just Started",
+      "publisher": "Webb Analytics (AI Growth Partners)",
+      "year": 2026,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://www.constructiondive.com/press-release/20230928-field-materials-launches-ai-powered-invoices-module-to-save-contractors-5-1",
+      "title": "Field Materials launches AI-powered invoices module",
+      "publisher": "Field Materials via Construction Dive",
+      "year": 2023,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.genetiqsoftware.com/hubfs/2026_GenetiQ%20USA%20Factsheet_Proven%20Results.pdf",
+      "title": "GenetiQ USA factsheet: Proven results",
+      "publisher": "GenetiQ",
+      "year": 2026,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://softwareconnect.com/reviews/epicor-bistrack/",
+      "title": "Epicor BisTrack review",
+      "publisher": "SoftwareConnect",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://www.naw.org/affiliate/rossum/",
+      "title": "AP Automation for wholesale distributors (Rossum)",
+      "publisher": "NAW",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.apqc.org/resource-library/resource-listing/accounts-payable-practices-report-retail-and-wholesale-industry",
+      "title": "Accounts Payable Practices Report: Retail and Wholesale Industry",
+      "publisher": "APQC",
+      "year": 2024,
+      "kind": "survey"
+    },
+    {
+      "url": "https://www.capterra.co.uk/software/218534/spruce",
+      "title": "Spruce (ECI) reviews and pricing",
+      "publisher": "Capterra",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://www.itqlick.com/epicor-eagle",
+      "title": "Epicor Eagle pricing estimate",
+      "publisher": "ITQlick",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://anchorgroup.tech/blog/wholesale-distribution-erp-statistics",
+      "title": "Wholesale distribution ERP statistics",
+      "publisher": "Anchor Group",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.epicor.com/en-us/industries/distribution/plumbing-wholesaler",
+      "title": "Plumbing Distribution Software",
+      "publisher": "Epicor",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.businesswire.com/news/home/20241113992247/en",
+      "title": "ServiceTitan and SRS Distribution partnership",
+      "publisher": "Business Wire",
+      "year": 2024,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.epicor.com/en-gb/products/enterprise-resource-planning-erp/bistrack/ap-assist/",
+      "title": "BisTrack AP Assist",
+      "publisher": "Epicor",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.truecommerce.com/trading-partner/weyerhaeuser/",
+      "title": "Weyerhaeuser EDI Integration",
+      "publisher": "TrueCommerce",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.ibisworld.com/united-states/number-of-businesses/lumber-building-material-stores/1034",
+      "title": "Lumber & Building Material Stores in the US - Number of Businesses",
+      "publisher": "IBISWorld",
+      "year": 2026,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://www.bvresources.com/articles/first-research-us-industry-profile/building-material-dealers",
+      "title": "Building Material Dealers (First Research industry profile)",
+      "publisher": "BVR / First Research",
+      "year": null,
+      "kind": "analyst"
+    },
+    {
+      "url": "https://justfacts.votesmart.org/interest-group/1788/national-lumber-and-building-material-dealers-association",
+      "title": "National Lumber and Building Material Dealers Association",
+      "publisher": "Vote Smart",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://www.lbmjournal.com/page/top-100-dealers",
+      "title": "LBM Journal Top 100 dealers",
+      "publisher": "LBM Journal",
+      "year": 2026,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.hbsdealer.com/lumberyards/hbsdealers-top-00-pro-dealer-industry-scoreboard-0",
+      "title": "HBSDealer's Top 200 Industry Scoreboard",
+      "publisher": "HBSDealer",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.lbmjournal.com/features/in-depth/news/15777340/in-depth-technology-tools",
+      "title": "In Depth: Technology tools",
+      "publisher": "LBM Journal",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://dmsi.com/?p=3386",
+      "title": "Kelly-Fradet Lumber (Agility case study)",
+      "publisher": "DMSi Software",
+      "year": null,
+      "kind": "case study"
+    },
+    {
+      "url": "https://dmsi.com/?p=9415",
+      "title": "Snavely Forest Products (Agility case study)",
+      "publisher": "DMSi Software",
+      "year": null,
+      "kind": "case study"
+    },
+    {
+      "url": "https://buildersshow.com/assets/docs/ibs/pressReleases/ExhibitorProductLit_43836_CompanyProfile_AgilityCore3pg.pdf",
+      "title": "DMSi company profile (Agility Core)",
+      "publisher": "DMSi Software / International Builders' Show",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://paladinpos.com/lumber-point-of-sale",
+      "title": "Lumber point of sale",
+      "publisher": "Paladin",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://ecisolutions.com/industries/building-supply/landscape-and-nursery-supply",
+      "title": "Landscape and Nursery Supply",
+      "publisher": "ECI Solutions",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.landscapemanagement.net/siteone-launches-online-estimate-tool/",
+      "title": "SiteOne launches online estimate tool",
+      "publisher": "Landscape Management",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.prokeep.com/features/business-texting",
+      "title": "Business Texting",
+      "publisher": "Prokeep",
+      "year": null,
+      "kind": "vendor"
+    },
+    {
+      "url": "https://www.epicor.com/en-us/resources/success-stories/distribution/shepherd-electric-supply/",
+      "title": "Shepherd Electric Supply",
+      "publisher": "Epicor",
+      "year": null,
+      "kind": "case study"
+    },
+    {
+      "url": "https://newsroom.epicor.com/warshauer-electric-supply-invests-in-future-with-epicor-eclipse/",
+      "title": "Warshauer Electric Supply invests in future with Epicor Eclipse",
+      "publisher": "Epicor",
+      "year": null,
+      "kind": "case study"
+    },
+    {
+      "url": "https://epicor.com/en-us/newsroom/news-releases/erb-company-inc-modernizes-business-processes-with-epicor-prophet-21",
+      "title": "Erb Company, Inc. modernizes business processes with Epicor Prophet 21",
+      "publisher": "Epicor",
+      "year": 2018,
+      "kind": "case study"
+    },
+    {
+      "url": "https://www.naw.org/news/top-distributor-sectors/building-materials-construction/webb-analytics-releases-2025-construction-supply-150/",
+      "title": "Webb Analytics Releases 2025 Construction Supply 150",
+      "publisher": "NAW / Modern Distribution Management",
+      "year": 2025,
+      "kind": "association"
+    },
+    {
+      "url": "https://www.naw.org/in-pursuit-of-value-where-400-distributors-are-investing-in-ai-today/",
+      "title": "In Pursuit of Value: Where 400+ Distributors are Investing in AI Today",
+      "publisher": "NAW / Modern Distribution Management",
+      "year": null,
+      "kind": "survey"
+    },
+    {
+      "url": "https://hbsdealer.com/sbp-enters-e-commerce-partnership-toolbx",
+      "title": "SBP enters e-commerce partnership with Toolbx",
+      "publisher": "HBSDealer",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.woodworkingnetwork.com/news/woodworking-industry-news/specialty-building-products-and-toolbx-drive-ecommerce-growth-lbm",
+      "title": "Specialty Building Products and Toolbx to drive ecommerce growth for LBM dealers",
+      "publisher": "Woodworking Network",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.westlakeroyalbuildingproducts.com/pros-blog/whats-trending-lbm-industry",
+      "title": "What's Trending in the LBM Industry?",
+      "publisher": "Westlake Royal Building Products",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://www.builderonline.com/?p=174705",
+      "title": "E-Commerce and 'Workflow Capture' in Housing Supply",
+      "publisher": "Builder",
+      "year": null,
+      "kind": "news"
+    },
+    {
+      "url": "https://www.capterra.co.uk/software/218533/rocksolid-max",
+      "title": "RockSolid MAX (ECI) reviews and pricing",
+      "publisher": "Capterra",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://softwareconnect.com/point-of-sale/eci-rocksolid",
+      "title": "ECI RockSolid",
+      "publisher": "SoftwareConnect",
+      "year": null,
+      "kind": "other"
+    },
+    {
+      "url": "https://www.g2.com/products/epicor-bistrack/pricing",
+      "title": "Epicor BisTrack Pricing Overview",
+      "publisher": "G2",
+      "year": null,
+      "kind": "other"
+    }
+  ]
+}

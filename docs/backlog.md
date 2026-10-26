@@ -71,6 +71,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-63  | Isolation and scale: tiers, egress allowlist, KMS keys, the single tenant, four bottlenecks, runbooks, the questionnaire  | M    | done   |
 | WB-64  | Ship to a customer: the release checklist, a review pack, five usability sessions, the top findings shipped               | M    | done   |
 | WB-65  | Growth: the site for answer engines, citations measured weekly, a scored target list, compliant outreach                  | M    | done   |
+| WB-66  | Analytics and research: metrics in SQL with tests, a weekly report, an analyst that shows its SQL, a market dossier       | M    | done   |
 
 ## Acceptance criteria
 
@@ -420,3 +421,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `pnpm aeo` and the Monday job `aeo-watch`, results in `citations`; the baseline run
 - `src/lib/accounts.ts` and a 25-account pilot in `content/growth/accounts.json`; `src/lib/outreach.ts` and `/api/unsubscribe`
 - `docs/growth.md`; D27
+
+### WB-66 Analytics and research: metrics in SQL with tests, a weekly report, an analyst that shows its SQL, a market dossier
+
+- `content/analytics`: a reproducible dataset, five metrics, data tests; `src/lib/analysis.ts` on the shared DuckDB sandbox
+- `pnpm analytics report | test | ask | check`: the report with a summary to review, the tests, a question in words, three known answers matched
+- `/research` on the public site: 47 claims from 76 sources with confidence labels, and the dataset
+- `docs/analytics.md`; D28

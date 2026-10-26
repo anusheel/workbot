@@ -31,7 +31,7 @@ test("crawlers, answer engines' included, may read everything, and find the site
 
 test("the sitemap lists the home page and every question, each dated", () => {
   const urls = sitemap();
-  expect(urls).toHaveLength(questions.length + 1);
+  expect(urls).toHaveLength(questions.length + 2);
   expect(urls.every((u) => u.lastModified)).toBe(true);
 });
 

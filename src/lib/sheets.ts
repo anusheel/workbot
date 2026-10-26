@@ -1,6 +1,7 @@
 import {
   type DuckDBValue,
   type Json,
+  type DuckDBConnection,
   DuckDBInstance,
   StatementType,
   dateValue,
@@ -170,18 +171,12 @@ const locked = {
   lock_configuration: "true",
 };
 
-/**
- * Loads the table into a DuckDB of its own as `sheet`, runs `fn` with it and
- * closes it. A query is one SELECT, read up to its row limit and stopped at
- * its time limit; anything else is refused before it runs.
- */
-export async function withSandbox<T>(
+/** Loads the table into a sandbox as `sheet`, runs `fn` with it and closes it. */
+export const withSandbox = <T>(
   table: Table,
   fn: (sandbox: Sandbox) => Promise<T>,
-): Promise<T> {
-  const instance = await DuckDBInstance.create(":memory:", locked);
-  try {
-    const setup = await instance.connect();
+): Promise<T> =>
+  sandbox(async (setup) => {
     await setup.run(
       `create table sheet (${table.columns.map((c) => `"${c.name}" ${c.type}`).join(", ")})`,
     );
@@ -193,6 +188,21 @@ export async function withSandbox<T>(
       appender.endRow();
     }
     appender.closeSync();
+  }, fn);
+
+/**
+ * A DuckDB of its own, filled by `load`, for `fn`, closed after. A query is
+ * one SELECT, read up to its row limit and stopped at its time limit; anything
+ * else is refused before it runs.
+ */
+export async function sandbox<T>(
+  load: (setup: DuckDBConnection) => Promise<void>,
+  fn: (sandbox: Sandbox) => Promise<T>,
+): Promise<T> {
+  const instance = await DuckDBInstance.create(":memory:", locked);
+  try {
+    const setup = await instance.connect();
+    await load(setup);
     setup.closeSync();
 
     return await fn({
