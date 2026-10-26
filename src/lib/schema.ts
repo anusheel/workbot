@@ -77,6 +77,18 @@ const tables = [
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
   )`,
+  `create table if not exists citations (
+    id bigserial primary key,
+    at date not null,
+    assistant text not null,
+    question text not null,
+    cited boolean not null,
+    sources text[] not null default '{}'
+  )`,
+  `create table if not exists suppressions (
+    address text primary key,
+    created_at timestamptz not null default now()
+  )`,
   `create table if not exists notifications (
     id uuid primary key default gen_random_uuid(),
     recipient text not null,

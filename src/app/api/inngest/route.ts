@@ -1,4 +1,5 @@
 import { serve } from "inngest/next";
+import { aeoWatch } from "@/inngest/aeo";
 import { channelReply } from "@/inngest/channel-reply";
 import { inngest } from "@/inngest/client";
 import { dispatchEvents } from "@/inngest/dispatch-events";
@@ -13,6 +14,7 @@ import { watch } from "@/inngest/watch";
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
+    aeoWatch,
     channelReply,
     dispatchEvents,
     documentApproval,
