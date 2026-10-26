@@ -70,6 +70,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-62  | Infrastructure as code: Terraform on three targets, a Helm chart, releases with smoke and rollback, the pipeline          | M    | done   |
 | WB-63  | Isolation and scale: tiers, egress allowlist, KMS keys, the single tenant, four bottlenecks, runbooks, the questionnaire  | M    | done   |
 | WB-64  | Ship to a customer: the release checklist, a review pack, five usability sessions, the top findings shipped               | M    | done   |
+| WB-65  | Growth: the site for answer engines, citations measured weekly, a scored target list, compliant outreach                  | M    | done   |
 
 ## Acceptance criteria
 
@@ -412,3 +413,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `docs/review.md`: the architecture and the data's path on one page for a customer's reviewers
 - `docs/research.md`: the plan, consent text and five tasks; five sessions by role, findings with counts, quotes and severity, each change marked docs, configuration or code
 - Shipped: the ordered sequence from an empty project, the missing-document path with dates and names in the admin pages, the questionnaire's tense, the cost box, the spend runbook; D26
+
+### WB-65 Growth: the site for answer engines, citations measured weekly, a scored target list, compliant outreach
+
+- `site/`: five question pages, structured data, author and date, robots, sitemap, `llms.txt`, from `site/src/site.ts`; `pnpm check:aeo`
+- `pnpm aeo` and the Monday job `aeo-watch`, results in `citations`; the baseline run
+- `src/lib/accounts.ts` and a 25-account pilot in `content/growth/accounts.json`; `src/lib/outreach.ts` and `/api/unsubscribe`
+- `docs/growth.md`; D27
