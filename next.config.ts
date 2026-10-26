@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // A self-contained server in .next/standalone, with only the files it uses: what the container image runs.
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   // Playwright drives a browser from its own package files; it is not for bundling.

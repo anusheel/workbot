@@ -45,8 +45,9 @@ if (!tasks.every((t) => evalTasks.includes(t)))
 const subset = values.smoke ? "smoke" : "full";
 // A mean under this is a broken prompt, whatever the baseline was.
 const threshold = 0.7;
+// CI's checkout, the image's build, or the working tree.
 const commit =
-  process.env.GITHUB_SHA?.slice(0, 7) ??
+  (process.env.GITHUB_SHA || process.env.COMMIT_SHA)?.slice(0, 7) ||
   execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim();
 
 async function promptText(): Promise<[string, string]> {

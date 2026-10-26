@@ -1,0 +1,12 @@
+# What the image is built from: the source, not what a machine made of it.
+.git
+.data
+.next
+.turbo
+.env*
+!.env.example
+node_modules
+site/node_modules
+site/.next
+error.log
+tsconfig.tsbuildinfo

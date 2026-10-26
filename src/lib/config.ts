@@ -25,11 +25,14 @@ const list = (value: string | undefined) =>
     .map((v) => v.trim())
     .filter(Boolean) ?? [];
 
+// Set by Vercel on its builds, and by the image build everywhere else.
+const commit = process.env.VERCEL_GIT_COMMIT_SHA || process.env.COMMIT_SHA;
+
 export const config = {
   // The customer this deployment serves: a file in content/customers, and the tenant every row it writes belongs to.
   customer: customerId(process.env.CUSTOMER),
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
-  commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
+  commit: commit?.slice(0, 7) || "local",
   // A postgres:// URL, or a directory for an embedded PGlite database.
   database: process.env.DATABASE_URL || ".data/pg",
   // A task's model instead of the routing table's first, as task=provider/size pairs:
