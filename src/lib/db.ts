@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite-pgvector";
 import postgres from "postgres";
@@ -90,12 +91,31 @@ export function connect(
  * An embedded database has one connection, so the owner steps down to the
  * app's role on it instead.
  */
+const schemaVersion = createHash("sha256")
+  .update(schema.join("\n"))
+  .digest("hex");
+
 async function prepare(database: string): Promise<Connection> {
   const owner = connect(database, { owner: true });
   // Instances that start together take turns: `create table if not exists` is not safe against itself.
   await owner.query(`select pg_advisory_lock(hashtext('workbot schema'))`);
   try {
-    for (const statement of schema) await owner.query(statement);
+    // Once per version of the schema: a replica starting under load would
+    // otherwise take its tables' locks only to find nothing to change.
+    await owner.query(
+      `create table if not exists schema_version (hash text primary key)`,
+    );
+    const applied = await owner.query(
+      `select 1 from schema_version where hash = $1`,
+      [schemaVersion],
+    );
+    if (applied.length === 0) {
+      for (const statement of schema) await owner.query(statement);
+      await owner.query(
+        `insert into schema_version (hash) values ($1) on conflict do nothing`,
+        [schemaVersion],
+      );
+    }
   } finally {
     await owner.query(`select pg_advisory_unlock(hashtext('workbot schema'))`);
   }

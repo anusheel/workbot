@@ -388,6 +388,8 @@ const tenancy = [
       end if;
     end $$`,
   ),
+  // Lists read the newest requests first; without this each one sorted the table.
+  `create index if not exists requests_newest on requests (tenant, created_at desc)`,
   `grant usage on schema public to workbot_app`,
   `grant select, insert, update, delete on all tables in schema public to workbot_app`,
   `grant usage, select on all sequences in schema public to workbot_app`,
