@@ -54,6 +54,7 @@ test("a list keeps its newest entries, and a queue gives them back in order", as
   expect(await state.enqueue("t-2", entry("b"), 10)).toBe(2);
   expect(await state.queueDepth("t-2")).toBe(2);
   expect(await state.dequeue("t-2")).toMatchObject({ message: { id: "a" } });
+  expect(await state.queueDepth("t-2")).toBe(1);
   expect(await state.dequeue("t-2")).toMatchObject({ message: { id: "b" } });
   expect(await state.dequeue("t-2")).toBeNull();
   expect(await state.dequeue("t-3")).toBeNull();

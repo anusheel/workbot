@@ -75,6 +75,8 @@ export const config = {
   slack: {
     botToken: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
+    // The bot's own user id (U…); with it, a cold start skips asking Slack who the bot is.
+    botUserId: process.env.SLACK_BOT_USER_ID,
   },
   // The spend in a day that raises an alert.
   alerts: { dailyDollars: dailyDollars(process.env.ALERT_DAILY_DOLLARS) },

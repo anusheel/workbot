@@ -49,14 +49,16 @@ export async function answer(
   return reply;
 }
 
-const { botToken, signingSecret } = config.slack;
+const { botToken, signingSecret, botUserId } = config.slack;
 
 /** The Slack bot, when the Slack app is configured: a mention starts a thread it follows, and each reply in the thread continues it. */
 export const bot =
   botToken && signingSecret
     ? new Chat({
         userName: "workbot",
-        adapters: { slack: createSlackAdapter({ botToken, signingSecret }) },
+        adapters: {
+          slack: createSlackAdapter({ botToken, signingSecret, botUserId }),
+        },
         state: databaseState(),
       })
     : undefined;

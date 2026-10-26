@@ -110,7 +110,7 @@ export function databaseState(): StateAdapter {
     async dequeue(threadId) {
       const [row] = await query<{ entry: QueueEntry | null }>(
         // The FROM clause reads the row as it was, so the head comes back as it is removed; only the thread's lock holder dequeues.
-        `update chat_state c set value = c.value - 0
+        `update chat_state c set value = c.value - 0::integer
          from (select value->0 as entry from chat_state where key = $1) head
          where c.key = $1 returning head.entry`,
         [queueKey(threadId)],

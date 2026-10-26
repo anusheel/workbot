@@ -5,6 +5,8 @@ import { POST } from "./route";
 vi.hoisted(() => {
   process.env.SLACK_BOT_TOKEN = "xoxb-test";
   process.env.SLACK_SIGNING_SECRET = "slack-secret";
+  // Known, so the adapter does not ask Slack who the bot is: no test reaches the network.
+  process.env.SLACK_BOT_USER_ID = "U0WORKBOT";
 });
 
 // How Slack signs: v0, the timestamp and the raw body, under the app's signing secret.
