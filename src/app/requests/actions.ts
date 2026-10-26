@@ -83,7 +83,11 @@ export async function attachRecording(id: string, formData: FormData) {
   const file = formData.get("recording");
   if (!(file instanceof File) || file.size === 0) return;
   const dir = await mkdtemp(join(tmpdir(), "workbot-recording-"));
-  const path = join(dir, basename(file.name) || "recording");
+  // A temporary file, not one of the app's: without the comment the build copies the whole project into its output.
+  const path = join(
+    /*turbopackIgnore: true*/ dir,
+    basename(file.name) || "recording",
+  );
   try {
     await writeFile(path, new Uint8Array(await file.arrayBuffer()));
     const model = modelFor("read");

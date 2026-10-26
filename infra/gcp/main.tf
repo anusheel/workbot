@@ -86,6 +86,8 @@ ephemeral "random_password" "database" {
   special = false
 }
 
+# Cloud SQL makes a user it creates a member of cloudsqlsuperuser, which may
+# create roles: the schema makes the app's own role on first connection.
 resource "google_sql_user" "workbot" {
   name                = "workbot"
   instance            = google_sql_database_instance.workbot.name
