@@ -26,7 +26,8 @@ COPY --from=build --chown=node /app/.next/static ./.next/static
 COPY --from=build --chown=node /app/public ./public
 # Read at run time: the customer, the rules, the knowledge base, the defaults.
 COPY --from=build --chown=node /app/content ./content
-USER node
+# The node user, by number, so a cluster can tell it is not root.
+USER 1000
 EXPOSE 3000
 CMD ["node", "server.js"]
 
@@ -34,5 +35,5 @@ FROM deps AS tools
 ARG COMMIT_SHA
 ENV COMMIT_SHA=$COMMIT_SHA
 COPY . .
-USER node
+USER 1000
 CMD ["node", "--import", "tsx", "realtime/server.ts"]
