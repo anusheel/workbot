@@ -16,9 +16,9 @@ Where WorkBot can run, what it costs at 1,000 and at 100,000 monthly active user
 | Identity           | what the services may touch                         | the platform's tokens      | an IAM role per task                  | a service account         | a managed identity             |
 | Models             | Anthropic's API                                     | the same                   | the same, or Bedrock in region        | the same, or Vertex AI    | the same, or Microsoft Foundry |
 
-Three choices made earlier keep every column open: everything runs in containers, everything kept is in Postgres, and the queue is an engine that runs anywhere. Nothing in the code names a cloud. Two products a customer might expect are absent on purpose. A cloud queue (SQS, Pub/Sub, Service Bus) would duplicate Inngest, which already retries and orders the work. Object storage waits until the bytes do not fit: at 100,000 users, documents kept 30 days come to about 20 GB, which Postgres holds without strain.
+Three choices made earlier keep every column open: everything runs in containers, everything kept is in Postgres, and the queue is an engine that runs anywhere. Nothing in the code names a cloud. Two products a customer might expect are absent on purpose. A cloud queue (SQS, Pub/Sub, Service Bus) would duplicate Inngest, which already retries and orders the work. Object storage waits until the bytes do not fit: at 100,000 users, documents of about 100 KB kept 30 days come to about 20 GB, which Postgres holds without strain.
 
-The managed model endpoints matter to customers more than to the code. A regulated customer may accept a model only inside its own cloud account, in a named region, under an agreement its procurement team already holds. Bedrock, Vertex AI and Foundry serve Claude on those terms. Using one is a third entry in the providers of `src/lib/providers.ts`, and a route per task that names it.
+The managed model endpoints matter to customers more than to the code. A regulated customer may accept a model only inside its own cloud account, in a named region, under an agreement its procurement team already holds. Bedrock, Vertex AI and Microsoft Foundry offer Claude under the cloud's own terms; for a given model and region, check where inference runs, who processes the data, and which agreement applies. Using one is a third entry in the providers of `src/lib/providers.ts`, and a route per task that names it.
 
 ## On this machine, shaped like a cloud
 
@@ -31,14 +31,14 @@ docker compose --env-file .env.compose run --rm tools node --import tsx cli/eval
 
 On Docker Desktop with 4 CPUs and 8 GB, the stack passed what a deployment must:
 
-| Check                                        | Result                                                                                        |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `GET /api/health`                            | ok, database ok, and the commit the image was built from                                      |
-| Inngest's sync                               | 10 functions, served by the web container                                                     |
-| 2 documents through `POST /api/documents`    | each classified, stored, and a request opened by the workflow                                 |
-| The eval smoke suite, in the tools container | chat 0.95, extract 0.89, triage 0.88, security 1.00: every gate passed                        |
-| The load test, 500 documents                 | none lost; the steady senders finished within 97 s, the noisy one's 300 in 368 s              |
-| The realtime server                          | a socket that stops answering pings ended within 60 s; a page reconnected 2 s after a restart |
+| Check                                        | Result                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/health`                            | ok, database ok, and the commit the image was built from                                                                                               |
+| Inngest's sync                               | 10 functions, served by the web container                                                                                                              |
+| 2 documents through `POST /api/documents`    | each classified, stored, and a request opened by the workflow                                                                                          |
+| The eval smoke suite, in the tools container | chat 0.95, extract 0.89, triage 0.88, security 1.00: every gate passed                                                                                 |
+| The load test, 500 documents                 | none lost; the steady senders finished within 97 s, the noisy one's 300 in 368 s                                                                       |
+| The realtime server                          | a socket that stops answering pings ended within 60 s; a client reopened its socket 2 s after it closed; a restart took 1 s, against about 10 s before |
 
 Running in containers found five things that a laptop had hidden:
 
@@ -81,7 +81,7 @@ What the numbers say:
 
 - **At 1,000 users the platform is the bill**, about 90% of it, and most of that is minimums: a standby database, the job engine's plan, instances kept running. The heartbeat alone moves Inngest from free to $99; requesting delivery when an event is written, with a sweep every ten minutes, would bring it under the free tier.
 - **At 100,000 users the model is the bill**, 75 to 80% of it, and the three platforms are within 7% of each other. At that scale the platform is chosen for control and compliance, not price. The levers are the model's: the large model is priced at 20 times the small one, so every turn on it would take the model's line from $1,800 to about $32,000.
-- **Allocation is already in place.** The runbook labels every service by app, environment and tier, which splits the platform bill; the model bill is split by the traces, which record each call's tenant, task, model and dollars.
+- **Allocation is already in place.** The runbook gives each environment its own project and labels what takes labels by app and environment, and the services by tier, which splits the platform bill; the model bill is split by the traces, which record each call's tenant, task, model and dollars.
 
 ## Recommendation: Fieldstone Supply
 

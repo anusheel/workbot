@@ -33,10 +33,10 @@ Previews never touch the customer's data. A Neon project holds a `main` branch w
 One project per environment, a budget before anything runs, one service account that can read its secrets and nothing else. The database has only a private address, and the services reach it through the project's network.
 
 ```sh
-PROJECT=workbot-prod REGION=us-central1 DOMAIN=workbot.example.com
+PROJECT=workbot-prod REGION=us-central1 DOMAIN=workbot.example.com LABELS=app=workbot,env=prod
 TAG=$(git rev-parse --short HEAD) IMAGES=$REGION-docker.pkg.dev/$PROJECT/workbot
 
-gcloud projects create $PROJECT --labels=app=workbot,env=prod
+gcloud projects create $PROJECT --labels=$LABELS
 gcloud billing projects link $PROJECT --billing-account=$BILLING_ACCOUNT
 gcloud billing budgets create --billing-account=$BILLING_ACCOUNT --display-name=workbot-prod \
   --budget-amount=300USD --filter-projects=projects/$PROJECT \
@@ -49,7 +49,7 @@ gcloud services enable run.googleapis.com sqladmin.googleapis.com secretmanager.
 **Images.** Cloud Run runs x86-64 images only, so a build on Apple silicon names the platform.
 
 ```sh
-gcloud artifacts repositories create workbot --repository-format=docker --location=$REGION
+gcloud artifacts repositories create workbot --repository-format=docker --location=$REGION --labels=$LABELS
 gcloud auth configure-docker $REGION-docker.pkg.dev
 for target in web tools; do
   docker buildx build --platform linux/amd64 --target $target \
@@ -74,16 +74,16 @@ gcloud sql users create workbot --instance=workbot --password="$DB_PASSWORD"
 DB_HOST=$(gcloud sql instances describe workbot --format='value(ipAddresses[0].ipAddress)')
 ```
 
-**Secrets and the service account.** Values go in through standard input, so none lands in the shell's history.
+**Secrets and the service account.** Values go in through standard input, so none lands in the shell's history. `BROWSER_URL` is a hosted browser service's address with its token, as for Vercel: a browser on Cloud Run would want an identity token that the Playwright client does not send.
 
 ```sh
 printf 'postgres://workbot:%s@%s:5432/workbot' "$DB_PASSWORD" "$DB_HOST" |
-  gcloud secrets create database-url --data-file=-
-printf %s "$ANTHROPIC_API_KEY" | gcloud secrets create anthropic-api-key --data-file=-
-openssl rand -base64 32 | tr -d '\n' | gcloud secrets create secrets-key --data-file=-
-printf %s "$INNGEST_EVENT_KEY" | gcloud secrets create inngest-event-key --data-file=-
-printf %s "$INNGEST_SIGNING_KEY" | gcloud secrets create inngest-signing-key --data-file=-
-printf %s "$BROWSER_URL" | gcloud secrets create browser-url --data-file=-
+  gcloud secrets create database-url --data-file=- --labels=$LABELS
+printf %s "$ANTHROPIC_API_KEY" | gcloud secrets create anthropic-api-key --data-file=- --labels=$LABELS
+openssl rand -base64 32 | tr -d '\n' | gcloud secrets create secrets-key --data-file=- --labels=$LABELS
+printf %s "$INNGEST_EVENT_KEY" | gcloud secrets create inngest-event-key --data-file=- --labels=$LABELS
+printf %s "$INNGEST_SIGNING_KEY" | gcloud secrets create inngest-signing-key --data-file=- --labels=$LABELS
+printf %s "$BROWSER_URL" | gcloud secrets create browser-url --data-file=- --labels=$LABELS
 
 gcloud iam service-accounts create workbot-run --display-name="WorkBot services"
 SA=workbot-run@$PROJECT.iam.gserviceaccount.com
@@ -102,12 +102,12 @@ SECRETS=DATABASE_URL=database-url:latest,ANTHROPIC_API_KEY=anthropic-api-key:lat
 gcloud run deploy workbot-web --image=$IMAGES/web:$TAG $NET --set-secrets=$SECRETS \
   --set-env-vars=CUSTOMER=fieldstone,APP_URL=https://app.$DOMAIN,REALTIME_URL=wss://live.$DOMAIN,COOKIE_DOMAIN=$DOMAIN \
   --cpu=1 --memory=1Gi --concurrency=40 --timeout=300 --allow-unauthenticated \
-  --labels=app=workbot,env=prod,tier=web
+  --labels=$LABELS,tier=web
 gcloud run deploy workbot-realtime --image=$IMAGES/tools:$TAG $NET \
   --command=node --args=--import,tsx,realtime/server.ts \
   --set-secrets=DATABASE_URL=database-url:latest --set-env-vars=APP_URL=https://app.$DOMAIN \
   --min-instances=1 --max-instances=4 --timeout=3600 --allow-unauthenticated \
-  --labels=app=workbot,env=prod,tier=realtime
+  --labels=$LABELS,tier=realtime
 gcloud run domain-mappings create --service=workbot-web --domain=app.$DOMAIN --region=$REGION
 gcloud run domain-mappings create --service=workbot-realtime --domain=live.$DOMAIN --region=$REGION
 curl -X PUT https://app.$DOMAIN/api/inngest
@@ -118,9 +118,9 @@ Each mapping prints the DNS records to add at the customer's registrar. The last
 **The checks, as jobs on the same network.**
 
 ```sh
-gcloud run jobs create workbot-eval --image=$IMAGES/tools:$TAG $NET --set-secrets=$SECRETS \
+gcloud run jobs create workbot-eval --image=$IMAGES/tools:$TAG $NET --set-secrets=$SECRETS --labels=$LABELS \
   --command=node --args=--import,tsx,cli/eval.ts,--task,all,--smoke,--runs,2,--gate
-gcloud run jobs create workbot-load --image=$IMAGES/tools:$TAG $NET --set-secrets=$SECRETS \
+gcloud run jobs create workbot-load --image=$IMAGES/tools:$TAG $NET --set-secrets=$SECRETS --labels=$LABELS \
   --command=node --args=--import,tsx,cli/load.ts --task-timeout=45m
 gcloud run jobs execute workbot-eval --region=$REGION --wait
 gcloud run jobs execute workbot-load --region=$REGION --wait
