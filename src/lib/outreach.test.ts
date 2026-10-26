@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { GET } from "@/app/api/unsubscribe/route";
+import { GET, POST } from "@/app/api/unsubscribe/route";
 import { config } from "./config";
 import {
   addressOf,
@@ -39,7 +39,7 @@ test("a token works only for the address it was signed for", () => {
   expect(addressOf(`${token.split(".")[0]}.forged`)).toBeUndefined();
 });
 
-test("the sequence waits its days, stops at a reply, and stops for good at an unsubscribe", async () => {
+test("the sequence waits its days, stops at a reply, and stops for good at an unsubscribe, which a link preview cannot make", async () => {
   const start = new Date("2026-10-01");
   const on = (day: number) => new Date(start.getTime() + day * 86_400_000);
   expect(

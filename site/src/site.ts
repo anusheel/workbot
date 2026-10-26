@@ -1,7 +1,12 @@
 // What every page says about itself: where the site lives, who wrote it, and
 // when it last changed. Answer engines weigh all three.
 export const site = {
-  url: process.env.SITE_URL ?? "http://localhost:3001",
+  // SITE_URL where it is set, Vercel's production address on Vercel, this machine otherwise.
+  url:
+    process.env.SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3001"),
   name: "WorkBot",
   author: "Anusheel Bhushan",
   updated: "2026-10-26",
