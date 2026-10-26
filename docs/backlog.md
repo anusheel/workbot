@@ -64,6 +64,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-56  | Config-first: three levels, the rule language and the model's proposals, the entity generator, the task graph    | M    | done   |
 | WB-57  | Security: roles and keys, tenants in the database, tools checked below the model, sealed tokens, injection evals | M    | done   |
 | WB-58  | Documents and spreadsheets: formats by their bytes, two paths for a PDF, tracked changes, SQL over 50,000 rows   | M    | done   |
+| WB-59  | One agent on 4 channels: conversations on the server, identities linked by a code, Twilio, Slack, a hand-off     | M    | done   |
 
 ## Acceptance criteria
 
@@ -362,3 +363,11 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `src/lib/extract.ts`: `route` sends a text PDF as its text and a scan or an image as the file, the path kept on the document and shown on the request; the contract schema, read with its changes accepted and every change listed
 - `src/lib/sheets.ts`, `/admin/sheets`: a workbook read into a typed table past its title, merges and formulas, its totals row checked against its rows; a DuckDB of its own per question with no file, network or settings access; one SELECT at a time, 50 rows, 5 s; the answer with every query and its rows; the `analyze` route; sheets kept 30 days
 - `pnpm formats`, `content/eval/contracts.json`, `src/lib/eval-formats.ts`: 10 invoices by 3 paths, 10 contracts, 5 questions of a seeded 50,000-row export with answers computed in code; `docs/documents.md`; D20
+
+### WB-59 One agent on 4 channels: conversations on the server, identities linked by a code, Twilio, Slack, a hand-off
+
+- `src/lib/assistant.ts`, `src/lib/history.ts`: one turn for every channel, the web's included; conversations kept on the server with each message's channel, the server's copy the one a turn starts from, 90 days
+- `src/lib/channels.ts`: one shape for an inbound message, per-channel writing rules enforced on the reply, a one-time code that links a phone or a Slack account to a person and a conversation, STOP and START, the role of a linked employee
+- `src/lib/twilio.ts`, `src/lib/outbound.ts`, `src/inngest/channel-reply.ts`, `/api/webhooks/twilio`: signed webhooks, the reply as workflow steps, an outbox that never sends twice, retries on provider failures, status callbacks, WhatsApp's 24-hour window and its template
+- `src/lib/bot.ts`, `src/lib/chat-state.ts`, `/api/webhooks/slack`: Slack through the Chat SDK, a thread as a conversation, tool use as a card, the SDK's state in a tenant-separated table
+- `hand_off` on every channel, `/admin/channels`, the phone link on the chat page, Slack's in settings; `docs/channels.md`; D21

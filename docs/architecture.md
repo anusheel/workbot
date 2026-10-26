@@ -10,7 +10,7 @@ flowchart LR
     web["Web app: chat, requests, voice line, dashboards, admin"]
     cli["Terminal: pnpm chat, explain, scrape, browse, video, extract, formats, eval, routes"]
     site["Public site: site/, static"]
-    api["API: /api/chat, /api/intake, /api/documents, /api/voice, /api/generate, /api/requests"]
+    api["API: /api/chat, /api/intake, /api/documents, /api/voice, /api/generate, /api/requests, webhooks for GitHub, Twilio and Slack"]
   end
   subgraph app ["Next.js app (Vercel)"]
     routes["Route handlers and Server Actions"]
@@ -24,7 +24,7 @@ flowchart LR
     crons["reminders, watch"]
   end
   subgraph data ["Postgres with pgvector"]
-    tables["requests, chunks, memories, inbox, documents, sheets, reports, recordings, traces, prompts, notifications"]
+    tables["requests, conversations, channels, outbound, chunks, memories, inbox, documents, sheets, reports, recordings, traces, prompts, notifications"]
   end
   models["Routed by task: Haiku for chat, research, extraction, triage, summaries, reading and SQL over sheets, Sonnet for generation and the judge, the other model behind each but the judge; OpenAI when keyed"]
   outside["The web through a guarded fetch, Chrome through Playwright, ffmpeg; Brave, Voyage and PostHog when keyed"]
@@ -64,7 +64,7 @@ Everything is in one Postgres database, one idempotent schema in `src/lib/schema
 - **People and access**: `users` with a role, `keys` stored as hashes, `sessions` a key opens, `credentials` sealed with AES-256-GCM. Every table, these included, carries a tenant and a forced row-level security policy; the app queries as `workbot_app`.
 - **Operations data**: `traces` (every model call: tenant, purpose, prompt version, tokens, cached tokens, dollars, latency, success or the error message; no prompt or reply content), `prompts` (versions and traffic shares), `notifications` (the outbox), `inbox` (the workflow's status per document).
 
-Flows are short. A chat message: cookie to visitor, memories and a compacted history to the prompt, the model with tools, a reply streamed back, memories extracted after the response. A document: bytes to the inbox, an event to Inngest, steps that read the bytes back from the database, a request and a document at the end, a notification in the outbox. A question about a sheet: the stored file read into a DuckDB of its own, the model's SELECTs run against it, the answer back on the page with every query and its rows.
+Flows are short. A chat message: cookie to visitor, memories and a compacted history to the prompt, the model with tools, a reply streamed back, memories extracted after the response. A document: bytes to the inbox, an event to Inngest, steps that read the bytes back from the database, a request and a document at the end, a notification in the outbox. A text message: Twilio's signed webhook, an event to Inngest, the same turn the web takes from the conversation on the server, the reply through the outbox, Twilio's status back by callback. A question about a sheet: the stored file read into a DuckDB of its own, the model's SELECTs run against it, the answer back on the page with every query and its rows.
 
 ## Technology
 
