@@ -68,6 +68,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-60  | Execution models: every operation classified, fair jobs with dead letters, events in Postgres, resumable chat, live calls | M    | done   |
 | WB-61  | Cloud services: two images, a stack shaped like a cloud, costs at two scales, a recommendation, the deployments written   | M    | done   |
 | WB-62  | Infrastructure as code: Terraform on three targets, a Helm chart, releases with smoke and rollback, the pipeline          | M    | done   |
+| WB-63  | Isolation and scale: tiers, egress allowlist, KMS keys, the single tenant, four bottlenecks, runbooks, the questionnaire  | M    | done   |
 
 ## Acceptance criteria
 
@@ -396,3 +397,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `infra/kubernetes` and `infra/chart`: the Gateway API, Traefik, KEDA and the secrets; every service from one template, scaling on the queue's depth, a migration hook, the smoke suite as `helm test`; applied to a local cluster, recreated from nothing and timed
 - `infra/release.sh` and `infra/gcp/release.sh`: migrate, smoke, move traffic, roll back; `infra/azure`: a VM with a hardened systemd unit behind a load balancer, keys from Key Vault
 - `.github/workflows/infra.yml` and `release.yml`: checks and mocked plans on every pull request, apply after approval and release by tag once an account is connected; `docs/infrastructure.md`; D24
+
+### WB-63 Isolation and scale: tiers, egress allowlist, KMS keys, the single tenant, four bottlenecks, runbooks, the questionnaire
+
+- `infra/egress`: every outbound call through Squid with an allowlist and a log; KMS key per environment under Cloud SQL and Secret Manager, data-access logs (`infra/gcp`)
+- The single tenant: `infra/gcp/harbor-dental.tfvars`; on a cluster, a namespace per tenant with its own database and a network policy, deployed for Harbor Dental
+- `pnpm bench` to the first bottleneck, four rounds: the list bounded, CPU scaling, an index and the schema once per version
+- `docs/isolation.md` with three runbooks and a provider-outage game day; `docs/questionnaire.md`; D25
