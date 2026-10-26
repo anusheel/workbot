@@ -1,7 +1,8 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { LanguageModel } from "ai";
-import { type Browser, chromium } from "playwright-core";
+import type { Browser } from "playwright-core";
+import { chrome } from "./chrome";
 import { type DocumentType, schemas } from "./document-model";
 import { classify } from "./documents";
 import { type Source, extract } from "./extract";
@@ -61,9 +62,9 @@ export async function documentCases(browser: Browser): Promise<DocumentCase[]> {
   return cases;
 }
 
-/** Opens the machine's Chrome for the documents that need rendering, and closes it after `fn`. */
+/** Opens a Chrome for the documents that need rendering, and closes it after `fn`. */
 export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>) {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const browser = await chrome();
   try {
     return await fn(browser);
   } finally {

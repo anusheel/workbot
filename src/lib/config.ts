@@ -74,6 +74,8 @@ export const config = {
     // A regional API host, such as https://api.dublin.ie1.twilio.com, to keep messages in a region.
     api: process.env.TWILIO_API_URL || "https://api.twilio.com",
   },
+  // A Playwright browser server, ws://…, for machines without Chrome: a container, a function. Unset, the machine's own Chrome.
+  browser: { url: process.env.BROWSER_URL },
   // The realtime server's address, ws://…, for live calls; unset, a call is not shared with staff.
   realtime: { url: process.env.REALTIME_URL },
   // The Slack app; unset, the Slack channel is off.

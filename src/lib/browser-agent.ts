@@ -1,6 +1,6 @@
 import { type LanguageModel, Output, generateText } from "ai";
-import { chromium } from "playwright-core";
 import { z } from "zod";
+import { chrome } from "./chrome";
 import type { Usage } from "./providers";
 import { isPublic } from "./web";
 
@@ -154,10 +154,10 @@ export function bounds(start: string): (url: string) => boolean {
   return (url) => url.startsWith(site) || isPublic(new URL(url));
 }
 
-/** A headless Chrome, the one installed on this machine, with the agent's viewport, kept within the bounds of `start`. */
+/** A headless Chrome with the agent's viewport, kept within the bounds of `start`. */
 export async function chromeBrowser(start: string): Promise<Browser> {
   const allowed = bounds(start);
-  const instance = await chromium.launch({ channel: "chrome", headless: true });
+  const instance = await chrome();
   // The route sits on the context, so it sees every request from every page the
   // run opens, including popups, and no service worker can answer in its place.
   const context = await instance.newContext({
