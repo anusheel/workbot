@@ -42,7 +42,9 @@ const jobs: {
   ...Array.from({ length: noisy }, (_, n) => ({
     owner: owners[0],
     name: `noisy-${n}`,
-    ...(n % Math.round(noisy / broken) === 0
+    // Exactly `broken` of them, spread through the batch.
+    ...(Math.floor(((n + 1) * broken) / noisy) >
+    Math.floor((n * broken) / noisy)
       ? { type: "application/pdf" as const, bytes: brokenPdf }
       : { type: "text/plain" as const, bytes: email(owners[0], n) }),
   })),
