@@ -3,8 +3,9 @@ import { settings } from "./settings";
 
 /**
  * Deletes what has outlived its window: traces, measurements, expired
- * sessions, and the bytes of documents whose run has ended. Each deletion runs under the deployment's tenant, so it
- * touches only its own rows. Returns how many rows each step removed.
+ * sessions, the bytes of documents whose run has ended, and spreadsheets.
+ * Each deletion runs under the deployment's tenant, so it touches only its
+ * own rows. Returns how many rows each step removed.
  */
 export async function applyRetention(
   windows = settings.retention,
@@ -36,6 +37,10 @@ export async function applyRetention(
        where status in ('stored', 'rejected', 'expired', 'failed') and length(bytes) > 0
          and updated_at < now() - make_interval(days => $1)`,
       [windows.documentBytesDays],
+    ),
+    sheets: await counts(
+      `delete from sheets where created_at < now() - make_interval(days => $1)`,
+      [windows.sheetsDays],
     ),
   };
 }

@@ -52,12 +52,19 @@ test("what has outlived its window goes, and what has not stays", async () => {
     `update inbox set status = 'stored', updated_at = now() - interval '31 days' where id = $1`,
     [item.id],
   );
+  await query(
+    `insert into sheets (name, bytes, columns, rows, totals, created_at) values ('old.xlsx', '', '[]', 0, '[]', now() - interval '31 days'), ('new.xlsx', '', '[]', 0, '[]', now())`,
+  );
 
   expect(await applyRetention()).toMatchObject({
     traces: 1,
     sessions: 1,
     documentBytes: 1,
+    sheets: 1,
   });
+  expect(await query(`select name from sheets`)).toEqual([
+    { name: "new.xlsx" },
+  ]);
   expect(await query(`select id from traces`)).toHaveLength(2);
   expect(await query(`select hash from sessions`)).toHaveLength(1);
   const [kept] = await query<{ status: string; size: number }>(
@@ -69,5 +76,6 @@ test("what has outlived its window goes, and what has not stays", async () => {
     traces: 0,
     sessions: 0,
     documentBytes: 0,
+    sheets: 0,
   });
 });
