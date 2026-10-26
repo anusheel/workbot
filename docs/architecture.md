@@ -1,6 +1,6 @@
 # WorkBot: the architecture as built
 
-WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system after Day 26: what runs, where state lives, the models, the design choices and their tradeoffs. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-25. Day 40 revisits it.
+WorkBot is the assistant and workflow engine for Fieldstone Supply's operations, finance and support teams, with a public chat for customers. This is the system at its final release, Day 40: what runs, where state lives, the models, how it is deployed and operated, the design choices and their tradeoffs, the numbers, and what would change next. Model ids and prices are those configured in `src/lib/providers.ts` on 2026-10-26.
 
 ## The system
 
@@ -97,7 +97,39 @@ Flows are short. A chat message: cookie to visitor, memories and a compacted his
 
 Built: a fallback model behind every task (the other size on the same provider), taken when a call fails with a status another model can take, and rehearsed with `OUTAGE`; step, dollar and time limits on every agent; Inngest's 3 retries per step and a failure handler that marks the document; a retry and a text fallback for the browser; words when embeddings are missing; idempotent filing (the request's creation is its own step); a public-address guard on every fetch; a rate limit on the chat; alerts on error rate and spend; the smoke evals as a gate on every pull request that touches a prompt, a tool, a model or an eval, in CI and in the fleet's queue, with the full suite nightly on the scoreboard (`docs/evals.md`).
 
-Missing, and in the design brief's plan: a second provider in the chain, which needs its key and its column in the table; a circuit breaker on a failing provider, so a long outage stops paying for the failed first call; a response cache for repeated questions; a shared store for the rate limit across instances; audio transcripts; sign-in, so a tenant is an account rather than a cookie.
+Missing: a second provider in the chain, which needs its key and its column in the table; a daily dollar cap that turns the large-model fallback off, so a long outage or a loop cannot run up the bill (the on-call study's sharpest finding); a circuit breaker on a failing provider; a rate limit for the anonymous chat shared across instances; sign-in through the customer's identity provider; a person's confirmation on writes that leave the system; audio transcripts.
+
+## Deployment and operations (Days 34 to 39)
+
+- **Two images and a database.** The web tier is Next's standalone server; a tools image runs the realtime server and every operator command. They run on Vercel with Supabase, on Cloud Run with Cloud SQL, on any Kubernetes cluster, and on an Azure VM under systemd, from Terraform in `infra/` with one root per target and one state per environment ([hosting.md](hosting.md), [infrastructure.md](infrastructure.md)).
+- **Releases are not applies.** Terraform makes each service once; a release migrates, waits for the new pods or revisions, runs the eval smoke suite and goes back on any failure. A broken tag was rolled back with the old pods serving.
+- **Isolation by layer.** Three network tiers, no public database, every outbound call through an egress allowlist with a log, a KMS key per environment under the data and the secrets, and a customer kept apart in a project or namespace of its own ([isolation.md](isolation.md)).
+- **What scale found.** An unbounded list, a scaler blind to CPU, and new replicas re-running the schema's DDL under traffic and deadlocking with inserts; the schema now runs once per version of it.
+- **What a customer receives is tested.** The runbook, admin pages, incident runbooks, security documents and cost estimate were each given to someone in one role with one task; the most severe findings shipped the same day ([research.md](research.md)).
+- **Found, measured, sold within the rules.** The public site is built for answer engines and checked in CI, citations are measured weekly, the target profile is code, and outreach carries its opt-out in every message ([growth.md](growth.md)).
+- **Analytics as tested SQL.** Five metrics in SQL files with data tests, and an analyst agent that answers from them in SQL it shows ([analytics.md](analytics.md)).
+
+## The numbers
+
+| Measure                                 | Value                                                                                                                                   |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Eval scores, Anthropic's small models   | chat 0.92, extraction 0.92, triage 0.96 (full set), security 1.00 of 20 attacks                                                         |
+| Eval scores, OpenAI                     | not measured: no key; the routing table has the column waiting                                                                          |
+| Cost per chat turn                      | $0.0008 on the small route, about 2.8 model calls; a document about $0.001                                                              |
+| p95 latency of a chat model call        | 3.1 s on the small route, 4.8 s on the large                                                                                            |
+| Deployment from a clean cluster         | 512 s with the smoke suite (Day 35); the final release into Harbor Dental's isolated namespace, 186 s from upgrade to every gate passed |
+| API throughput on one 4-CPU node        | 846 calls a second at 200 workers, p95 573 ms, no errors                                                                                |
+| Pull requests merged by the agent fleet | 50 in 2.4 hours, 20.6 an hour (Day 22)                                                                                                  |
+| Monthly cost at 1,000 users             | about $180 on the neo-cloud, $240 on Google Cloud, $262 on AWS                                                                          |
+
+## What would change next
+
+1. **A spend cap with teeth.** A daily dollar limit that turns the large-model fallback off, so the most expensive failure is a slower answer, not a bill.
+2. **A second provider in production.** The routing layer is ready; the column needs a key and an eval run, and then an outage costs latency instead of answers.
+3. **Sign-in through the customer's identity provider,** with a second factor, and scoping by team or location for customers with several sites.
+4. **The investigation as a job.** It still runs for minutes inside a request (Day 33); as a job with progress on the page it would survive a deploy.
+5. **Eval sets per customer.** The sets are Fieldstone's, so Harbor Dental's release ran them as Fieldstone; its own policies and teams need cases of their own.
+6. **Object storage for documents,** once the bytes outgrow the database, and the deployment's own data in the analytics instead of the seed.
 
 ## Audited against the principles (Day 26)
 

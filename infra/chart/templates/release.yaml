@@ -41,9 +41,14 @@ spec:
       command: [node, --import, tsx, cli/eval.ts, --task, all, --smoke, --runs, "2", --gate]
       env:
         - { name: BROWSER_URL, value: ws://browser:3000/ }
+        # The release's own settings, except the customer: the eval sets are written
+        # for one, whose teams and policies their cases name.
         {{- range $key, $value := .Values.env }}
+        {{- if ne $key "CUSTOMER" }}
         - { name: {{ $key }}, value: {{ $value | quote }} }
         {{- end }}
+        {{- end }}
+        - { name: CUSTOMER, value: {{ .Values.evalCustomer | quote }} }
       envFrom:
         - secretRef: { name: workbot }
         - secretRef: { name: postgres }
