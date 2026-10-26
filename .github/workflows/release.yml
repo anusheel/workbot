@@ -1,51 +1,73 @@
 name: Release
 
-# A tag releases its commit: the two images built and pushed under the commit's
-# short hash, then infra/release.sh on the cluster, which migrates, waits for
-# the new pods, runs the eval smoke suite and rolls back on any failure.
-# It runs once a cluster is connected: the repository variable CLUSTER set to
-# true, its kubeconfig in the KUBECONFIG secret, and an environment named
-# production whose deployments wait for a reviewer.
+# A tag releases its commit: the two images built once under the commit's short
+# hash, then the target's release script, which migrates, runs the eval smoke
+# suite, moves traffic and goes back on any failure. Each job runs once its
+# target is connected, and waits for a reviewer in the production environment.
 on:
   push:
     tags: ["v*"]
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  release:
+  # Google Cloud: the repository variables GCP_PROJECT, GCP_WORKLOAD_IDENTITY_PROVIDER,
+  # GCP_SERVICE_ACCOUNT and APP_DOMAIN.
+  cloud-run:
+    if: vars.GCP_PROJECT != ''
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      REGISTRY: us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/workbot
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+      - run: |
+          for target in web tools; do
+            docker build --target $target --build-arg COMMIT_SHA=$GITHUB_SHA -t $REGISTRY/$target:${GITHUB_SHA::7} .
+            docker push $REGISTRY/$target:${GITHUB_SHA::7}
+          done
+      - run: infra/gcp/release.sh ${GITHUB_SHA::7}
+        env:
+          DOMAIN: ${{ vars.APP_DOMAIN }}
+
+  # A Kubernetes cluster: the repository variables CLUSTER (true) and APP_URL,
+  # and the cluster's kubeconfig in the KUBECONFIG secret.
+  cluster:
     if: vars.CLUSTER == 'true'
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io/${{ github.repository_owner }}
     steps:
       - uses: actions/checkout@v7
-      - run: echo "TAG=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
-      - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7
-        with:
-          target: web
-          push: true
-          build-args: COMMIT_SHA=${{ github.sha }}
-          tags: ghcr.io/${{ github.repository_owner }}/workbot-web:${{ env.TAG }}
-      - uses: docker/build-push-action@v7
-        with:
-          target: tools
-          push: true
-          build-args: COMMIT_SHA=${{ github.sha }}
-          tags: ghcr.io/${{ github.repository_owner }}/workbot-tools:${{ env.TAG }}
+      - run: |
+          for target in web tools; do
+            docker build --target $target --build-arg COMMIT_SHA=$GITHUB_SHA -t $REGISTRY/workbot-$target:${GITHUB_SHA::7} .
+            docker push $REGISTRY/workbot-$target:${GITHUB_SHA::7}
+          done
       - uses: azure/setup-helm@v5
         with:
           version: v4.3.1
       - run: |
           mkdir -p ~/.kube
           printf '%s' "$KUBECONFIG_FILE" > ~/.kube/config
-          infra/release.sh "$TAG" --set registry=ghcr.io/${{ github.repository_owner }}/
+          infra/release.sh ${GITHUB_SHA::7} --set registry=$REGISTRY/ --set appUrl=${{ vars.APP_URL }}
         env:
           KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
