@@ -11,7 +11,7 @@ locals {
   labels  = { app = "workbot", env = var.environment }
   images  = "${var.region}-docker.pkg.dev/${var.project}/workbot"
   secrets = ["anthropic-api-key", "secrets-key", "inngest-event-key", "inngest-signing-key", "browser-url"]
-  apis    = ["run", "sqladmin", "secretmanager", "artifactregistry", "servicenetworking", "compute", "cloudkms"]
+  apis    = ["run", "sqladmin", "secretmanager", "artifactregistry", "servicenetworking", "compute", "cloudkms", "monitoring", "billingbudgets", "cloudresourcemanager"]
   # The environment variables each secret fills, for the web tier and the jobs.
   app_secrets = {
     DATABASE_URL        = "database-url"
@@ -31,8 +31,8 @@ resource "google_project_service" "api" {
 
 # One key per environment, rotated every 90 days, under the database and every
 # secret: the data is encrypted with keys of its own, and those keys with this
-# one, which never leaves KMS. The Cloud SQL service agent must exist first:
-# `gcloud beta services identity create --service=sqladmin.googleapis.com`.
+# one, which never leaves KMS. The two service agents that use it must exist
+# first: `gcloud beta services identity create --service=<sqladmin|secretmanager>.googleapis.com`.
 data "google_project" "this" {}
 
 resource "google_kms_key_ring" "workbot" {
@@ -323,4 +323,43 @@ resource "google_compute_global_forwarding_rule" "app" {
   port_range            = "443"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   labels                = local.labels
+}
+
+# Watched from outside: the health check every minute, from several regions.
+resource "google_monitoring_uptime_check_config" "health" {
+  display_name = "workbot-${var.environment} health"
+  timeout      = "10s"
+  period       = "60s"
+  http_check {
+    path         = "/api/health"
+    port         = 443
+    use_ssl      = true
+    validate_ssl = true
+  }
+  monitored_resource {
+    type   = "uptime_url"
+    labels = { project_id = var.project, host = var.domain }
+  }
+}
+
+# A budget for the environment's project, with an email to the billing admins
+# at half, nine tenths and all of it.
+resource "google_billing_budget" "monthly" {
+  billing_account = var.billing_account
+  display_name    = "workbot-${var.environment}"
+  budget_filter {
+    projects = ["projects/${data.google_project.this.number}"]
+  }
+  amount {
+    specified_amount {
+      currency_code = "USD"
+      units         = tostring(var.monthly_budget)
+    }
+  }
+  dynamic "threshold_rules" {
+    for_each = [0.5, 0.9, 1.0]
+    content {
+      threshold_percent = threshold_rules.value
+    }
+  }
 }
