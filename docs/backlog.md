@@ -66,6 +66,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-58  | Documents and spreadsheets: formats by their bytes, two paths for a PDF, tracked changes, SQL over 50,000 rows            | M    | done   |
 | WB-59  | One agent on 4 channels: conversations on the server, identities linked by a code, Twilio, Slack, a hand-off              | M    | done   |
 | WB-60  | Execution models: every operation classified, fair jobs with dead letters, events in Postgres, resumable chat, live calls | M    | done   |
+| WB-61  | Cloud services: two images, a stack shaped like a cloud, costs at two scales, a recommendation, the deployments written   | M    | done   |
 
 ## Acceptance criteria
 
@@ -380,3 +381,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `src/lib/events.ts`: `request.created` written with its request, consumers (notifications, analytics) reading from their own positions, versioned readers, a bad event dead-lettered after 3 tries
 - `src/lib/resumable.ts`, `/api/chat/[id]/stream`: chat replies kept in parts and resumed after a reload
 - `src/lib/realtime.ts`, `pnpm realtime`, `/admin/calls`: WebSockets for live voice calls across instances over Postgres's NOTIFY; the schema applied under an advisory lock; D22
+
+### WB-61 Cloud services: two images, a stack shaped like a cloud, costs at two scales, a recommendation, the deployments written
+
+- `Dockerfile`: the web image from Next's standalone output and the tools image for the realtime server and the operator's commands, both naming the commit they were built from; `compose.yaml`: web, two realtime instances, Postgres with pgvector, Inngest self-hosted and a Playwright server on one private network
+- The eval smoke suite and `pnpm load` pass in the tools container against the stack
+- `BROWSER_URL` for machines without Chrome; the realtime server pings every 30 s, ends silent sockets and exits on SIGTERM, and both pages reconnect (`src/lib/socket.ts`); `COOKIE_DOMAIN` for a realtime server on its own host; `DATABASE_URL_UNPOOLED` preferred where a platform sets both
+- `docs/hosting.md`: the services across a neo-cloud, AWS, Google Cloud and Azure, monthly costs at 1,000 and 100,000 users with the 3 assumptions, and the recommendation for Fieldstone Supply; `docs/deploy.md`: Vercel, Supabase, Inngest Cloud and Render with a Neon branch per pull request, and Google Cloud, not run; D23

@@ -80,6 +80,14 @@ their consumers from Postgres; a chat reply resumes after a reload; and
 on as many instances as needed. `pnpm load` sends 500 documents through the
 queue with one noisy sender.
 
+The system is two images and a database, and runs on any cloud
+([docs/hosting.md](docs/hosting.md)): `docker compose --env-file .env.compose up --build`
+starts it as a major cloud would, with Inngest self-hosted and two realtime
+instances, and the evals and the load test run against it from the tools
+image. The costs at 1,000 and 100,000 monthly users, the recommendation for
+Fieldstone, and the steps for Vercel with Supabase and for Google Cloud
+([docs/deploy.md](docs/deploy.md)) are written down.
+
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question
 is answered by SQL the model writes, shown under the answer with the rows it
