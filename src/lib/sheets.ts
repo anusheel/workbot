@@ -329,7 +329,8 @@ const sheetColumns = `id, name, columns, rows, totals, created_at as "createdAt"
 export async function saveSheet(name: string, bytes: Uint8Array) {
   const table = await readSheet(bytes);
   const [row] = await query<SheetRecord>(
-    `insert into sheets (name, bytes, columns, rows, totals) values ($1, $2, $3, $4, $5) returning ${sheetColumns}`,
+    // JSON goes in as text and is cast: the Postgres driver would encode a string a second time.
+    `insert into sheets (name, bytes, columns, rows, totals) values ($1, $2, $3::text::jsonb, $4, $5::text::jsonb) returning ${sheetColumns}`,
     [
       name,
       bytes,
