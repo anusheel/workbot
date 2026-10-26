@@ -1,7 +1,10 @@
 import { io } from "next/cache";
 import { query } from "./db";
 import type { DocumentType } from "./document-model";
-import type { MediaType } from "./extract";
+import type { MediaType, Source } from "./extract";
+
+/** What the inbox holds: a file, or text and a page's address sent in through the API. */
+export type Stored = MediaType | "text/plain" | "text/uri-list";
 
 /** Where a document is in the approval workflow. */
 export const inboxStatuses = [
@@ -18,7 +21,8 @@ export type InboxStatus = (typeof inboxStatuses)[number];
 export type InboxItem = {
   id: string;
   name: string;
-  mediaType: MediaType;
+  mediaType: Stored;
+  owner: string | null;
   status: InboxStatus;
   type: DocumentType | null;
   data: Record<string, unknown> | null;
@@ -29,29 +33,36 @@ export type InboxItem = {
   updatedAt: Date;
 };
 
-const columns = `id, name, media_type as "mediaType", status, type, data, confidence, review, request_id as "requestId", created_at as "createdAt", updated_at as "updatedAt"`;
+const columns = `id, name, media_type as "mediaType", owner, status, type, data, confidence, review, request_id as "requestId", created_at as "createdAt", updated_at as "updatedAt"`;
 
-/** A document arrives: its bytes are kept, so every step of the workflow can read it again. */
+/** A document arrives from someone: its bytes are kept, so every step of the workflow can read it again. */
 export async function receive(
   name: string,
-  mediaType: MediaType,
+  mediaType: Stored,
   bytes: Uint8Array,
+  owner?: string,
 ): Promise<InboxItem> {
   const [row] = await query<InboxItem>(
-    `insert into inbox (name, media_type, bytes) values ($1, $2, $3) returning ${columns}`,
-    [name, mediaType, bytes],
+    `insert into inbox (name, media_type, bytes, owner) values ($1, $2, $3, $4) returning ${columns}`,
+    [name, mediaType, bytes, owner ?? null],
   );
   return row;
 }
 
-export async function fileOf(
-  id: string,
-): Promise<{ data: Uint8Array; mediaType: MediaType } | undefined> {
-  const [row] = await query<{ bytes: Uint8Array; mediaType: MediaType }>(
+/** A stored document as the model's source: a file as itself, text as text, an address as the page to read. */
+export async function sourceOf(id: string): Promise<Source | undefined> {
+  const [row] = await query<{ bytes: Uint8Array; mediaType: Stored }>(
     `select bytes, media_type as "mediaType" from inbox where id = $1`,
     [id],
   );
-  return row && { data: new Uint8Array(row.bytes), mediaType: row.mediaType };
+  if (!row) return undefined;
+  const data = new Uint8Array(row.bytes);
+  const text = () => new TextDecoder().decode(data);
+  return row.mediaType === "text/plain"
+    ? { kind: "text", text: text() }
+    : row.mediaType === "text/uri-list"
+      ? { kind: "url", url: text() }
+      : { kind: "file", data, mediaType: row.mediaType };
 }
 
 /** A run that gave up after its retries: the row says so, with the reason, instead of staying "received" forever. */
