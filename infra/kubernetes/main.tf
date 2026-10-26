@@ -50,6 +50,18 @@ resource "helm_release" "traefik" {
   depends_on = [kubernetes_manifest.gateway_api]
 }
 
+# CPU readings for the autoscaler. A managed cluster has its own; kind's
+# kubelet serves a certificate metrics-server cannot verify.
+resource "helm_release" "metrics_server" {
+  count      = var.metrics_server ? 1 : 0
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = "3.14.0"
+  namespace  = "kube-system"
+  set        = [{ name = "args", value = "{--kubelet-insecure-tls}" }]
+}
+
 resource "helm_release" "keda" {
   name             = "keda"
   repository       = "https://kedacore.github.io/charts"

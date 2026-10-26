@@ -28,3 +28,9 @@ variable "tenants" {
   type        = set(string)
   default     = ["workbot"]
 }
+
+variable "metrics_server" {
+  description = "Install metrics-server for CPU scaling; a managed cluster has its own."
+  type        = bool
+  default     = true
+}
