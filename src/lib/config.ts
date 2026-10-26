@@ -33,8 +33,11 @@ export const config = {
   customer: customerId(process.env.CUSTOMER),
   env: process.env.VERCEL_ENV || process.env.NODE_ENV,
   commit: commit?.slice(0, 7) || "local",
-  // A postgres:// URL, or a directory for an embedded PGlite database.
-  database: process.env.DATABASE_URL || ".data/pg",
+  // A postgres:// URL, or a directory for an embedded PGlite database. Where a
+  // platform sets a pooled and a direct URL, as Neon's integration does, the
+  // direct one: a transaction pooler drops LISTEN and session advisory locks.
+  database:
+    process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || ".data/pg",
   // A task's model instead of the routing table's first, as task=provider/size pairs:
   // "chat=anthropic/small,generate=anthropic/small".
   routes: Object.fromEntries(
