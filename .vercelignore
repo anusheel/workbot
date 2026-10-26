@@ -1,0 +1,7 @@
+# What a deploy from this machine must never upload: keys, local databases and builds.
+.env*
+!.env.example
+.data/
+.next/
+.turbo/
+site/.next/

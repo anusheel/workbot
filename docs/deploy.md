@@ -2,6 +2,20 @@
 
 The steps to put WorkBot on a neo-cloud and on Google Cloud; the same Google Cloud deployment as Terraform is in [infrastructure.md](infrastructure.md). They have not been run: each creates billed resources in an account, and that is the account owner's decision. Every piece was proven in the containers of `compose.yaml` (see [hosting.md](hosting.md)), and every flag below was checked against the installed `gcloud`.
 
+## Live on Vercel
+
+Two projects in the `anusheels-projects` team, deployed from this repository with `vercel deploy --prod`:
+
+| Project        | Address                          | What runs                                                                              |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| `workbot`      | https://workbot-beryl.vercel.app | the app, on a Neon database of its own (free plan, `iad1`) from the Vercel integration |
+| `workbot-site` | https://workbot-site.vercel.app  | the public site, its question pages, `llms.txt` and the research dossier               |
+
+- **The app's build indexes the knowledge base first** (`node --import tsx cli/index-knowledge.ts && next build`), against the production database, so the database's credentials stay in Vercel and the content is indexed before the new version serves.
+- **The site** has `site` as its root directory and installs from the repository's lockfile (`cd .. && pnpm install --frozen-lockfile`), since `site` has a workspace file of its own; its sitemap and robots name the production address on their own.
+- **`.vercelignore`** keeps keys, local databases and builds out of every upload from a machine.
+- **Off until connected:** the jobs and workflows (Inngest needs its keys), live calls (the realtime server needs a container), and the investigation's browser (`BROWSER_URL`). The chat, requests, documents read in the request, sheets, the admin pages and the evals' scoreboard run.
+
 What any target must provide:
 
 - **Postgres 17 with pgvector, by a direct connection.** The app sets its tenant and role when a session starts, takes an advisory lock while it applies the schema, and the realtime server listens for notifications. A transaction pooler carries none of these, so a platform's pooled URL will not work. Where a platform injects both, the app reads `DATABASE_URL_UNPOOLED` first.
