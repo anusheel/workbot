@@ -1,0 +1,75 @@
+{{- range $name, $s := .Values.services }}
+{{- $ours := not (contains ":" $s.image) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+spec:
+  {{- if ne $name "web" }}
+  replicas: {{ $s.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels: { app: {{ $name }} }
+  template:
+    metadata:
+      labels: { app: {{ $name }} }
+    spec:
+      # No variables named after the other services: Kubernetes would set
+      # INNGEST_PORT to an address, and Inngest reads it as its port.
+      enableServiceLinks: false
+      containers:
+        - name: {{ $name }}
+          image: {{ if $ours }}{{ $.Values.registry }}{{ $s.image }}:{{ $.Values.tag }}{{ else }}{{ $s.image }}{{ end }}
+          {{- with $s.command }}
+          command: {{ toJson . }}
+          {{- end }}
+          ports: [{ containerPort: {{ $s.port }} }]
+          env:
+            - { name: PORT, value: {{ $s.port | quote }} }
+            - { name: APP_URL, value: {{ $.Values.appUrl | quote }} }
+            - { name: REALTIME_URL, value: {{ printf "%s/realtime" (replace "http" "ws" $.Values.appUrl) | quote }} }
+            - { name: BROWSER_URL, value: ws://browser:3000/ }
+            - { name: INNGEST_BASE_URL, value: http://inngest:8288 }
+            {{- range $key, $value := $.Values.env }}
+            - { name: {{ $key }}, value: {{ $value | quote }} }
+            {{- end }}
+          {{- if $s.secrets }}
+          envFrom:
+            - secretRef: { name: workbot }
+            - secretRef: { name: postgres }
+          {{- end }}
+          readinessProbe:
+            {{- if $s.health }}
+            httpGet: { path: {{ $s.health }}, port: {{ $s.port }} }
+            {{- else }}
+            tcpSocket: { port: {{ $s.port }} }
+            {{- end }}
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+          {{- if $ours }}
+          # Our images write nowhere but the folders named here.
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            {{- range $i, $path := $s.writable }}
+            - { name: scratch-{{ $i }}, mountPath: {{ $path }} }
+            {{- end }}
+      volumes:
+        {{- range $i, $path := $s.writable }}
+        - { name: scratch-{{ $i }}, emptyDir: {} }
+        {{- end }}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+spec:
+  selector: { app: {{ $name }} }
+  ports: [{ port: {{ $s.port }} }]
+---
+{{- end }}

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: workbot
+description: WorkBot on any Kubernetes cluster, the same images as everywhere else
+type: application
+version: 0.1.0

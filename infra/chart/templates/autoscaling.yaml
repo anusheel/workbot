@@ -1,0 +1,24 @@
+# The web tier on the queue's depth: one replica for each so many documents
+# waiting to be read, counted in the database each time the autoscaler asks.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: web
+spec:
+  scaleTargetRef: { name: web }
+  minReplicaCount: {{ .Values.autoscaling.min }}
+  maxReplicaCount: {{ .Values.autoscaling.max }}
+  triggers:
+    - type: postgresql
+      metadata:
+        query: select count(*) from inbox where status = 'received'
+        targetQueryValue: {{ .Values.autoscaling.documentsPerReplica | quote }}
+      authenticationRef: { name: postgres }
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: postgres
+spec:
+  secretTargetRef:
+    - { parameter: connection, name: postgres, key: DATABASE_URL }
