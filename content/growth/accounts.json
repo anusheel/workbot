@@ -1,0 +1,375 @@
+[
+  {
+    "name": "Woodson Lumber Company",
+    "website": "https://www.woodsonlumber.com",
+    "state": "TX",
+    "category": "lumber",
+    "locations": 7,
+    "employees": "about 120",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.woodsonlumber.com",
+      "https://hardwareretailing.com/woodson-lumber-company-celebrates-100-year-anniversary-2"
+    ]
+  },
+  {
+    "name": "Alamo Lumber Company",
+    "website": "https://alamolumber.com",
+    "state": "TX",
+    "category": "lumber",
+    "locations": 16,
+    "employees": "more than 200",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.doitbest.com/alamo-lumber/our-history/",
+      "https://www.doitbestonline.com/?p=3373"
+    ]
+  },
+  {
+    "name": "Harbin Lumber Company",
+    "website": "https://www.harbinlumber.com",
+    "state": "GA",
+    "category": "lumber",
+    "locations": 4,
+    "employees": "about 350",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": null,
+    "evidence": [
+      "https://www.harbinlumber.com/",
+      "https://unionrecorder.com/?p=225553"
+    ]
+  },
+  {
+    "name": "Scherer Bros. Lumber Co.",
+    "website": "https://www.schererbros.com",
+    "state": "MN",
+    "category": "lumber",
+    "locations": 5,
+    "employees": "more than 300",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://www.schererbros.com/locations/",
+      "https://www.doitbestonline.com/_annual_reports/2021/files/basic-html/page12.html"
+    ]
+  },
+  {
+    "name": "J.H. Larson Electrical Company",
+    "website": "https://www.jhlarson.com",
+    "state": "MN",
+    "category": "electrical",
+    "locations": 7,
+    "employees": "113",
+    "delivers": null,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.jhlarson.com/",
+      "https://builtin.com/company/j-h-larson-electrical-company",
+      "https://www.ewweb.com/news/article/21169750/jh-larson-co-celebrates-90th-anniversary"
+    ]
+  },
+  {
+    "name": "Beisser Lumber Company",
+    "website": "https://beisserlumber.com",
+    "state": "IA",
+    "category": "lumber",
+    "locations": 3,
+    "employees": "78",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": true,
+    "evidence": [
+      "https://beisserlumber.com/",
+      "https://bouncewatch.com/company/beisser-lumber-co"
+    ]
+  },
+  {
+    "name": "W.L. Tucker Supply Company",
+    "website": "https://www.wltucker.com",
+    "state": "OH",
+    "category": "masonry",
+    "locations": 1,
+    "employees": "34",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.wltucker.com",
+      "https://thebluebook.com/iProView/263194"
+    ]
+  },
+  {
+    "name": "Wool Plumbing Supply",
+    "website": "https://woolsupply.com",
+    "state": "FL",
+    "category": "plumbing",
+    "locations": 10,
+    "employees": "140",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": ["https://woolsupply.com/", "https://woolkb.com/about"]
+  },
+  {
+    "name": "Burton Lumber & Hardware",
+    "website": "https://www.burtonlumber.com",
+    "state": "UT",
+    "category": "lumber",
+    "locations": 8,
+    "employees": "201-500",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://www.burtonlumber.com",
+      "https://seamless.ai/b/burton-lumber-242163149"
+    ]
+  },
+  {
+    "name": "Werner Electric Supply (now Werner)",
+    "website": "https://www.onewerner.com",
+    "state": "WI",
+    "category": "electrical",
+    "locations": 11,
+    "employees": "about 450",
+    "delivers": null,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://insightonbusiness.com/werner-electric-supply-celebrates-75-years/",
+      "https://dailyreporter.com/2026/03/30/werner-etco-electric-supply-acquisition/",
+      "https://www.onewerner.com/"
+    ]
+  },
+  {
+    "name": "Western Building Center",
+    "website": "https://www.westernbuildingcenter.com",
+    "state": "MT",
+    "category": "general",
+    "locations": 13,
+    "employees": "201-500",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://www.westernbuildingcenter.com/",
+      "https://columbiafallschamber.org/Sys/PublicProfile/66472193",
+      "https://www.zoominfo.com/c/western-building-center/62505060"
+    ]
+  },
+  {
+    "name": "Custom Brick & Supply Company",
+    "website": "https://custombrick.com",
+    "state": "NC",
+    "category": "masonry",
+    "locations": 1,
+    "employees": "24",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": null,
+    "evidence": [
+      "https://custombrick.com/",
+      "https://www.thebluebook.com/iProView/802297/custom-brick-and-supply-company/subcontractors/"
+    ]
+  },
+  {
+    "name": "Talbert Building Supply",
+    "website": "https://www.talbertbuildingsupply.com",
+    "state": "NC",
+    "category": "lumber",
+    "locations": 7,
+    "employees": "113",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://www.talbertbuildingsupply.com/",
+      "https://a-leads.co/company/2638499_fce0e7e6"
+    ]
+  },
+  {
+    "name": "A.D. Moyer Lumber",
+    "website": "https://www.admoyer.com",
+    "state": "PA",
+    "category": "lumber",
+    "locations": 4,
+    "employees": "more than 80",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.admoyer.com/",
+      "https://www.woodworkingnetwork.com/wood-market-trends/woodworking-industry-news/production-woodworking-news/ad_moyer_lumber_marks_70th_anniversary_127733508.html"
+    ]
+  },
+  {
+    "name": "Bricks and Stones",
+    "website": "https://bricksandstones.com",
+    "state": "PA",
+    "category": "masonry",
+    "locations": 4,
+    "employees": "24",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://bricksandstones.com/",
+      "https://www.datanyze.com/companies/bricks-stones/346696387"
+    ]
+  },
+  {
+    "name": "New Castle Building Products",
+    "website": "https://ncbp.com",
+    "state": "NY",
+    "category": "roofing",
+    "locations": 24,
+    "employees": "425+",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": ["https://ncbp.com/"]
+  },
+  {
+    "name": "Star Lumber & Supply",
+    "website": "https://www.starlumber.com",
+    "state": "KS",
+    "category": "lumber",
+    "locations": null,
+    "employees": "over 400",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": true,
+    "evidence": [
+      "https://www.starlumber.com/company/",
+      "https://www.familybusinessmagazine.com/print/shoring-foundation"
+    ]
+  },
+  {
+    "name": "Wilson Lumber Company",
+    "website": "https://www.wilsonlumber.net",
+    "state": "AL",
+    "category": "lumber",
+    "locations": 6,
+    "employees": "more than 200",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.wilsonlumber.net/",
+      "https://cm.hsvchamber.org/news/details/wilson-lumber-to-celebrate-75-years-of-business-honoring-the-past-building-the-future-11-03-2023"
+    ]
+  },
+  {
+    "name": "Hughes Lumber",
+    "website": "https://hugheslumber.net",
+    "state": "OK",
+    "category": "lumber",
+    "locations": 7,
+    "employees": "51-200",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": true,
+    "evidence": [
+      "https://hugheslumber.net/",
+      "https://connect2business.kuder.com/directory/hughes-lumber/"
+    ]
+  },
+  {
+    "name": "Mutual Materials",
+    "website": "https://www.mutualmaterials.com",
+    "state": "WA",
+    "category": "masonry",
+    "locations": 18,
+    "employees": "over 400",
+    "delivers": null,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://www.mutualmaterials.com/about",
+      "https://www.portraitmagazine.com/mutual-materials"
+    ]
+  },
+  {
+    "name": "Masters' Supply",
+    "website": "https://www.masterssupply.com",
+    "state": "KY",
+    "category": "plumbing",
+    "locations": 8,
+    "employees": "151",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.phcppros.com/articles/19581-best-service-in-town",
+      "https://www.phcppros.com/articles/10433-the-master-collective"
+    ]
+  },
+  {
+    "name": "Contractors Pipe & Supply",
+    "website": "https://www.contractorspipeandsupply.com",
+    "state": "MI",
+    "category": "plumbing",
+    "locations": 7,
+    "employees": "58",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": null,
+    "evidence": [
+      "https://www.contractorspipeandsupply.com/",
+      "https://apps.apple.com/us/app/-/id6450680203",
+      "https://pppreport.org/company/contractors+pipe+supply+corp"
+    ]
+  },
+  {
+    "name": "Belletetes",
+    "website": "https://belletetes.com",
+    "state": "NH",
+    "category": "lumber",
+    "locations": 10,
+    "employees": "over 350",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": null,
+    "evidence": [
+      "https://www.building-products.com/belletetes-expanding-in-brookline/",
+      "https://recruiting.paylocity.com/Recruiting/Jobs/Details/3866636"
+    ]
+  },
+  {
+    "name": "Hilltop Lumber",
+    "website": "https://hilltoplbr.com",
+    "state": "MN",
+    "category": "lumber",
+    "locations": 4,
+    "employees": "more than 100",
+    "delivers": true,
+    "contractorOrdering": null,
+    "departments": true,
+    "evidence": [
+      "https://hilltoplbr.com/",
+      "https://www.echopress.com/business/hilltop-lumber-purchases-northland-lumber-in-park-rapids"
+    ]
+  },
+  {
+    "name": "Hamilton Building Supply",
+    "website": "https://hamiltonsupply.com",
+    "state": "NJ",
+    "category": "lumber",
+    "locations": 1,
+    "employees": "80",
+    "delivers": true,
+    "contractorOrdering": true,
+    "departments": true,
+    "evidence": [
+      "https://hamiltonsupply.com/",
+      "https://topworkplaces.com/company/hamilton-building-supply/newjersey/"
+    ]
+  }
+]
