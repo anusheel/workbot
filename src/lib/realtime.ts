@@ -85,7 +85,11 @@ export async function startRealtime(port: number): Promise<Server> {
       request.url ?? "/",
       "http://realtime",
     ).searchParams.get("call");
-    const role = await staff(request.headers.cookie);
+    // A browser sends its cookies to any page's socket, so a staff session counts only from the app's own pages, or from a client that is not a browser.
+    const { origin } = request.headers;
+    const ours =
+      !origin || (!!config.appUrl && origin === new URL(config.appUrl).origin);
+    const role = ours ? await staff(request.headers.cookie) : undefined;
     const caller = !!call && call !== "*";
     // Watching every call is for staff; a caller needs only the id of its own call.
     if (!call || (!caller && !role)) {

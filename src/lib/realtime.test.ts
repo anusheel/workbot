@@ -14,9 +14,12 @@ afterAll(() => {
 const url = (server: typeof first, call: string) =>
   `ws://127.0.0.1:${(server.address() as AddressInfo).port}/?call=${call}`;
 
-const open = (address: string, cookie?: string) =>
+const open = (address: string, cookie?: string, origin?: string) =>
   new Promise<WebSocket>((resolve, reject) => {
-    const ws = new WebSocket(address, { headers: cookie ? { cookie } : {} });
+    const ws = new WebSocket(address, {
+      headers: cookie ? { cookie } : {},
+      ...(origin && { origin }),
+    });
     ws.once("open", () => resolve(ws));
     ws.once("unexpected-response", (_, response) =>
       reject(new Error(String(response.statusCode))),
@@ -66,6 +69,10 @@ test("a call on one instance is followed from the other, and an agent's note rea
 
 test("watching every call needs staff, and a viewer may watch but not speak", async () => {
   await expect(open(url(first, "*"))).rejects.toThrow("403");
+  // A staff session from another site's page is not staff.
+  await expect(
+    open(url(first, "*"), await staff("agent"), "https://elsewhere.example"),
+  ).rejects.toThrow("403");
   // A cookie that does not decode is no one's, and the server stays up.
   await expect(open(url(first, "*"), `${sessionCookie}=%`)).rejects.toThrow(
     "403",
