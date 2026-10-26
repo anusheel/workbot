@@ -18,6 +18,7 @@ import { listNotifications } from "@/lib/notify";
 import { review, runReminders, uploadDocuments } from "./actions";
 import { permits, requireUser } from "@/lib/auth";
 import { Allowed } from "@/components/allowed";
+import { when } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Inbox" };
 
@@ -109,9 +110,7 @@ async function Items() {
                   : "—"}
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
-                {item.updatedAt.toLocaleTimeString("en-GB", {
-                  timeStyle: "short",
-                })}
+                {when(item.updatedAt)}
               </TableCell>
             </TableRow>
           ))}

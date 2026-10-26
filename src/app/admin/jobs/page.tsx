@@ -77,8 +77,13 @@ async function Sections() {
               <TableBody>
                 {letters.map((letter) => (
                   <TableRow key={letter.id}>
-                    <TableCell className="font-mono text-xs">
-                      {letter.source}
+                    <TableCell>
+                      <div className="font-mono text-xs">{letter.source}</div>
+                      {letter.document && (
+                        <div className="text-xs text-muted-foreground">
+                          {letter.document}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="max-w-32 truncate">
                       {letter.owner ?? "—"}

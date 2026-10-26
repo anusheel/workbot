@@ -95,7 +95,11 @@ on the queue's depth and is recreated from nothing in one sequence
 ([docs/infrastructure.md](docs/infrastructure.md)). Isolation, keys, the
 single-tenant option, the load test's bottlenecks and the runbooks are in
 [docs/isolation.md](docs/isolation.md); a vendor review's 20 questions are
-answered in [docs/questionnaire.md](docs/questionnaire.md).
+answered in [docs/questionnaire.md](docs/questionnaire.md). What a customer's
+reviewers need is on one page ([docs/review.md](docs/review.md)); the release
+checklist and the usability study of the runbook and admin pages are in
+[docs/release-checklist.md](docs/release-checklist.md) and
+[docs/research.md](docs/research.md).
 
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question

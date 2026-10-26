@@ -39,3 +39,14 @@ variable "min_instances" {
   type        = number
   default     = 0
 }
+
+variable "billing_account" {
+  description = "The billing account the environment's budget watches."
+  type        = string
+}
+
+variable "monthly_budget" {
+  description = "Dollars a month before the billing admins hear of it; Day 34's estimate is $240 at 1,000 users."
+  type        = number
+  default     = 300
+}

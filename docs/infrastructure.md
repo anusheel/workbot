@@ -10,6 +10,46 @@ WorkBot's infrastructure as code, on three targets, and the pipeline that change
 
 The order of preference is the table's: managed containers first, Kubernetes when the customer's platform team runs it and wants WorkBot there too, a virtual machine when policy demands one. Each step down adds work the customer's team or ours must do, from patching nodes to rotating the VM's image.
 
+## Staging from an empty project
+
+The whole sequence, in order, for a Google Cloud project that has nothing in it yet. Values in angle brackets are yours; `staging.tfvars` holds examples to replace.
+
+```sh
+PROJECT=<project> REGION=us-central1 HOST=<staging host> BILLING=<billing account> STATE=<state bucket>
+A="-var-file=staging.tfvars -var project=$PROJECT -var domain=$HOST -var billing_account=$BILLING"
+
+# 1. The project, billing, and what Terraform cannot make for itself.
+gcloud projects create $PROJECT && gcloud billing projects link $PROJECT --billing-account=$BILLING
+gcloud config set project $PROJECT
+gcloud services enable cloudresourcemanager.googleapis.com sqladmin.googleapis.com secretmanager.googleapis.com
+gcloud beta services identity create --service=sqladmin.googleapis.com
+gcloud beta services identity create --service=secretmanager.googleapis.com
+gcloud storage buckets create gs://$STATE --location=$REGION --uniform-bucket-level-access
+gcloud storage buckets update gs://$STATE --versioning
+
+# 2. The secrets first, then their values: the services read them when they start.
+terraform -chdir=infra/gcp init -backend-config=bucket=$STATE -backend-config=prefix=staging
+terraform -chdir=infra/gcp apply $A -target=google_secret_manager_secret.key
+printf %s "$ANTHROPIC_API_KEY" | gcloud secrets versions add anthropic-api-key --data-file=-
+openssl rand -base64 32 | tr -d '\n' | gcloud secrets versions add secrets-key --data-file=-
+# and inngest-event-key, inngest-signing-key, browser-url the same way
+
+# 3. Everything else, then the domain's A record at the address it prints.
+terraform -chdir=infra/gcp apply $A
+terraform -chdir=infra/gcp output -raw address
+# wait until the certificate is ACTIVE
+gcloud compute ssl-certificates describe workbot --global --format='value(managed.status)'
+
+# 4. The images, the release (migration, smoke suite, traffic), and the jobs engine told where the app is.
+TAG=$(git rev-parse --short HEAD) IMAGES=$(terraform -chdir=infra/gcp output -raw images)
+gcloud auth configure-docker $REGION-docker.pkg.dev
+for t in web tools; do docker buildx build --platform linux/amd64 --target $t --build-arg COMMIT_SHA=$(git rev-parse HEAD) -t $IMAGES/$t:$TAG --push .; done
+DOMAIN=$HOST infra/gcp/release.sh $TAG
+curl -X PUT https://$HOST/api/inngest
+```
+
+Done: `https://<staging host>/api/health` answers ok with the tag's commit, and the release's smoke job passed. The first admin is made as in [deploy.md](deploy.md), from the tools image as a one-off job. That runbook is the same deployment by hand with the realtime server on a host of its own; this one serves it under `/realtime` on the app's host. Use one or the other.
+
 ## Terraform
 
 - **One root per target, one state per environment.** `infra/gcp`, `infra/kubernetes` and `infra/azure` are applied on their own. Staging and production are the same root with a variable file each, `staging.tfvars` and `production.tfvars`, and a state each under its own prefix. Staging has a database without a standby that can be destroyed and an idle cost near zero; production has a standby, deletion protection and one web instance kept warm.

@@ -2,12 +2,19 @@
 # cost, and the same checks on every pull request.
 mock_provider "google" {
   # The key's id, known at plan time so the resources it encrypts can be checked.
+  mock_data "google_project" {
+    defaults = { number = "123456789" }
+  }
   mock_resource "google_kms_crypto_key" {
     override_during = plan
     defaults = {
       id = "projects/workbot/locations/us-central1/keyRings/workbot/cryptoKeys/data"
     }
   }
+}
+
+variables {
+  billing_account = "000000-000000-000000"
 }
 
 run "staging" {
@@ -85,6 +92,10 @@ run "single_tenant" {
   assert {
     condition     = google_sql_database_instance.workbot.encryption_key_name == google_kms_crypto_key.data.id && google_secret_manager_secret.key["anthropic-api-key"].replication[0].auto[0].customer_managed_encryption[0].kms_key_name == google_kms_crypto_key.data.id
     error_message = "The database and the secrets are encrypted under the environment's key."
+  }
+  assert {
+    condition     = google_monitoring_uptime_check_config.health.http_check[0].path == "/api/health" && length(google_billing_budget.monthly.threshold_rules) == 3
+    error_message = "The health check is watched from outside, and spend alerts at 50, 90 and 100%."
   }
   assert {
     condition     = length(google_project_iam_audit_config.reads) == 2
