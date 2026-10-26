@@ -108,7 +108,10 @@ export function salesOrders(count = 50_000, seed = 2025): Order[] {
     let r = random() * weight;
     let month = 0;
     while (r > season[month]) r -= season[month++];
-    const date = new Date(Date.UTC(2025, month, 1 + Math.floor(random() * 28)));
+    const days = new Date(Date.UTC(2025, month + 1, 0)).getUTCDate();
+    const date = new Date(
+      Date.UTC(2025, month, 1 + Math.floor(random() * days)),
+    );
     const region = pick(Object.keys(reps));
     const [product, price] = pick(products);
     const units = 1 + Math.floor(random() ** 2 * 60);
