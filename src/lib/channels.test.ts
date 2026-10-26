@@ -141,4 +141,18 @@ test("a customer who needs a person is handed to the team, with the conversation
   });
   expect(request.body).toContain("Reply on WhatsApp to +15105550166.");
   expect(request.body).toContain("Customer: Two bags arrived split open.");
+
+  // The next turn sees the hand-off itself, not only the reply that mentioned it, so it does not file it twice.
+  const next = scripted([{ text: "It is filed; a person will reply here." }]);
+  await respond(
+    {
+      channel: "whatsapp",
+      address: "+15105550166",
+      text: "Did that go through?",
+    },
+    next.model,
+  );
+  const prompt = JSON.stringify(next.prompts[0]);
+  expect(prompt).toContain('"toolName":"hand_off"');
+  expect(prompt).toContain("Filed for the support team as request");
 });

@@ -1,6 +1,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
+  type ContentPart,
+  type DynamicToolUIPart,
   type LanguageModel,
+  type ToolSet,
   type UIMessage,
   generateText,
   isStepCount,
@@ -125,14 +128,44 @@ async function roleOf(person: string): Promise<Access> {
 
 const message = (
   role: "user" | "assistant",
-  text: string,
+  parts: UIMessage["parts"],
   channel: Channel,
 ): UIMessage<{ channel: Channel }> => ({
   id: randomUUID(),
   role,
-  parts: [{ type: "text", text }],
+  parts,
   metadata: { channel },
 });
+
+/** The tool calls of a turn as the web keeps them, so the next turn on any channel sees what was done, not only what was said about it. */
+const toolParts = (steps: { content: ContentPart<ToolSet>[] }[]) =>
+  steps.flatMap(({ content }) =>
+    content.flatMap((part): DynamicToolUIPart[] =>
+      part.type === "tool-result"
+        ? [
+            {
+              type: "dynamic-tool",
+              toolName: part.toolName,
+              toolCallId: part.toolCallId,
+              state: "output-available",
+              input: part.input,
+              output: part.output,
+            },
+          ]
+        : part.type === "tool-error"
+          ? [
+              {
+                type: "dynamic-tool",
+                toolName: part.toolName,
+                toolCallId: part.toolCallId,
+                state: "output-error",
+                input: part.input,
+                errorText: String(part.error),
+              },
+            ]
+          : [],
+    ),
+  );
 
 /** A reply, the tools the turn used, and the conversation it was added to, for whatever runs after the reply is out. */
 export type Reply = {
@@ -191,7 +224,7 @@ export async function respond(
   const id = inbound.thread ?? conversationId;
   const history = [
     ...((await historyOf(id, person))?.messages ?? []),
-    message("user", text, channel),
+    message("user", [{ type: "text", text }], channel),
   ];
   const role = await roleOf(person);
   const prompt = await promptOf("workbot/system", person, systemPrompt);
@@ -225,7 +258,11 @@ export async function respond(
       const reply = render(result.text, channel);
       await saveHistory(id, person, [
         ...history,
-        message("assistant", reply, channel),
+        message(
+          "assistant",
+          [...toolParts(result.steps), { type: "text", text: reply }],
+          channel,
+        ),
       ]);
       return {
         text: reply,
