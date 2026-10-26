@@ -69,3 +69,24 @@ test("a dead-lettered event goes back to its consumer", async () => {
     ),
   ).toHaveLength(1);
 });
+
+test("a send-back that fails leaves the letter for another try", async () => {
+  await deadLetter(
+    "event:notifications",
+    "r-bad",
+    {
+      id: "9002",
+      topic: "request.created",
+      version: 2,
+      key: "r-bad",
+      data: {},
+    },
+    new Error("No reader for request.created version 2"),
+    3,
+  );
+  const letter = (await listDeadLetters()).find((l) => l.owner === "r-bad")!;
+  await expect(replay(letter.id)).rejects.toThrow("No reader");
+  expect(
+    (await listDeadLetters()).find((l) => l.id === letter.id)?.replayedAt,
+  ).toBeNull();
+});

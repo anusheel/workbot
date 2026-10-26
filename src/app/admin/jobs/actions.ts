@@ -9,7 +9,11 @@ import {
   messageReceived,
 } from "@/inngest/events";
 import { requireUser } from "@/lib/auth";
-import { claimForReplay } from "@/lib/dead-letters";
+import {
+  type DeadLetter,
+  claimForReplay,
+  releaseReplay,
+} from "@/lib/dead-letters";
 import { type DomainEvent, redeliver } from "@/lib/events";
 import { updateItem } from "@/lib/inbox";
 
@@ -18,6 +22,17 @@ export async function replay(id: string) {
   await requireUser("admin");
   const letter = await claimForReplay(z.uuid().parse(id));
   if (!letter) return refresh();
+  try {
+    await sendBack(letter);
+  } catch (error) {
+    // A replay that failed leaves the letter where it was, for another try.
+    await releaseReplay(letter.id);
+    throw error;
+  }
+  refresh();
+}
+
+async function sendBack(letter: DeadLetter) {
   const { data } = letter.payload as { data: Record<string, unknown> };
   if (letter.source === "job:document") {
     const { id: item, owner } = documentReceived.schema.parse(data);
@@ -35,7 +50,6 @@ export async function replay(id: string) {
       letter.payload as DomainEvent,
     );
   }
-  refresh();
 }
 
 /** Hands the domain events to their consumers now. */

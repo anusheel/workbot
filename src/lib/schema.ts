@@ -290,18 +290,20 @@ const tables = [
     value jsonb not null,
     expires_at timestamptz
   )`,
-  // Domain events: what happened, once, in order, for every consumer to read from where it left off.
+  // Domain events: what happened, once, in order, for every consumer to read from where it left off. Each keeps the transaction that wrote it: ids are handed out before commit, so a lower id can commit after a higher one, and readers go by the transaction instead.
   `create table if not exists events (
     id bigserial primary key,
+    tx xid8 not null default pg_current_xact_id(),
     topic text not null,
     version integer not null,
     key text not null,
     data jsonb not null,
     created_at timestamptz not null default now()
   )`,
-  // How far each consumer has read, and how often it has failed on the event it is stuck at.
+  // How far each consumer has read, as the transaction and the id of the last event it finished, and how often it has failed on the event it is stuck at.
   `create table if not exists event_offsets (
     consumer text primary key,
+    tx xid8 not null default '0',
     position bigint not null default 0,
     failures integer not null default 0
   )`,

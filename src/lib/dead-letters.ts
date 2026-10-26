@@ -49,6 +49,11 @@ export async function claimForReplay(id: string) {
   return row;
 }
 
+/** Puts a letter back after a replay that failed, for another try. */
+export async function releaseReplay(id: string) {
+  await query(`update dead_letters set replayed_at = null where id = $1`, [id]);
+}
+
 /** How many are waiting for a person, by where they came from and whose they were. */
 export const deadLetterCounts = () =>
   query<{ source: string; owner: string | null; count: number }>(

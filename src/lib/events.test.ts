@@ -37,7 +37,7 @@ test("a request and its event are written together, and each consumer reads it o
   expect(await notificationsFor("Forklift 3 hydraulic leak")).toHaveLength(1);
 
   // Read again from the start, as after a lost position: the notification is not made twice.
-  await query(`update event_offsets set position = 0`);
+  await query(`update event_offsets set tx = '0', position = 0`);
   await dispatch();
   expect(await notificationsFor("Forklift 3 hydraulic leak")).toHaveLength(1);
 });
@@ -79,7 +79,7 @@ test("a field a consumer does not know passes; a version it cannot read is dead-
 
 test("an event that fails, then goes through, does not use up the next event's tries", async () => {
   await query(
-    `update event_offsets set position = (select max(id) from events)`,
+    `update event_offsets set (tx, position) = (select tx, id from events order by tx desc, id desc limit 1)`,
   );
   const inserted = await query<{ id: string; key: string }>(
     `insert into events (topic, version, key, data) values

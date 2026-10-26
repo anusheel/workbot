@@ -97,19 +97,22 @@ export async function dispatch(batch = 500) {
       [consumer.name],
     );
     const [current] = await query<{
+      tx: string;
       position: string;
       failures: number;
     }>(
-      `select position::text, failures from event_offsets where consumer = $1`,
+      `select tx::text, position::text, failures from event_offsets where consumer = $1`,
       [consumer.name],
     );
-    const { position } = current;
     // Failures count against the event the consumer is stuck at; each event passed starts the count again.
     let failures = current.failures;
-    const events = await query<DomainEvent>(
-      `select id::text, topic, version, key, data, created_at as "createdAt" from events
-       where id > $1 and topic = any($2) order by id limit $3`,
-      [position, consumer.topics, batch],
+    // Only events from transactions older than every one still running: none of those can still commit, so nothing is passed before it is visible.
+    const events = await query<DomainEvent & { tx: string }>(
+      `select id::text, tx::text, topic, version, key, data, created_at as "createdAt" from events
+       where (tx, id) > ($1::xid8, $2::bigint) and topic = any($3)
+         and tx < pg_snapshot_xmin(pg_current_snapshot())
+       order by tx, id limit $4`,
+      [current.tx, current.position, consumer.topics, batch],
     );
     for (const event of events) {
       try {
@@ -131,8 +134,8 @@ export async function dispatch(batch = 500) {
         );
       }
       await query(
-        `update event_offsets set position = $2, failures = 0 where consumer = $1`,
-        [consumer.name, event.id],
+        `update event_offsets set tx = $2::xid8, position = $3, failures = 0 where consumer = $1`,
+        [consumer.name, event.tx, event.id],
       );
       failures = 0;
       finished[consumer.name]++;
@@ -151,7 +154,8 @@ export async function consumerLag() {
         failures: number;
       }>(
         `select coalesce(o.position, 0)::text as position, coalesce(o.failures, 0) as failures,
-           (select count(*)::int from events e where e.id > coalesce(o.position, 0) and e.topic = any($2)) as behind
+           (select count(*)::int from events e
+            where (e.tx, e.id) > (coalesce(o.tx, '0'::xid8), coalesce(o.position, 0)) and e.topic = any($2)) as behind
          from (select 1) one left join event_offsets o on o.consumer = $1`,
         [name, topics],
       );
