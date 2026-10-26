@@ -47,6 +47,7 @@ test("a call on one instance is followed from the other, and an agent's note rea
   });
 
   const note = next(caller);
+  const echoed = next(supervisor);
   supervisor.send(
     JSON.stringify({
       call: "call-1",
@@ -57,6 +58,8 @@ test("a call on one instance is followed from the other, and an agent's note rea
     type: "note",
     text: "A person is here.",
   });
+  // Staff watching see what a colleague said into the call.
+  expect((await echoed).from).toBe("staff");
   caller.close();
   supervisor.close();
 });

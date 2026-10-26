@@ -52,9 +52,12 @@ export async function startRealtime(port: number): Promise<Server> {
   const rooms = new Map<string, Set<WebSocket>>();
   await listen(channel, (payload) => {
     const frame = JSON.parse(payload) as Frame;
-    // What a caller says goes to the staff watching; what staff say goes to the call.
-    const listeners = rooms.get(frame.from === "caller" ? "*" : frame.call);
-    for (const socket of listeners ?? [])
+    // Staff watching see everything on every call; the caller hears only what staff say into its call.
+    const listeners = [
+      ...(rooms.get("*") ?? []),
+      ...(frame.from === "staff" ? (rooms.get(frame.call) ?? []) : []),
+    ];
+    for (const socket of listeners)
       if (socket.readyState === WebSocket.OPEN) socket.send(payload);
   });
 
