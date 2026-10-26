@@ -255,3 +255,27 @@ test("a conversation continued on another channel reaches the model as the serve
   ]);
   expect(kept?.messages).toHaveLength(5);
 });
+
+test("a turn whose save has not landed yet is kept from the browser's copy", async () => {
+  const text = (id: string, role: "user" | "assistant", words: string) => ({
+    id,
+    role,
+    parts: [{ type: "text" as const, text: words }],
+  });
+  await saveHistory("c-lag", "visitor-1", [text("l1", "user", "Hello")]);
+  const response = await post({
+    id: "c-lag",
+    messages: [
+      text("l1", "user", "Hello"),
+      text("l2", "assistant", "Hi, how can I help?"),
+      text("l3", "user", "Where is my order?"),
+    ],
+  });
+  await response.text();
+  const kept = await historyOf("c-lag", "visitor-1");
+  expect(kept?.messages.map((m) => m.id).slice(0, 3)).toEqual([
+    "l1",
+    "l2",
+    "l3",
+  ]);
+});

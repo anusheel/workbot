@@ -22,7 +22,7 @@ const day = 86_400_000;
 export const windowOpen = (lastInbound: Date | null, now = new Date()) =>
   !!lastInbound && now.getTime() - lastInbound.getTime() < day;
 
-/** A message to send, kept before it is sent so a retry finds it; `inbound` names the message it answers. */
+/** A message to send, kept before it is sent so a retry finds it. `inbound` names the message it answers, and a step that queues again for it gets the row it already made. */
 export async function queue(
   channel: Channel,
   address: string,
@@ -30,7 +30,8 @@ export async function queue(
   inbound?: string,
 ) {
   const [row] = await query<{ id: string }>(
-    `insert into outbound (channel, address, body, inbound) values ($1, $2, $3, $4) returning id`,
+    `insert into outbound (channel, address, body, inbound) values ($1, $2, $3, $4)
+     on conflict (inbound) do update set inbound = excluded.inbound returning id`,
     [channel, address, body, inbound ?? null],
   );
   return row.id;

@@ -63,10 +63,11 @@ export async function POST(request: Request) {
     return Response.json({ error: validated.error.message }, { status: 400 });
   const person = user?.id ?? visitor;
   const caller = person ?? "web";
-  // The server's copy is the conversation: it holds what was said on other channels since this browser last saw it.
+  // The server's copy holds what was said on other channels since this browser last saw it; the browser's holds a turn whose save has not landed yet. The conversation is both.
   const stored = person ? await historyOf(body.data.id, person) : undefined;
+  const saved = new Set(stored?.messages.map((m) => m.id));
   const history = stored
-    ? [...stored.messages, validated.data.at(-1)!]
+    ? [...stored.messages, ...validated.data.filter((m) => !saved.has(m.id))]
     : validated.data;
   const prompt = await promptOf("workbot/system", caller, systemPrompt);
   return withTrace(

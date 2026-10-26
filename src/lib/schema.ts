@@ -270,10 +270,10 @@ const tables = [
     conversation_id text,
     expires_at timestamptz not null
   )`,
-  // A message sent on a channel: its id is the idempotency key, and the provider's id and status come back by callback.
+  // A message sent on a channel: one per message it answers, and the provider's id and status come back by callback.
   `create table if not exists outbound (
     id uuid primary key default gen_random_uuid(),
-    inbound text,
+    inbound text unique,
     channel text not null,
     address text not null,
     body text not null,

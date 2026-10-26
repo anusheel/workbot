@@ -29,6 +29,13 @@ const status = async (id: string) =>
     )
   )[0];
 
+test("queueing again for the same message gets the same row", async () => {
+  const first = await queue("sms", "+15105550142", "Friday at 9.", "SM-once");
+  expect(await queue("sms", "+15105550142", "Friday at 9.", "SM-once")).toBe(
+    first,
+  );
+});
+
 test("a message is sent once, however often its step runs", async () => {
   const id = await queue("sms", "+15105550142", "Your order ships Friday.");
   const before = received.length;
