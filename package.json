@@ -14,6 +14,7 @@
     "extract": "node --env-file-if-exists=.env.local --import tsx cli/extract.ts",
     "formats": "node --env-file-if-exists=.env.local --import tsx cli/formats.ts",
     "load": "node --env-file-if-exists=.env.local --import tsx cli/load.ts",
+    "realtime": "node --env-file-if-exists=.env.local --import tsx realtime/server.ts",
     "eval": "node --env-file-if-exists=.env.local --import tsx cli/eval.ts",
     "eval:generate": "node --env-file-if-exists=.env.local --import tsx cli/eval-generate.ts",
     "eval:calibrate": "node --env-file-if-exists=.env.local --import tsx cli/eval-calibrate.ts",
@@ -75,6 +76,7 @@
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "unpdf": "1.8.1",
+    "ws": "8.22.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -85,6 +87,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "inngest-cli": "^1.49.0",

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkRequest } from "@/lib/request-model";
 import { type VoiceState, initial, next } from "@/lib/voice-model";
+import { useLiveCall } from "./live-call";
 
 /** What the line needs from the browser: ears and a voice. The Web Speech API is one implementation. */
 type Listener = {
@@ -102,8 +103,10 @@ const status: Record<VoiceState, { label: string; dot: string }> = {
  * with the caller able to cut in at any time. Without speech services it is
  * a typed conversation with the same server.
  */
-export function VoiceLine() {
+export function VoiceLine({ realtimeUrl }: { realtimeUrl?: string }) {
   const [voice, dispatch] = useReducer(next, initial);
+  // The call is shared with staff as it happens, when a realtime server is configured.
+  const { publish, notes } = useLiveCall(realtimeUrl);
   const [typed, setTyped] = useState("");
   const [filed, setFiled] = useState<WorkRequest>();
   const [voiceReady, setVoiceReady] = useState<boolean>();
@@ -153,6 +156,7 @@ export function VoiceLine() {
           setFiled(request);
           closing.current = true;
         }
+        publish({ type: "turn", heard: voice.turns.at(-1)?.text, reply: say });
         dispatch({ type: "reply", text: say });
       })
       .catch(() => {
@@ -163,7 +167,13 @@ export function VoiceLine() {
           });
       });
     return () => controller.abort();
-  }, [voice.state, voice.turns]);
+  }, [voice.state, voice.turns, publish]);
+
+  // A call that had turns and is back to idle has ended, for whoever is following it.
+  const ended = voice.state === "idle" && voice.turns.length > 0;
+  useEffect(() => {
+    if (ended) publish({ type: "end" });
+  }, [ended, publish]);
 
   // Speaking: say the latest line. Leaving this state early, because the
   // caller cut in, runs the cleanup, which stops the voice mid-sentence.
@@ -227,6 +237,15 @@ export function VoiceLine() {
           </li>
         )}
       </ol>
+      {notes.map((note, index) => (
+        <p
+          key={index}
+          className="rounded-xl border bg-card px-4 py-3 text-sm"
+          role="status"
+        >
+          <span className="text-muted-foreground">From the team:</span> {note}
+        </p>
+      ))}
       {filed && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 text-sm">
           <span>

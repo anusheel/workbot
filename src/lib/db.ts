@@ -9,7 +9,13 @@ export type Query = <T extends Row>(
   text: string,
   params?: unknown[],
 ) => Promise<T[]>;
-export type Connection = { query: Query; close(): Promise<void> };
+export type Connection = {
+  query: Query;
+  /** Calls `on` with each notification on the channel, for as long as the connection is open. */
+  listen(channel: string, on: (payload: string) => void): Promise<void>;
+  notify(channel: string, payload: string): Promise<void>;
+  close(): Promise<void>;
+};
 
 /** The role every query runs as: it owns no table and bypasses nothing, so row-level security binds it. */
 const appRole = "workbot_app";
@@ -45,6 +51,12 @@ export function connect(
     return {
       query: async <T extends Row>(text: string, params: unknown[] = []) =>
         (await client.unsafe<T[]>(text, nullable(params) as never)) as T[],
+      listen: async (channel, on) => {
+        await client.listen(channel, on);
+      },
+      notify: async (channel, payload) => {
+        await client.notify(channel, payload);
+      },
       close: () => client.end(),
     };
   }
@@ -58,6 +70,14 @@ export function connect(
     query: async <T extends Row>(text: string, params: unknown[] = []) => {
       await ready;
       return (await pg.query<T>(text, nullable(params))).rows;
+    },
+    listen: async (channel, on) => {
+      await ready;
+      await pg.listen(channel, on);
+    },
+    notify: async (channel, payload) => {
+      await ready;
+      await pg.query(`select pg_notify($1, $2)`, [channel, payload]);
     },
     close: () => pg.close(),
   };
@@ -87,6 +107,12 @@ const connection = () => (shared.database ??= prepare(config.database));
 
 export const query: Query = async (text, params) =>
   (await connection()).query(text, params);
+
+/** Postgres's own publish and subscribe, for messages between server instances; a channel name is shared by every tenant on the database, so it names its tenant. */
+export const listen: Connection["listen"] = async (channel, on) =>
+  (await connection()).listen(channel, on);
+export const notify: Connection["notify"] = async (channel, payload) =>
+  (await connection()).notify(channel, payload);
 
 /** Closes the shared connection. Scripts call it to exit; the server never does. */
 export async function close() {
