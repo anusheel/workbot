@@ -63,6 +63,9 @@ export const config = {
   brave: { key: process.env.BRAVE_SEARCH_KEY },
   // The address the app is reached at from outside: a provider signs a webhook over the URL it called, so the check needs the same one.
   appUrl: process.env.APP_URL,
+  // The domain the session cookie covers when the realtime server has a host of its
+  // own beside the app's, workbot.example.com for app. and live.; unset, the app's host only.
+  cookieDomain: process.env.COOKIE_DOMAIN,
   // Text messages through Twilio; unset, SMS and WhatsApp are off.
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
