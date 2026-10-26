@@ -77,17 +77,30 @@ export async function POST(request: Request) {
       user: user?.id,
       prompt: `workbot/system@${prompt.version}`,
     },
-    () => reply(body.data.id, history, person, prompt.text, tools),
+    () =>
+      reply({
+        conversationId: body.data.id,
+        history,
+        person,
+        prompt: prompt.text,
+        tools,
+      }),
   );
 }
 
-async function reply(
-  conversationId: string,
-  history: UIMessage[],
-  person: string | undefined,
-  prompt: string,
-  tools: ToolSet,
-) {
+async function reply({
+  conversationId,
+  history,
+  person,
+  prompt,
+  tools,
+}: {
+  conversationId: string;
+  history: UIMessage[];
+  person?: string;
+  prompt: string;
+  tools: ToolSet;
+}) {
   const { instructions, messages, memories, question } = await prepare({
     history,
     person,
