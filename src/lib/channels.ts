@@ -208,6 +208,8 @@ export async function respond(
         history,
         person,
         prompt: prompt.text,
+        // Someone texting the business number is outside the company; on the web and in Slack, a signed-out person may be staff.
+        customer: role === "public" && channel !== "slack",
         style: styles[channel],
       });
       const result = await generateText({
@@ -249,3 +251,20 @@ export async function learnFrom({
   if (user && assistant)
     await learn(person, { user, assistant }, await listMemories(person));
 }
+
+export type SenderRow = {
+  channel: Channel;
+  address: string;
+  person: string;
+  verifiedAt: Date | null;
+  lastInboundAt: Date | null;
+  optedOutAt: Date | null;
+};
+
+/** Everyone who has written on a channel, the latest first, linked or not. */
+export const listSenders = (limit = 20) =>
+  query<SenderRow>(
+    `select channel, address, person, verified_at as "verifiedAt", last_inbound_at as "lastInboundAt", opted_out_at as "optedOutAt"
+     from channels order by last_inbound_at desc nulls last limit $1`,
+    [limit],
+  );

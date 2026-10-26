@@ -20,6 +20,15 @@ export async function historyOf(id: string, person: string) {
   return row;
 }
 
+/** A conversation by its id, for the people who look after the channels. */
+export async function historyById(id: string) {
+  const [row] = await query<History>(
+    `select ${columns} from conversations where id = $1`,
+    [id],
+  );
+  return row;
+}
+
 /** Keeps a conversation's latest messages; another person's conversation under the same id is left as it was. */
 export async function saveHistory(
   id: string,

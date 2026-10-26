@@ -12,11 +12,13 @@ import {
   remember,
 } from "./memory";
 import { modelFor } from "./routing";
+import { customerNote } from "./system-prompt";
 
 /**
  * A turn as the assistant takes it on every channel: the prompt everyone
  * gets, first, so the provider can serve it from its cache; what is known
- * about the person; how the channel wants the reply written; and the
+ * about the person, and that they are a customer when they write from
+ * outside; how the channel wants the reply written; and the
  * conversation, compacted to a budget. The web streams the turn, the other
  * channels wait for it.
  */
@@ -24,11 +26,14 @@ export async function prepare({
   history,
   person,
   prompt,
+  customer = false,
   style,
 }: {
   history: UIMessage[];
   person?: string;
   prompt: string;
+  /** The person writes from outside the company: a customer, not an employee. */
+  customer?: boolean;
   style?: string;
 }) {
   const [memories, { messages, summary }] = await Promise.all([
@@ -40,6 +45,7 @@ export async function prepare({
   const known = [
     memoryNote(memories),
     summary && `Earlier in this conversation: ${summary}`,
+    customer && customerNote,
     style,
   ]
     .filter(Boolean)

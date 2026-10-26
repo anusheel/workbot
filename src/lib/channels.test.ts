@@ -31,8 +31,9 @@ test("a conversation started on the web continues on WhatsApp once the phone sen
   ]);
   const reply = await respond({ ...phone, text: "Is that still on?" }, model);
   expect(reply?.text).toBe("Yes, the 40 bags go out Friday.");
-  // The model saw the web conversation before the new message.
+  // The model saw the web conversation before the new message, and was told it is talking to a customer.
   expect(JSON.stringify(prompts[0])).toContain("40 bags of cement to Alameda");
+  expect(JSON.stringify(prompts[0])).toContain("customers, not an employee");
   const kept = await historyOf("chat-1", "visitor-1");
   expect(kept?.messages.map((m) => m.metadata?.channel)).toEqual([
     undefined,
@@ -92,6 +93,10 @@ test("a linked employee gets the tools of their role; anyone else the customer's
   );
   expect(staff.tools[0]).toContain("find_contact");
   expect(stranger.tools[0]).not.toContain("find_contact");
+  // Someone in the company's Slack is not a customer, linked or not.
+  expect(JSON.stringify(stranger.prompts[0])).not.toContain(
+    "customers, not an employee",
+  );
 });
 
 test("a reply is fitted to its channel", () => {
