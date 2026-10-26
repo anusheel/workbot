@@ -13,6 +13,7 @@ test("a file is known by its bytes, the Office formats by the part inside the zi
   expect(formatOf(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe("jpeg");
   expect(formatOf(strToU8("just text"))).toBeUndefined();
   expect(formatOf(zipSync({ "notes.txt": strToU8("x") }))).toBeUndefined();
+  expect(formatOf(strToU8("PK but no archive"))).toBeUndefined();
 });
 
 test("a PDF's text layer is read page by page, and a page without one counts as scanned", async () => {

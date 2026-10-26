@@ -14,7 +14,12 @@ export function formatOf(bytes: Uint8Array): Format | undefined {
   if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "webp";
   if (ascii(0, 2) !== "PK") return undefined;
   const parts: string[] = [];
-  unzipSync(bytes, { filter: (file) => (parts.push(file.name), false) });
+  try {
+    unzipSync(bytes, { filter: (file) => (parts.push(file.name), false) });
+  } catch {
+    // It starts like a zip and is not one: no format WorkBot reads.
+    return undefined;
+  }
   if (parts.includes("word/document.xml")) return "docx";
   if (parts.includes("xl/workbook.xml")) return "xlsx";
   return undefined;
