@@ -67,6 +67,15 @@ export async function startRealtime(port: number): Promise<Server> {
   });
 
   const sockets = new WebSocketServer({ noServer: true });
+  // A load balancer ends a socket that is quiet for a minute or so, and a phone
+  // that loses its signal never says goodbye: every socket is pinged each 30 s,
+  // and one that did not answer the last ping is ended.
+  const answered = new WeakSet<WebSocket>();
+  const heartbeat = setInterval(() => {
+    for (const ws of sockets.clients)
+      if (answered.delete(ws)) ws.ping();
+      else ws.terminate();
+  }, 30_000);
   const server = createServer((_, response) =>
     response
       .writeHead(426, { "content-type": "text/plain" })
@@ -97,6 +106,8 @@ export async function startRealtime(port: number): Promise<Server> {
       return;
     }
     sockets.handleUpgrade(request, socket, head, (ws) => {
+      answered.add(ws);
+      ws.on("pong", () => answered.add(ws));
       const room = rooms.get(call) ?? new Set<WebSocket>();
       rooms.set(call, room.add(ws));
       ws.on("close", () => {
@@ -120,6 +131,7 @@ export async function startRealtime(port: number): Promise<Server> {
       });
     });
   }
+  server.on("close", () => clearInterval(heartbeat));
   await new Promise<void>((done) => server.listen(port, done));
   return server;
 }

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Frame } from "@/lib/realtime";
+import { reconnecting } from "@/lib/socket";
 
 type Line = { who: "caller" | "assistant" | "team"; text: string };
 type Call = { id: string; lines: Line[]; ended: boolean };
@@ -37,28 +38,28 @@ export function LiveCalls({
   assistant: string;
   canSpeak: boolean;
 }) {
-  const socket = useRef<WebSocket>(undefined);
+  const socket = useRef<ReturnType<typeof reconnecting>>(undefined);
   const [calls, setCalls] = useState<Call[]>([]);
   const [connected, setConnected] = useState(false);
   useEffect(() => {
-    const ws = new WebSocket(`${url}?call=*`);
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => setConnected(false);
-    ws.onmessage = ({ data }) => {
-      const frame = JSON.parse(String(data)) as Frame;
-      setCalls((previous) => {
-        const existing = previous.find((c) => c.id === frame.call);
-        const call = existing ?? { id: frame.call, lines: [], ended: false };
-        const updated = {
-          ...call,
-          lines: [...call.lines, ...linesOf(frame)],
-          ended: call.ended || frame.event.type === "end",
-        };
-        return [updated, ...previous.filter((c) => c.id !== frame.call)];
-      });
-    };
-    socket.current = ws;
-    return () => ws.close();
+    socket.current = reconnecting(`${url}?call=*`, {
+      open: () => setConnected(true),
+      close: () => setConnected(false),
+      message(data) {
+        const frame = JSON.parse(data) as Frame;
+        setCalls((previous) => {
+          const existing = previous.find((c) => c.id === frame.call);
+          const call = existing ?? { id: frame.call, lines: [], ended: false };
+          const updated = {
+            ...call,
+            lines: [...call.lines, ...linesOf(frame)],
+            ended: call.ended || frame.event.type === "end",
+          };
+          return [updated, ...previous.filter((c) => c.id !== frame.call)];
+        });
+      },
+    });
+    return socket.current.stop;
   }, [url]);
   const speak = (call: string, text: string) =>
     socket.current?.send(
