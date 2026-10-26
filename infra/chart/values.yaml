@@ -12,6 +12,10 @@ host: ""
 env:
   CUSTOMER: fieldstone
 
+# The customer the eval sets were written for: the release's smoke suite runs as
+# them. A customer with eval sets of its own names itself here.
+evalCustomer: fieldstone
+
 # Postgres in the cluster, for a cluster that stands alone. Against a managed
 # database, turn it off and give DATABASE_URL in the `postgres` secret.
 postgres:
