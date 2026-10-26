@@ -75,4 +75,7 @@ A PDF with a text layer goes as its text, and a scan goes as the file: the accur
 - OCR as a separate step: a scan goes to a model that reads images, which on these 10 was enough.
 - Older formats: `.doc`, `.xls` and CSV are refused; a CSV would load into the same sandbox in a few lines.
 - More than one worksheet, and joins across sheets: the first worksheet is the table.
+- Headers, footers, footnotes and comments of a Word document: `docxText` reads `word/document.xml` only. Filling a customer's own Word template is not built either; `docxFrom` writes a minimal document.
+- Recalculation: a formula reads as the result saved with the file, and a file written by a script may carry none.
+- Idempotency by content hash: a document uploaded twice is read twice. Keying the record by the file's hash and the prompt's version would let a reprocess after a prompt change touch only what changed.
 - The model proposing a cleaning plan for a messy sheet (dates as serial numbers, units in the header): types are inferred in code from every value, which is exact for exports like this one and wrong for sheets typed by hand.
