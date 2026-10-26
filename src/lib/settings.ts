@@ -45,6 +45,7 @@ export const Settings = z.object({
     measurementsDays: z.number().int().positive(),
     documentBytesDays: z.number().int().positive(),
     sheetsDays: z.number().int().positive(),
+    conversationsDays: z.number().int().positive(),
   }),
 });
 export type Settings = z.infer<typeof Settings>;

@@ -15,6 +15,7 @@
     "tracesDays": 90,
     "measurementsDays": 30,
     "documentBytesDays": 30,
-    "sheetsDays": 30
+    "sheetsDays": 30,
+    "conversationsDays": 90
   }
 }
