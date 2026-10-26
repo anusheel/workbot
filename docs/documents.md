@@ -69,6 +69,17 @@ Each answer rests on one aggregate query, grouped and sorted in SQL, never on ro
 
 A PDF with a text layer goes as its text, and a scan goes as the file: the accuracy was the same within what 10 documents can show, the text costs less and the gap grows with pages. The text path's cost is layout, which lost one field in 10; a document whose meaning is in its layout, a form or a page in columns, should go as the file, which today is a parameter of `ingest` rather than a setting. Word documents go as their text with changes marked, since the model takes no Word files and the marks carry what a reviewer needs. Spreadsheets go to SQL on the small model, routed as `analyze`: 5 of 5 at a twentieth of the large model's cost. Recorded as D20.
 
+## A document that was not filed
+
+WorkBot does not read a mailbox. A document arrives by an upload at `/admin/inbox`, or from another system through `POST /api/documents` with an agent's key, which is how a mail rule or an integration hands over an emailed invoice. When one is reported missing, check in this order:
+
+1. **`/admin/inbox`**, by name and date. "Awaiting review" means a field was below the confidence bar: approve or reject it there, and the request is filed. "Failed" names why.
+2. **`/admin/jobs`**: a dead letter shows the document's name under its source. "Send back" runs it once more, after the cause is fixed.
+3. **The requests list**, filtered to the team that files its kind (invoices to finance), in case it was filed under another title.
+4. **Not in the inbox at all**: it never arrived. Upload it, and check the sending system's rule; a document uploaded twice is read twice, so look before uploading again.
+
+A document that stays "received" for more than a few minutes was never picked up by the job engine; send it back from the inbox's upload, and report it, since every received document should end read, waiting for a person, or failed.
+
 ## What is not here
 
 - Mixed documents split by region, a table to one path and a photograph to another: every page of a PDF goes one way, and the router averages the pages, so a typed cover on top of scanned pages can send the whole file as text and lose the scans.

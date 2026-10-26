@@ -89,9 +89,11 @@ What the numbers say:
 
 **The decision.** Run WorkBot on the neo-cloud: Vercel for the web tier, Supabase for Postgres, Inngest Cloud for the jobs, and Render for the realtime server, all in a US West region.
 
-**Reason 1: nobody at Fieldstone has to run a network.** There are no subnets, NAT gateways, load balancers or IAM policies to design, review and keep current; the platforms patch and scale themselves. The people who look after WorkBot are its builders, part time, and an hour not spent on infrastructure is an hour on the assistant. It is also the cheapest option at Fieldstone's size, $180 a month against $240 and $262, though a difference of $60 is not the reason.
+**Reason 1: nobody at Fieldstone has to run a network.** There are no subnets, NAT gateways, load balancers or IAM policies to design, review and keep current; the platforms patch and scale themselves. The people who look after WorkBot are its builders, part time, and an hour not spent on infrastructure is an hour on the assistant. It is also the cheapest option at Fieldstone's size, $180 a month against $240 and $262, though a difference of $60 to $82 a month is not the reason.
 
 **Reason 2: the choice can be undone in a day.** The images Render runs are the ones `compose.yaml` runs in the shape of a major cloud, and the database is Postgres with pgvector, which `pg_dump` moves. If Fieldstone is acquired, audited, or grows a hundredfold, moving to Cloud Run or ECS is the runbook in [deploy.md](deploy.md), not a rewrite. At 100,000 users the platforms cost within 7% of each other, so price will not force the move either.
+
+**What the $180 covers, and what it does not.** It covers hosting, the database, the job engine, the realtime server and the model, at the assumptions above. It leaves out the text messages and calls sent through Twilio (billed per message by Twilio to Fieldstone's own account), a staging environment (about $50 more, mostly a second database), point-in-time recovery for the database, and seats past the first on Vercel at $20 each. Set one budget alert across the providers at $225, and a second on the model's account at $40, which is twice its expected spend and the first sign of a fallback to the large model.
 
 **What it gives up.** Supabase's Pro instance has no standby: a failure in its zone is a restore, and with only the daily backup that Pro includes, up to a day of requests lost. Point-in-time recovery is an add-on, and it should be bought once WorkBot is where the team's requests live.
 

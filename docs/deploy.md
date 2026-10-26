@@ -30,6 +30,8 @@ Previews never touch the customer's data. A Neon project holds a `main` branch w
 
 ## Google Cloud: Cloud Run, Cloud SQL, Secret Manager
 
+These are the steps by hand, with the realtime server on a host of its own and `COOKIE_DOMAIN` over both. The Terraform in `infra/gcp` makes the same deployment with both on one host behind a load balancer, and its ordered sequence is in [infrastructure.md](infrastructure.md); use one or the other.
+
 One project per environment, a budget before anything runs, one service account that can read its secrets and nothing else. The database has only a private address, and the services reach it through the project's network.
 
 ```sh
