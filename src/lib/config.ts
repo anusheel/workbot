@@ -71,6 +71,8 @@ export const config = {
     // A regional API host, such as https://api.dublin.ie1.twilio.com, to keep messages in a region.
     api: process.env.TWILIO_API_URL || "https://api.twilio.com",
   },
+  // The realtime server's address, ws://…, for live calls; unset, a call is not shared with staff.
+  realtime: { url: process.env.REALTIME_URL },
   // The Slack app; unset, the Slack channel is off.
   slack: {
     botToken: process.env.SLACK_BOT_TOKEN,

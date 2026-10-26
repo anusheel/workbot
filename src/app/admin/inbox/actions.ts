@@ -14,7 +14,7 @@ import { requireUser } from "@/lib/auth";
 
 /** Each file lands in the inbox and starts its own run of the approval workflow. */
 export async function uploadDocuments(formData: FormData) {
-  await requireUser("agent");
+  const user = await requireUser("agent");
   const files = formData
     .getAll("documents")
     .filter((f): f is File => f instanceof File)
@@ -32,13 +32,17 @@ export async function uploadDocuments(formData: FormData) {
   );
   const items = await Promise.all(
     read.flatMap(({ name, bytes, type }) =>
-      type ? [receive(name, type, bytes)] : [],
+      type ? [receive(name, type, bytes, user.id)] : [],
     ),
   );
   if (items.length === 0) return;
   // The rows and their events go together: an upload the engine never heard of is removed, not stranded.
   await inngest
-    .send(items.map((item) => documentReceived.create({ id: item.id })))
+    .send(
+      items.map((item) =>
+        documentReceived.create({ id: item.id, owner: user.id }),
+      ),
+    )
     .catch(async (error: unknown) => {
       await discard(items.map((item) => item.id));
       throw error;

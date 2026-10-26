@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VoiceLine } from "@/components/voice-line";
+import { config } from "@/lib/config";
 import { customer } from "@/lib/customer";
 
 export const metadata: Metadata = { title: "Voice line" };
@@ -14,7 +15,7 @@ export default function VoicePage() {
           files the request, and tells you where it went. You can talk over it.
         </p>
         <div className="mt-8">
-          <VoiceLine />
+          <VoiceLine realtimeUrl={config.realtime.url} />
         </div>
       </div>
     </main>

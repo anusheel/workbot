@@ -1,54 +1,20 @@
-import { MockLanguageModelV4 } from "ai/test";
 import { expect, test, vi } from "vitest";
 import { uploadDocuments } from "@/app/admin/inbox/actions";
+import { inngest } from "@/inngest/client";
 import { maxFileBytes } from "@/lib/extract";
+import { getItem, sourceOf } from "@/lib/inbox";
+import { GET } from "./[id]/route";
+import { DocumentStatus } from "./[id]/types";
 import { POST } from "./route";
 import { as, signIn } from "@/test/auth";
 
 vi.mock("next/headers", async () => ({
   headers: async () => (await import("@/test/caller")).caller.headers,
 }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("next/cache", () => ({ refresh: vi.fn() }));
-vi.mock("@/inngest/client", () => ({ inngest: { send: vi.fn() } }));
-vi.mock("@/lib/inbox", () => ({ receive: vi.fn(), discard: vi.fn() }));
-const generated = vi.hoisted(() => ({ calls: 0 }));
-vi.mock("@/lib/routing", () => {
-  const replies = [
-    { type: "email" },
-    {
-      data: {
-        from: "dana@fieldstone.example",
-        to: ["support@fieldstone.example"],
-        subject: "Refund for order 4411",
-        intent: "request",
-        actions: ["Refund order 4411"],
-        urgency: "medium",
-      },
-      confidence: [{ field: "from", score: 1 }],
-    },
-  ];
-  return {
-    modelFor: () =>
-      new MockLanguageModelV4({
-        doGenerate: async () => ({
-          ...(generated.calls++, {}),
-          content: [{ type: "text", text: JSON.stringify(replies.shift()) }],
-          finishReason: { unified: "stop", raw: undefined },
-          usage: {
-            inputTokens: {
-              total: 10,
-              noCache: 10,
-              cacheRead: undefined,
-              cacheWrite: undefined,
-            },
-            outputTokens: { total: 20, text: 20, reasoning: undefined },
-          },
-          warnings: [],
-        }),
-      }),
-  };
-});
+vi.mock("@/inngest/client", () => ({
+  inngest: { send: vi.fn(async () => ({ ids: [] })) },
+}));
 
 const agent = await as("agent");
 await signIn("agent");
@@ -62,21 +28,45 @@ const post = (body: unknown) =>
     }),
   );
 
-test("a document posted as text becomes a request with its record attached", async () => {
-  const response = await post({
-    text: "From: dana@fieldstone.example\nTo: support@fieldstone.example\nSubject: Refund for order 4411\n\nPlease refund order 4411, it arrived damaged.",
+test("a document posted as text is kept under its sender, handed to the workflow, and followed at its address", async () => {
+  const text =
+    "From: dana@fieldstone.example\nSubject: Refund for order 4411\n\nPlease refund order 4411, it arrived damaged.";
+  const response = await post({ text });
+  expect(response.status).toBe(202);
+  const { id, status, location } = await response.json();
+  expect(status).toBe("received");
+  expect(response.headers.get("location")).toBe(`/api/documents/${id}`);
+  expect(location).toBe(`/api/documents/${id}`);
+  const item = await getItem(id);
+  expect(item?.owner).toEqual(expect.any(String));
+  expect(await sourceOf(id)).toEqual({ kind: "text", text });
+  expect(vi.mocked(inngest.send)).toHaveBeenCalledWith(
+    expect.objectContaining({
+      name: "document/received",
+      data: { id, owner: item?.owner },
+    }),
+  );
+
+  const followed = await GET(
+    new Request(`http://workbot${location}`, { headers: agent }),
+    { params: Promise.resolve({ id }) },
+  );
+  expect(DocumentStatus.parse(await followed.json())).toEqual({
+    id,
+    status: "received",
+    type: null,
+    review: [],
+    requestId: null,
   });
-  expect(response.status).toBe(201);
-  const { request, document } = await response.json();
-  expect(request).toMatchObject({
-    title: "Refund for order 4411",
-    team: "operations",
-    status: "open",
-  });
-  expect(document).toMatchObject({ type: "email", name: "text" });
+  const missing = await GET(
+    new Request("http://workbot/api/documents/x", { headers: agent }),
+    { params: Promise.resolve({ id: "x" }) },
+  );
+  expect(missing.status).toBe(404);
 });
 
 test("a short text, a bad or private address, an empty body and a file of the wrong type are rejected with the reason", async () => {
+  vi.mocked(inngest.send).mockClear();
   expect((await post({ text: "hi" })).status).toBe(400);
   expect((await post({ url: "not a url" })).status).toBe(400);
   const local = await post({ url: "http://localhost:3000/admin" });
@@ -101,6 +91,7 @@ test("a short text, a bad or private address, an empty body and a file of the wr
   expect(JSON.stringify(await upload.json())).toContain(
     "a PDF, a Word document or an image",
   );
+  expect(vi.mocked(inngest.send)).not.toHaveBeenCalled();
 });
 
 const upload = (file: File) => {
@@ -115,8 +106,8 @@ const upload = (file: File) => {
   );
 };
 
-test("an empty file, a file over the limit, a broken zip and a malformed multipart body answer 400 before any model call", async () => {
-  generated.calls = 0;
+test("an empty file, a file over the limit, a broken zip and a malformed multipart body answer 400 before anything is queued", async () => {
+  vi.mocked(inngest.send).mockClear();
   const empty = await upload(
     new File([], "empty.pdf", { type: "application/pdf" }),
   );
@@ -142,7 +133,7 @@ test("an empty file, a file over the limit, a broken zip and a malformed multipa
     }),
   );
   expect(garbage.status).toBe(400);
-  expect(generated.calls).toBe(0);
+  expect(vi.mocked(inngest.send)).not.toHaveBeenCalled();
 });
 
 test("the inbox upload refuses an oversized file the same way", async () => {

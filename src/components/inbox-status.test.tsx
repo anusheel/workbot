@@ -7,6 +7,7 @@ const item = (over: Partial<InboxItem>): InboxItem => ({
   id: "i1",
   name: "invoice.pdf",
   mediaType: "application/pdf",
+  owner: null,
   status: "received",
   type: null,
   data: null,

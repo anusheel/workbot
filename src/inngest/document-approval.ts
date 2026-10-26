@@ -3,11 +3,13 @@ import { modelFor } from "@/lib/routing";
 import { type Extracted, schemas } from "@/lib/document-model";
 import { classify, saveDocument, toRequest } from "@/lib/documents";
 import { type Source, extract, route } from "@/lib/extract";
-import { fileOf, getItem, markFailed, updateItem } from "@/lib/inbox";
+import { deadLetter } from "@/lib/dead-letters";
+import { getItem, markFailed, sourceOf, updateItem } from "@/lib/inbox";
 import { notify } from "@/lib/notify";
 import { createRequest, getRequest } from "@/lib/requests";
 import { withTrace } from "@/lib/tracing";
 import { inngest } from "./client";
+import { failFast } from "./fail-fast";
 import { documentReceived, documentReviewed } from "./events";
 
 /**
@@ -20,25 +22,36 @@ export const documentApproval = inngest.createFunction(
   {
     id: "document-approval",
     retries: 3,
+    // Two runs at a time for one sender and ten in all, so a bulk upload waits its turn rather than taking every slot.
+    concurrency: [{ key: "event.data.owner", limit: 2 }, { limit: 10 }],
     triggers: [documentReceived],
-    // The run gave up: the row shows it, with the reason, for a person to act on.
-    onFailure: ({ event, error }) =>
-      markFailed(event.data.event.data.id, error.message),
+    // The run gave up: the row shows it, and the dead letters keep the event for a person to look at and send again.
+    onFailure: async ({ event, error }) => {
+      const received = event.data.event;
+      await markFailed(received.data.id, error.message);
+      await deadLetter(
+        "job:document",
+        received.data.owner ?? null,
+        { name: received.name, data: received.data },
+        error,
+      );
+    },
   },
   async ({ event, step }) => {
     const { id } = event.data;
     const model = modelFor("extract");
     // Each step reads the file again and takes the same path: a PDF's text when it has a text layer, the file when it is scanned.
     const source = async (): Promise<Source> => {
-      const file = await fileOf(id);
-      if (!file) throw new NonRetriableError(`No document ${id} in the inbox.`);
-      return (await route({ kind: "file", ...file })).source;
+      const stored = await sourceOf(id);
+      if (!stored)
+        throw new NonRetriableError(`No document ${id} in the inbox.`);
+      return (await route(stored)).source;
     };
 
     const ctx = { caller: "workflow", name: "document" };
     const type = await step.run("classify", () =>
       withTrace(ctx, async () => {
-        const type = await classify(await source(), model);
+        const type = await classify(await source(), model).catch(failFast);
         await updateItem(id, { type });
         return type;
       }),
@@ -50,7 +63,7 @@ export const documentApproval = inngest.createFunction(
           await source(),
           schemas[type],
           model,
-        );
+        ).catch(failFast);
         await updateItem(id, { status: "extracted", data, confidence, review });
         return { data, confidence, review };
       }),

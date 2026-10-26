@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   type ToolSet,
   type UIMessage,
@@ -18,6 +19,7 @@ import { modelFor } from "@/lib/routing";
 import { learn, prepare } from "@/lib/assistant";
 import { textOf } from "@/lib/context";
 import { historyOf, saveHistory } from "@/lib/history";
+import { record } from "@/lib/resumable";
 import { promptOf } from "@/lib/prompts";
 import { allow } from "@/lib/rate-limit";
 import { systemPrompt } from "@/lib/system-prompt";
@@ -135,5 +137,12 @@ async function reply({
         });
       },
     }),
+    // A copy of the reply is kept as it goes, so a browser that reloads mid-reply picks it up again.
+    consumeSseStream: ({ stream }) => {
+      if (!person) return;
+      // It starts now, alongside the reply; the function stays up until it is written.
+      const recording = record(randomUUID(), conversationId, person, stream);
+      after(() => recording);
+    },
   });
 }

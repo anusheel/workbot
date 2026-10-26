@@ -290,6 +290,52 @@ const tables = [
     value jsonb not null,
     expires_at timestamptz
   )`,
+  // Domain events: what happened, once, in order, for every consumer to read from where it left off. Each keeps the transaction that wrote it: ids are handed out before commit, so a lower id can commit after a higher one, and readers go by the transaction instead.
+  `create table if not exists events (
+    id bigserial primary key,
+    tx xid8 not null default pg_current_xact_id(),
+    topic text not null,
+    version integer not null,
+    key text not null,
+    data jsonb not null,
+    created_at timestamptz not null default now()
+  )`,
+  // How far each consumer has read, as the transaction and the id of the last event it finished, and how often it has failed on the event it is stuck at.
+  `create table if not exists event_offsets (
+    consumer text primary key,
+    tx xid8 not null default '0',
+    position bigint not null default 0,
+    failures integer not null default 0
+  )`,
+  // What could not be done after its retries, kept for a person to look at and send back.
+  `create table if not exists dead_letters (
+    id uuid primary key default gen_random_uuid(),
+    source text not null,
+    owner text,
+    payload jsonb not null,
+    error text not null,
+    attempts integer,
+    replayed_at timestamptz,
+    created_at timestamptz not null default now()
+  )`,
+  // Who sent a document in: the uploader or the integration, whose runs share a fair limit.
+  `alter table inbox add column if not exists owner text`,
+  // A chat reply as it streams out, kept in parts so a reader who lost it can read it again.
+  `create table if not exists streams (
+    id text primary key,
+    conversation_id text not null,
+    person text not null,
+    done boolean not null default false,
+    created_at timestamptz not null default now()
+  )`,
+  `create table if not exists stream_parts (
+    stream_id text not null references streams(id) on delete cascade,
+    seq integer not null,
+    data text not null,
+    primary key (stream_id, seq)
+  )`,
+  // A notification made by an event's consumer is made once, however often the event is read.
+  `alter table notifications add column if not exists event_id bigint unique`,
   // The entities content/entities describes; pnpm generate writes their statements.
   ...entityTables,
 ];
@@ -332,6 +378,8 @@ const tenancy = [
     channels: "channel, address",
     link_codes: "hash",
     chat_state: "key",
+    event_offsets: "consumer",
+    stream_parts: "stream_id, seq",
   }).map(
     ([table, key]) => `do $$ begin
       if not exists (select 1 from information_schema.key_column_usage where table_name = '${table}' and constraint_name = '${table}_pkey' and column_name = 'tenant') then

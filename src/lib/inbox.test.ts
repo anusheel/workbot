@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
 import {
   discard,
-  fileOf,
   getItem,
   listInbox,
   markFailed,
   receive,
+  sourceOf,
   updateItem,
   waitingSince,
 } from "./inbox";
@@ -22,7 +22,8 @@ test("a document is kept with its bytes, moved through the workflow's statuses, 
     review: [],
     requestId: null,
   });
-  expect(await fileOf(item.id)).toEqual({
+  expect(await sourceOf(item.id)).toEqual({
+    kind: "file",
     data: bytes,
     mediaType: "application/pdf",
   });
@@ -44,7 +45,9 @@ test("a document is kept with its bytes, moved through the workflow's statuses, 
     later.id,
     item.id,
   ]);
-  expect(await fileOf("00000000-0000-0000-0000-000000000000")).toBeUndefined();
+  expect(
+    await sourceOf("00000000-0000-0000-0000-000000000000"),
+  ).toBeUndefined();
 });
 
 test("waitingSince finds the reviews nobody has answered for long enough", async () => {
@@ -81,5 +84,30 @@ test("a run that gave up marks its document failed, with the reason where the re
   expect(await getItem(item.id)).toMatchObject({
     status: "failed",
     review: ["The model answered 500 three times."],
+  });
+});
+
+test("text and a page's address sent in come back as the sources they are, with who sent them", async () => {
+  const encode = (text: string) => new TextEncoder().encode(text);
+  const text = await receive(
+    "text",
+    "text/plain",
+    encode("Please refund order 4411."),
+    "intake",
+  );
+  const page = await receive(
+    "https://fieldstone.example/po/7714",
+    "text/uri-list",
+    encode("https://fieldstone.example/po/7714"),
+    "intake",
+  );
+  expect(text.owner).toBe("intake");
+  expect(await sourceOf(text.id)).toEqual({
+    kind: "text",
+    text: "Please refund order 4411.",
+  });
+  expect(await sourceOf(page.id)).toEqual({
+    kind: "url",
+    url: "https://fieldstone.example/po/7714",
   });
 });

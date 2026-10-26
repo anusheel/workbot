@@ -4,8 +4,8 @@ import { settings } from "./settings";
 /**
  * Deletes what has outlived its window: traces, measurements, expired
  * sessions, the bytes of documents whose run has ended, spreadsheets,
- * conversations and the messages sent in them, expired link codes and the
- * chat bot's expired state.
+ * conversations and the messages sent in them, expired link codes, the
+ * chat bot's expired state, and chat replies kept for resuming.
  * Each deletion runs under the deployment's tenant, so it touches only its
  * own rows. Returns how many rows each step removed.
  */
@@ -54,6 +54,10 @@ export async function applyRetention(
     ),
     expired:
       (await counts(`delete from link_codes where expires_at < now()`)) +
-      (await counts(`delete from chat_state where expires_at < now()`)),
+      (await counts(`delete from chat_state where expires_at < now()`)) +
+      // A reply is resumed within minutes or not at all; its parts go after a day.
+      (await counts(
+        `delete from streams where created_at < now() - interval '1 day'`,
+      )),
   };
 }

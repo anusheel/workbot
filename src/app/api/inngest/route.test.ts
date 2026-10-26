@@ -7,6 +7,6 @@ test("the engine can read the functions this app serves", async () => {
     params: Promise.resolve({}),
   });
   expect(response.status).toBe(200);
-  // The 7 functions, and a failure handler each for the document approval and the channel reply.
-  expect(await response.json()).toMatchObject({ function_count: 9 });
+  // The 8 functions, and a failure handler each for the document approval and the channel reply.
+  expect(await response.json()).toMatchObject({ function_count: 10 });
 });

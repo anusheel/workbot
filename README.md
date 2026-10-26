@@ -72,6 +72,14 @@ hand a conversation to a person, as a request with the transcript and where to
 reply. `/admin/channels` shows the channels, who has linked, and every message
 sent ([docs/channels.md](docs/channels.md)).
 
+Each operation runs as what it is, a request, a stream, a job or a workflow
+([docs/execution.md](docs/execution.md)). Jobs share the workers fairly between
+senders and leave what still fails at `/admin/jobs`; domain events are read by
+their consumers from Postgres; a chat reply resumes after a reload; and
+`pnpm realtime` serves live voice calls that staff follow at `/admin/calls`,
+on as many instances as needed. `pnpm load` sends 500 documents through the
+queue with one noisy sender.
+
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question
 is answered by SQL the model writes, shown under the answer with the rows it
