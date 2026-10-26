@@ -63,6 +63,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-55  | One shape for tickets and contacts, 3 sync paths, the rule table, a cache with its freshness                     | M    | done   |
 | WB-56  | Config-first: three levels, the rule language and the model's proposals, the entity generator, the task graph    | M    | done   |
 | WB-57  | Security: roles and keys, tenants in the database, tools checked below the model, sealed tokens, injection evals | M    | done   |
+| WB-58  | Documents and spreadsheets: formats by their bytes, two paths for a PDF, tracked changes, SQL over 50,000 rows   | M    | done   |
 
 ## Acceptance criteria
 
@@ -354,3 +355,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - `src/lib/tool.ts`: every tool states the role it requires; the chat offers what the caller's role reaches and every tool checks again when it runs; pages show only the controls a role can use
 - `src/lib/secrets.ts`, `src/lib/credentials.ts`: integration tokens sealed with AES-256-GCM, a GitHub call made with the signed-in user's own token, revocation and `pnpm users reseal`; `src/lib/redact.ts` and `src/inngest/retention.ts`: personal data and secrets out of traces, retention windows in configuration
 - `content/eval/injection.json`, `src/lib/eval-security.ts`: 20 injection attempts through chat, tool results and documents as `pnpm eval --task security`, all failing on 2026-10-25; `docs/security.md`, the note for a customer; D19
+
+### WB-58 Documents and spreadsheets: formats by their bytes, two paths for a PDF, tracked changes, SQL over 50,000 rows
+
+- `src/lib/files.ts`: PDF, Word, Excel and images told apart by their bytes; a PDF's text layer page by page, a scan detected by its letters a page; a Word document's text with tracked changes marked, and Word documents written from runs
+- `src/lib/extract.ts`: `route` sends a text PDF as its text and a scan or an image as the file, the path kept on the document and shown on the request; the contract schema, read with its changes accepted and every change listed
+- `src/lib/sheets.ts`, `/admin/sheets`: a workbook read into a typed table past its title, merges and formulas, its totals row checked against its rows; a DuckDB of its own per question with no file, network or settings access; one SELECT at a time, 50 rows, 5 s; the answer with every query and its rows; the `analyze` route; sheets kept 30 days
+- `pnpm formats`, `content/eval/contracts.json`, `src/lib/eval-formats.ts`: 10 invoices by 3 paths, 10 contracts, 5 questions of a seeded 50,000-row export with answers computed in code; `docs/documents.md`; D20

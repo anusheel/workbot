@@ -8,7 +8,7 @@ WorkBot is the assistant and workflow engine for Fieldstone Supply's operations,
 flowchart LR
   subgraph clients [Clients]
     web["Web app: chat, requests, voice line, dashboards, admin"]
-    cli["Terminal: pnpm chat, explain, scrape, browse, video, extract, eval, routes"]
+    cli["Terminal: pnpm chat, explain, scrape, browse, video, extract, formats, eval, routes"]
     site["Public site: site/, static"]
     api["API: /api/chat, /api/intake, /api/documents, /api/voice, /api/generate, /api/requests"]
   end
@@ -24,9 +24,9 @@ flowchart LR
     crons["reminders, watch"]
   end
   subgraph data ["Postgres with pgvector"]
-    tables["requests, chunks, memories, inbox, documents, reports, recordings, traces, prompts, notifications"]
+    tables["requests, chunks, memories, inbox, documents, sheets, reports, recordings, traces, prompts, notifications"]
   end
-  models["Routed by task: Haiku for chat, extraction, triage, summaries, reading and the judge, Sonnet for generation and research, each with the other behind it; OpenAI when keyed"]
+  models["Routed by task: Haiku for chat, research, extraction, triage, summaries, reading and SQL over sheets, Sonnet for generation and the judge, the other model behind each but the judge; OpenAI when keyed"]
   outside["The web through a guarded fetch, Chrome through Playwright, ffmpeg; Brave, Voyage and PostHog when keyed"]
   clients --> routes --> lib --> models
   lib --> tables
@@ -58,13 +58,13 @@ Everything is in one Postgres database, one idempotent schema in `src/lib/schema
 - **Requests** are the unit of work: title, body, team, priority, status. Every intake path ends in one: the form, the API, the voice line, a document, the approval workflow.
 - **The knowledge base** is 52 Markdown files in `content/knowledge`, indexed into `chunks` by heading, with a full-text vector always and a 1,024-dimension embedding when Voyage is keyed. The files are the source of truth; the index rebuilds from them.
 - **Per-person state** is small and erasable: `memories` by visitor cookie, forgotten from `/settings`.
-- **Documents and media** keep their derived records, not their bytes, except the inbox, which keeps a document's bytes for the length of its workflow run: `documents` (the extracted record, confidence, the fields to review), `reports` (the analyst's report and findings), `recordings` (frame notes and a timeline).
+- **Documents and media** keep their derived records, not their bytes, except the inbox, which keeps a document's bytes for the length of its workflow run: `documents` (the extracted record, confidence, the fields to review), `reports` (the analyst's report and findings), `recordings` (frame notes and a timeline). `sheets` keeps a spreadsheet's file for 30 days, with the columns and totals read from it, since every question reads the file again.
 - **Tickets and contacts** are one shape each (`tickets`, `contacts`), mapped from every source with the provider's record in `raw` and the rules that fired in `applied`, refreshed by the pull, the webhook and the nightly read (`sync_log` says how far behind each left the copy); the writes made through the ticketing system are remembered by key (`filings`), so a write asked twice is made once. `cache` holds reads from outside per tenant, with every read's outcome in `cache_reads`.
 - **Entities from descriptions** (`vendors`, `locations`): tables `pnpm generate` writes from `content/entities`, one per description, with the model, route and page beside them.
 - **People and access**: `users` with a role, `keys` stored as hashes, `sessions` a key opens, `credentials` sealed with AES-256-GCM. Every table, these included, carries a tenant and a forced row-level security policy; the app queries as `workbot_app`.
 - **Operations data**: `traces` (every model call: tenant, purpose, prompt version, tokens, cached tokens, dollars, latency, success or the error message; no prompt or reply content), `prompts` (versions and traffic shares), `notifications` (the outbox), `inbox` (the workflow's status per document).
 
-Flows are short. A chat message: cookie to visitor, memories and a compacted history to the prompt, the model with tools, a reply streamed back, memories extracted after the response. A document: bytes to the inbox, an event to Inngest, steps that read the bytes back from the database, a request and a document at the end, a notification in the outbox.
+Flows are short. A chat message: cookie to visitor, memories and a compacted history to the prompt, the model with tools, a reply streamed back, memories extracted after the response. A document: bytes to the inbox, an event to Inngest, steps that read the bytes back from the database, a request and a document at the end, a notification in the outbox. A question about a sheet: the stored file read into a DuckDB of its own, the model's SELECTs run against it, the answer back on the page with every query and its rows.
 
 ## Technology
 
@@ -91,7 +91,7 @@ Flows are short. A chat message: cookie to visitor, memories and a compacted his
 - **Durable workflows for documents, plain requests for chat.** A chat turn is seconds; a document can wait days for a person. The split keeps the fast path simple and gives the slow path checkpoints.
 - **In-house tracing over Langfuse.** A table and a page took a day and store no content; Langfuse would add sessions, scores and prompt management with a UI, at the price of an account and content leaving the database. The seam is one function per concern.
 - **Browser speech over hosted speech.** No keys, works in Chrome, interruption handled; worse recognition than Deepgram, no audio transcripts for recordings. The interfaces are 2 methods each so the hosted services can take the seats.
-- **Small model first.** Haiku reads documents, judges evals, investigates tickets and, since the table could not separate the 2 on the golden set, answers chat; Sonnet lays out pages. A document costs under a cent in model calls; the risk is quality on hard documents, which the confidence threshold and the reviewer catch.
+- **Small model first.** Haiku reads documents, investigates tickets, writes the SQL for a sheet's questions and, since the table could not separate the 2 on the golden set, answers chat; Sonnet lays out pages and judges the evals. A document costs under a cent in model calls; the risk is quality on hard documents, which the confidence threshold and the reviewer catch.
 
 ## Reliability, as built and as missing
 
@@ -101,7 +101,7 @@ Missing, and in the design brief's plan: a second provider in the chain, which n
 
 ## Audited against the principles (Day 26)
 
-**As it is.** Two deployables: the app (Next.js, on Vercel) and the public site (`site/`, static, 140 lines). One engine, Inngest, for the document workflow and the crons. One database, Postgres with pgvector, 11 tables, JSONB where a record's shape is the model's to decide (documents' records, findings, a recording's scenes). One queue, Inngest's, with an outbox table for notifications. One observability stack, the `traces` table and its page. Two MCP servers for the CLIs, run from the repository, not deployed. Outside: the model providers, Chrome, ffmpeg, and Brave, Voyage and PostHog when keyed. The layers are 3: route handlers and Server Actions, the functions of `src/lib`, and `query` with `$n` parameters in `db.ts`; nothing in between.
+**As it is.** Two deployables: the app (Next.js, on Vercel) and the public site (`site/`, static, 140 lines). One engine, Inngest, for the document workflow and the crons. DuckDB in process, in memory, one database per question about a spreadsheet, closed after it. One database, Postgres with pgvector, 11 tables, JSONB where a record's shape is the model's to decide (documents' records, findings, a recording's scenes). One queue, Inngest's, with an outbox table for notifications. One observability stack, the `traces` table and its page. Two MCP servers for the CLIs, run from the repository, not deployed. Outside: the model providers, Chrome, ffmpeg, and Brave, Voyage and PostHog when keyed. The layers are 3: route handlers and Server Actions, the functions of `src/lib`, and `query` with `$n` parameters in `db.ts`; nothing in between.
 
 | Principle                                       | WorkBot on the morning of Day 26                                                                                                                                                                        | What it costs today                                                                                                                                                                                                                                                              |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -55,10 +55,19 @@ Attach a recording reads a video frame by frame into a timeline you can ask
 about (`pnpm video <file>` does the same from the terminal; it needs ffmpeg).
 
 A document files its own request: on the new-request page, or at `POST
-/api/documents`, an invoice, an email, a letter or a form (as a PDF, an
-image or text) is read into a typed record, filed with the right team, and
-kept on the request with its doubtful fields marked. `pnpm extract <file>`
-runs the extraction alone; `pnpm eval --task extract` measures it on the eval documents.
+/api/documents`, an invoice, an email, a letter, a form or a contract (as a
+PDF, a scan, an image, a Word document or text) is read into a typed record,
+filed with the right team, and kept on the request with its doubtful fields
+marked. A PDF with a text layer goes to the model as its text, a scan as the
+file, and a Word contract with its tracked changes kept and listed.
+`pnpm extract <file>` runs the extraction alone; `pnpm eval --task extract`
+measures it on the eval documents, and `pnpm formats` compares the paths
+([docs/documents.md](docs/documents.md)).
+
+A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
+DuckDB of its own, its totals row is checked against its rows, and a question
+is answered by SQL the model writes, shown under the answer with the rows it
+returned.
 
 Documents can also go through the approval workflow at `/admin/inbox`: each
 upload is a durable run on [Inngest](https://www.inngest.com) that classifies,
