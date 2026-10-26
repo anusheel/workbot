@@ -56,3 +56,10 @@ test("the mark a deleted paragraph leaves does not open a change", () => {
   const file = zipSync({ "word/document.xml": strToU8(xml) });
   expect(docxText(file)).toBe("Kept\nNext");
 });
+
+test("characters written by number read as themselves", () => {
+  const xml =
+    '<?xml version="1.0"?><w:document xmlns:w="w"><w:body><w:p><w:r><w:t>Buyer&#x2019;s notice &#8212; 30 days &amp; no more</w:t></w:r></w:p></w:body></w:document>';
+  const file = zipSync({ "word/document.xml": strToU8(xml) });
+  expect(docxText(file)).toBe("Buyer’s notice — 30 days & no more");
+});

@@ -48,8 +48,15 @@ const entities: Record<string, string> = {
   quot: '"',
   apos: "'",
 };
+// The five named entities, and characters written by number, &#8217; or &#x2019;.
 const decode = (xml: string) =>
-  xml.replace(/&(amp|lt|gt|quot|apos);/g, (_, name: string) => entities[name]);
+  xml.replace(
+    /&(?:(amp|lt|gt|quot|apos)|#(\d+)|#x([\da-f]+));/gi,
+    (_, name, dec, hex) =>
+      name
+        ? entities[name]
+        : String.fromCodePoint(dec ? Number(dec) : parseInt(hex, 16)),
+  );
 
 // An insertion or a deletion opening or closing (not the self-closing marks a deleted paragraph leaves), a run of text, a tab, a table cell or a paragraph ending.
 const token =
