@@ -108,10 +108,15 @@ async function prepare(database: string): Promise<Connection> {
 }
 
 // One connection per server process, opened on first use: each route is
-// bundled on its own, and an embedded database must not be opened twice.
+// bundled on its own, and an embedded database must not be opened twice. A
+// database that is not up yet is tried again on the next query, not given up on.
 type Shared = typeof globalThis & { database?: Promise<Connection> };
 const shared = globalThis as Shared;
-const connection = () => (shared.database ??= prepare(config.database));
+const connection = () =>
+  (shared.database ??= prepare(config.database).catch((error: unknown) => {
+    shared.database = undefined;
+    throw error;
+  }));
 
 export const query: Query = async (text, params) =>
   (await connection()).query(text, params);
