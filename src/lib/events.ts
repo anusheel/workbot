@@ -72,6 +72,13 @@ export const consumers: Consumer[] = [
   },
 ];
 
+/** Hands a dead-lettered event to its consumer again, as a person does once the cause is fixed. */
+export async function redeliver(consumerName: string, event: DomainEvent) {
+  const consumer = consumers.find((c) => c.name === consumerName);
+  if (!consumer) throw new Error(`No consumer ${consumerName}`);
+  await consumer.handle(event);
+}
+
 const failuresAllowed = 3;
 
 /**

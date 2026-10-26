@@ -7,6 +7,7 @@ const nav = [
   { href: "/admin/inbox", label: "Inbox" },
   { href: "/admin/sheets", label: "Sheets" },
   { href: "/admin/channels", label: "Channels" },
+  { href: "/admin/jobs", label: "Jobs" },
   { href: "/admin/traces", label: "Traces" },
   { href: "/admin/prompts", label: "Prompts" },
   { href: "/admin/evals", label: "Evals" },
