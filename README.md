@@ -101,7 +101,9 @@ checklist and the usability study of the runbook and admin pages are in
 [docs/release-checklist.md](docs/release-checklist.md) and
 [docs/research.md](docs/research.md). How WorkBot is found and how it finds its
 buyers, the site for answer engines, the weekly citation check, the target list
-and the outreach rules, is in [docs/growth.md](docs/growth.md).
+and the outreach rules, is in [docs/growth.md](docs/growth.md). The usage analytics, an analyst that
+answers in SQL it shows, and the market dossier are in
+[docs/analytics.md](docs/analytics.md).
 
 A spreadsheet too large for a prompt goes to `/admin/sheets`: it loads into a
 DuckDB of its own, its totals row is checked against its rows, and a question
