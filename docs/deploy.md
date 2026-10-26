@@ -1,6 +1,6 @@
 # Deploying
 
-The steps to put WorkBot on a neo-cloud and on Google Cloud. They have not been run: each creates billed resources in an account, and that is the account owner's decision. Every piece was proven in the containers of `compose.yaml` (see [hosting.md](hosting.md)), and every flag below was checked against the installed `gcloud`.
+The steps to put WorkBot on a neo-cloud and on Google Cloud; the same Google Cloud deployment as Terraform is in [infrastructure.md](infrastructure.md). They have not been run: each creates billed resources in an account, and that is the account owner's decision. Every piece was proven in the containers of `compose.yaml` (see [hosting.md](hosting.md)), and every flag below was checked against the installed `gcloud`.
 
 What any target must provide:
 

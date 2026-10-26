@@ -1,0 +1,52 @@
+# The images are named by the commit they were built from, and a release
+# changes `tag` and nothing else. `registry` is empty for images loaded into a
+# local cluster, and a registry's address with its slash otherwise.
+registry: ""
+tag: latest
+
+# The address people reach the app at; the realtime server is under /realtime.
+appUrl: http://localhost:3500
+
+env:
+  CUSTOMER: fieldstone
+
+# Postgres in the cluster, for a cluster that stands alone. Against a managed
+# database, turn it off and give DATABASE_URL in the `postgres` secret.
+postgres:
+  enabled: true
+  image: pgvector/pgvector:pg17
+  storage: 2Gi
+
+# The web tier runs the jobs Inngest hands it, so it scales on the documents
+# waiting to be read. More replicas than the engine runs steps at once (10) do nothing.
+autoscaling:
+  min: 1
+  max: 4
+  documentsPerReplica: 20
+
+# Each service: its image (ours by name, others with their tag), how it starts,
+# the port it listens on, and whether it reads the secrets.
+services:
+  web:
+    image: workbot-web
+    port: 3000
+    health: /api/health
+    secrets: true
+    writable: [/tmp, /app/.next/cache]
+  realtime:
+    image: workbot-tools
+    command: [node, --import, tsx, realtime/server.ts]
+    port: 3001
+    replicas: 2
+    secrets: true
+    writable: [/tmp]
+  browser:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    command:
+      [npx, -y, playwright@1.64.1, run-server, --port, "3000", --host, 0.0.0.0]
+    port: 3000
+  inngest:
+    image: inngest/inngest:v1.49.0
+    command: [inngest, start, --sdk-url, http://web:3000/api/inngest]
+    port: 8288
+    secrets: true

@@ -1,0 +1,44 @@
+#cloud-config
+# The VM's whole setup: Docker, a script that writes the app's environment
+# from Key Vault into memory, and the systemd unit that runs the web image.
+package_update: true
+packages: [docker.io, jq]
+write_files:
+  - path: /usr/local/bin/workbot-env
+    permissions: "0755"
+    content: |
+      #!/bin/sh
+      # The app's environment, from Key Vault with the VM's own identity, to /run only.
+      set -eu
+      token=$(curl -sf -H Metadata:true "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net" | jq -r .access_token)
+      umask 077
+      mkdir -p /run/workbot
+      {
+        for name in ${secrets}; do
+          value=$(curl -sf -H "Authorization: Bearer $token" "https://${vault}.vault.azure.net/secrets/$name?api-version=7.4" | jq -r .value)
+          echo "$(echo "$name" | tr a-z- A-Z_)=$value"
+        done
+        echo "CUSTOMER=${customer}"
+        echo "APP_URL=${app_url}"
+      } > /run/workbot/web.env
+  - path: /etc/systemd/system/workbot-web.service
+    content: |
+      [Unit]
+      Description=WorkBot web
+      Requires=docker.service
+      After=docker.service network-online.target
+      Wants=network-online.target
+
+      [Service]
+      ExecStartPre=/usr/local/bin/workbot-env
+      ExecStartPre=-/usr/bin/docker rm -f workbot-web
+      ExecStart=/usr/bin/docker run --rm --name workbot-web --env-file /run/workbot/web.env -p 3000:3000 --read-only --tmpfs /tmp --tmpfs /app/.next/cache --cap-drop ALL --security-opt no-new-privileges ${image}
+      ExecStop=/usr/bin/docker stop workbot-web
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+runcmd:
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, workbot-web.service]

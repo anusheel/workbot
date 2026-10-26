@@ -1,0 +1,84 @@
+name: Infrastructure
+
+on:
+  pull_request:
+    paths: [infra/**, .github/workflows/infra.yml]
+  push:
+    branches: [main]
+    paths: [infra/**, .github/workflows/infra.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  # Every root formatted, valid, and planned against mocked providers: no account needed.
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        root: [gcp, azure, kubernetes]
+    defaults:
+      run:
+        working-directory: infra/${{ matrix.root }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - if: hashFiles(format('infra/{0}/tests/*.tftest.hcl', matrix.root)) != ''
+        run: terraform test
+
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: v4.3.1
+      - run: helm lint infra/chart
+
+  # The real plan on a pull request and the apply after merge, once Google Cloud
+  # is connected: the repository variables GCP_PROJECT, GCP_WORKLOAD_IDENTITY_PROVIDER,
+  # GCP_SERVICE_ACCOUNT and TF_STATE_BUCKET, and an environment named production
+  # whose deployments wait for a reviewer.
+  plan:
+    needs: check
+    if: vars.GCP_PROJECT != '' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: infra/gcp
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform init -input=false -backend-config=bucket=${{ vars.TF_STATE_BUCKET }} -backend-config=prefix=production
+      - run: terraform plan -input=false -lock-timeout=5m -var-file=production.tfvars
+
+  apply:
+    needs: check
+    if: vars.GCP_PROJECT != '' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: infra/gcp
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - uses: hashicorp/setup-terraform@v4
+      - run: terraform init -input=false -backend-config=bucket=${{ vars.TF_STATE_BUCKET }} -backend-config=prefix=production
+      - run: terraform apply -input=false -auto-approve -lock-timeout=5m -var-file=production.tfvars

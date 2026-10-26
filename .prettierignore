@@ -1,1 +1,4 @@
 pnpm-lock.yaml
+
+# Helm templates: YAML with Go template directives, which no YAML parser reads
+infra/chart/templates/

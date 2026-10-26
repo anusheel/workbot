@@ -67,6 +67,7 @@ checks. Sizes: S is under an hour, M is a few hours.
 | WB-59  | One agent on 4 channels: conversations on the server, identities linked by a code, Twilio, Slack, a hand-off              | M    | done   |
 | WB-60  | Execution models: every operation classified, fair jobs with dead letters, events in Postgres, resumable chat, live calls | M    | done   |
 | WB-61  | Cloud services: two images, a stack shaped like a cloud, costs at two scales, a recommendation, the deployments written   | M    | done   |
+| WB-62  | Infrastructure as code: Terraform on three targets, a Helm chart, releases with smoke and rollback, the pipeline          | M    | done   |
 
 ## Acceptance criteria
 
@@ -388,3 +389,10 @@ checks. Sizes: S is under an hour, M is a few hours.
 - The eval smoke suite and `pnpm load` pass in the tools container against the stack
 - `BROWSER_URL` for machines without Chrome; the realtime server pings every 30 s, ends silent sockets and exits on SIGTERM, and both pages reconnect (`src/lib/socket.ts`); `COOKIE_DOMAIN` for a realtime server on its own host; `DATABASE_URL_UNPOOLED` preferred where a platform sets both
 - `docs/hosting.md`: the services across a neo-cloud, AWS, Google Cloud and Azure, monthly costs at 1,000 and 100,000 users with the 3 assumptions, and the recommendation for Fieldstone Supply; `docs/deploy.md`: Vercel, Supabase, Inngest Cloud and Render with a Neon branch per pull request, and Google Cloud, not run; D23
+
+### WB-62 Infrastructure as code: Terraform on three targets, a Helm chart, releases with smoke and rollback, the pipeline
+
+- `infra/gcp` with `infra/modules/cloud-run-service`: Cloud SQL on a private address, secrets kept out of the state, the registry, both services, one host behind a load balancer, the release jobs; staging and production planned in `terraform test` against a mocked provider
+- `infra/kubernetes` and `infra/chart`: the Gateway API, Traefik, KEDA and the secrets; every service from one template, scaling on the queue's depth, a migration hook, the smoke suite as `helm test`; applied to a local cluster, recreated from nothing and timed
+- `infra/release.sh` and `infra/gcp/release.sh`: migrate, smoke, move traffic, roll back; `infra/azure`: a VM with a hardened systemd unit behind a load balancer, keys from Key Vault
+- `.github/workflows/infra.yml` and `release.yml`: checks and mocked plans on every pull request, apply after approval and release by tag once an account is connected; `docs/infrastructure.md`; D24
