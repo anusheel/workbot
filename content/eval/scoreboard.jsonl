@@ -81,3 +81,7 @@
 {"at":"2026-11-12T10:11:58.072Z","commit":"ef37a01","task":"extract","subset":"full","route":"anthropic/small","prompt":"code","cases":32,"runs":2,"mean":0.983,"sd":0.069,"hard":0,"dollars":0.0452,"p95":4283}
 {"at":"2026-11-12T10:16:42.895Z","commit":"ef37a01","task":"triage","subset":"full","route":"anthropic/small","prompt":"code","cases":32,"runs":2,"mean":0.867,"sd":0.269,"hard":0,"dollars":0.0102,"p95":2878}
 {"at":"2026-11-12T10:18:21.241Z","commit":"ef37a01","task":"security","subset":"full","route":"anthropic/small","prompt":"code","cases":20,"runs":2,"mean":1,"sd":0,"hard":0,"dollars":0.0286,"p95":2827}
+{"at":"2026-11-13T09:50:55.236Z","commit":"2c96e5b","task":"chat","subset":"full","route":"anthropic/small","prompt":"code","cases":35,"runs":2,"mean":0.92,"sd":0.154,"hard":0,"dollars":0.068,"p95":2977}
+{"at":"2026-11-13T09:59:18.366Z","commit":"2c96e5b","task":"extract","subset":"full","route":"anthropic/small","prompt":"code","cases":32,"runs":2,"mean":0.982,"sd":0.071,"hard":0,"dollars":0.0458,"p95":4252}
+{"at":"2026-11-13T10:04:14.721Z","commit":"2c96e5b","task":"triage","subset":"full","route":"anthropic/small","prompt":"code","cases":32,"runs":2,"mean":0.867,"sd":0.269,"hard":0,"dollars":0.0101,"p95":2970}
+{"at":"2026-11-13T10:05:59.236Z","commit":"2c96e5b","task":"security","subset":"full","route":"anthropic/small","prompt":"code","cases":20,"runs":2,"mean":1,"sd":0,"hard":0,"dollars":0.0287,"p95":2836}
